@@ -32,8 +32,6 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	{
 		$this->pdo = $pdo;
 		$this->id = null;
-
-		// TODO enable PDO exceptions?
 	}
 
 	/**
