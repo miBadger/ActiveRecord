@@ -161,6 +161,17 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	}
 
 	/**
+	 * Set the PDO.
+	 *
+	 * @param \PDO $pdo
+	 * @return null
+	 */
+	protected function setPdo($pdo)
+	{
+		$this->pdo = $pdo;
+	}
+
+	/**
 	 * Returns the ID.
 	 *
 	 * @return null|int The ID.
@@ -168,6 +179,17 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	public function getId()
 	{
 		return $this->id;
+	}
+
+	/**
+	 * Set the ID.
+	 *
+	 * @param int $id
+	 * @return null
+	 */
+	protected function setId($id)
+	{
+		$this->id = $id;
 	}
 
 	/**

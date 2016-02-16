@@ -34,7 +34,7 @@ abstract class AbstractActiveRecordSearch extends AbstractActiveRecord
 
 		while ($row = $pdoStatement->fetch()) {
 			$x = new static($this->getPdo());
-			$x->id = intval($row['id']);
+			$x->setId(intval($row['id']));
 
 			foreach ($x->getActiveRecordData() as $key => &$value) {
 				$value = $row[$key];
