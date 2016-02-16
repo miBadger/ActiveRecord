@@ -22,9 +22,6 @@ abstract class AbstractActiveRecordSearch extends AbstractActiveRecord
 	 */
 	public function search($options = [])
 	{
-		$name = $this->getActiveRecordName();
-		$data = $this->getActiveRecordData();
-
 		$pdoStatement = $this->getPdo()->prepare($this->getSearchQuery($options));
 		array_walk_recursive($options, function (&$value) use ($pdoStatement) {
 			static $index = 1;
