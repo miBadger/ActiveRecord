@@ -49,7 +49,7 @@ abstract class AbstractActiveRecordSearch extends AbstractActiveRecord
 	/**
 	 * Returns the search query with the given options.
 	 *
-	 * @param arrray $options = []
+	 * @param array $options = []
 	 * @return string the search query with the given options.
 	 */
 	private function getSearchQuery($options = [])
