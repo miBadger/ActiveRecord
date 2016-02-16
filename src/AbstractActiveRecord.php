@@ -153,7 +153,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	/**
 	 * Returns the PDO.
 	 *
-	 * @return PDO the PDO.
+	 * @return \PDO the PDO.
 	 */
 	public function getPdo()
 	{
