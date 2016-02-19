@@ -24,7 +24,7 @@ abstract class AbstractActiveRecordSearch extends AbstractActiveRecord
 	{
 		try {
 			$pdoStatement = $this->getPdo()->prepare($this->getSearchQuery($options));
-			array_walk_recursive($options, function (&$value) use ($pdoStatement) {
+			array_walk_recursive($options, function(&$value) use ($pdoStatement) {
 				static $index = 1;
 
 				$pdoStatement->bindParam($index++, $value);
@@ -69,7 +69,7 @@ abstract class AbstractActiveRecordSearch extends AbstractActiveRecord
 				$values[] = $key . ' = ?';
 			} elseif (is_string($value)) {
 				$values[] = $key . ' LIKE ?';
-			} elseif(is_array($value) && !empty($value)) {
+			} elseif (is_array($value) && !empty($value)) {
 				$values[] = $key . ' IN(' . implode(',', array_fill(0, count($value), '?')) . ')';
 			} else {
 				throw new ActiveRecordException('Option value not supported.');

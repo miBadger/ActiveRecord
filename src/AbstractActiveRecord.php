@@ -46,7 +46,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 			$pdoStatement->execute($this->getActiveRecordData());
 
 			$this->setId(intval($this->getPdo()->lastInsertId()));
-		} catch(\PDOException $e) {
+		} catch (\PDOException $e) {
 			throw new ActiveRecordException('Can\'t create the record.', 0, $e);
 		}
 
