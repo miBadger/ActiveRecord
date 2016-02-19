@@ -15,7 +15,7 @@ namespace miBadger\ActiveRecord;
  *
  * @since 1.0.0
  */
-class ActiveRecordException extends \Exception
+class ActiveRecordException extends \RuntimeException
 {
 
 }

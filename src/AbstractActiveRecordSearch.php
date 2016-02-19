@@ -22,29 +22,30 @@ abstract class AbstractActiveRecordSearch extends AbstractActiveRecord
 	 */
 	public function search($options = [])
 	{
-		$pdoStatement = $this->getPdo()->prepare($this->getSearchQuery($options));
-		array_walk_recursive($options, function (&$value) use ($pdoStatement) {
-			static $index = 1;
+		try {
+			$pdoStatement = $this->getPdo()->prepare($this->getSearchQuery($options));
+			array_walk_recursive($options, function (&$value) use ($pdoStatement) {
+				static $index = 1;
 
-			$pdoStatement->bindParam($index++, $value);
-		});
+				$pdoStatement->bindParam($index++, $value);
+			});
 
-		$pdoStatement->execute();
-		$result = [];
+			$pdoStatement->execute();
+			$result = [];
 
-		while ($row = $pdoStatement->fetch()) {
-			$new = new static($this->getPdo());
-			$new->setId(intval($row['id']));
-			$data = $new->getActiveRecordData();
+			while ($fetch = $pdoStatement->fetch()) {
+				$new = new static($this->getPdo());
 
-			foreach ($data as $key => &$value) {
-				$value = $row[$key];
+				$new->setId(intval($fetch['id']));
+				$new->setActiveRecordData($fetch);
+
+				$result[] = $new;
 			}
 
-			$result[] = $new;
+			return $result;
+		} catch (\PDOException $e) {
+			throw new ActiveRecordException('Can\'t search the record.', 0, $e);
 		}
-
-		return $result;
 	}
 
 	/**
@@ -56,21 +57,22 @@ abstract class AbstractActiveRecordSearch extends AbstractActiveRecord
 	private function getSearchQuery($options = [])
 	{
 		$columns = array_keys($this->getActiveRecordData());
+		$columns[] = 'id';
 		$values = [];
 
 		foreach ($options as $key => $value) {
 			if (!in_array($key, $columns)) {
-				throw new ActiveRecordException('Invalid option key.');
+				throw new ActiveRecordException(sprintf('Option key "%s" doesn\'t exists.', $key));
 			}
 
-			if (is_int($value)) {
+			if (is_numeric($value)) {
 				$values[] = $key . ' = ?';
 			} elseif (is_string($value)) {
 				$values[] = $key . ' LIKE ?';
 			} elseif(is_array($value) && !empty($value)) {
 				$values[] = $key . ' IN(' . implode(',', array_fill(0, count($value), '?')) . ')';
 			} else {
-				throw new ActiveRecordException('Invalid option value.');
+				throw new ActiveRecordException('Option value not supported.');
 			}
 		}
 

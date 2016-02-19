@@ -30,8 +30,10 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 */
 	public function __construct(\PDO $pdo)
 	{
-		$this->pdo = $pdo;
-		$this->id = null;
+		$pdo->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
+		$pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+
+		$this->setPdo($pdo);
 	}
 
 	/**
@@ -39,10 +41,15 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 */
 	public function create()
 	{
-		$pdoStatement = $this->pdo->prepare($this->getCreateQuery());
-		$pdoStatement->execute($this->getActiveRecordData());
+		try {
+			$pdoStatement = $this->getPdo()->prepare($this->getCreateQuery());
+			$pdoStatement->execute($this->getActiveRecordData());
 
-		$this->id = intval($this->pdo->lastInsertId());
+			$this->setId(intval($this->getPdo()->lastInsertId()));
+		} catch(\PDOException $e) {
+			throw new ActiveRecordException('Can\'t create the record.', 0, $e);
+		}
+
 		return $this;
 	}
 
@@ -68,16 +75,14 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 */
 	public function read($id)
 	{
-		$data = $this->getActiveRecordData();
+		try {
+			$pdoStatement = $this->getPdo()->prepare($this->getReadQuery());
+			$pdoStatement->execute(['id' => $id]);
 
-		$pdoStatement = $this->pdo->prepare($this->getReadQuery());
-		$pdoStatement->execute(['id' => $id]);
-		$result = $pdoStatement->fetch(\PDO::FETCH_ASSOC);
-
-		$this->id = $id;
-
-		foreach ($data as $key => &$value) {
-			$value = $result[$key];
+			$this->setActiveRecordData($pdoStatement->fetch());
+			$this->setId($id);
+		} catch (\PDOException $e) {
+			throw new ActiveRecordException('Can\'t read the record.', 0, $e);
 		}
 
 		return $this;
@@ -98,8 +103,16 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 */
 	public function update()
 	{
-		$pdoStatement = $this->pdo->prepare($this->getUpdateQuery());
-		$pdoStatement->execute(['id' => $this->id] + $this->getActiveRecordData());
+		if (!$this->exists()) {
+			throw new ActiveRecordException('Can\'t update a non-existent record.');
+		}
+
+		try {
+			$pdoStatement = $this->getPdo()->prepare($this->getUpdateQuery());
+			$pdoStatement->execute(['id' => $this->getId()] + $this->getActiveRecordData());
+		} catch (\PDOException $e) {
+			throw new ActiveRecordException('Can\'t update the record.', 0, $e);
+		}
 
 		return $this;
 	}
@@ -125,10 +138,19 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 */
 	public function delete()
 	{
-		$pdoStatement = $this->pdo->prepare($this->getDeleteQuery());
-		$pdoStatement->execute(['id' => $this->id]);
+		if (!$this->exists()) {
+			throw new ActiveRecordException('Can\'t delete a non-existent record.');
+		}
 
-		$this->id = null;
+		try {
+			$pdoStatement = $this->getPdo()->prepare($this->getDeleteQuery());
+			$pdoStatement->execute(['id' => $this->getId()]);
+
+			$this->setId(null);
+		} catch (\PDOException $e) {
+			throw new ActiveRecordException('Can\'t delete the record.', 0, $e);
+		}
+
 		return $this;
 	}
 
@@ -139,7 +161,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 */
 	private function getDeleteQuery()
 	{
-		return sprintf('SELECT * FROM `%s` WHERE `id` = :id', $this->getActiveRecordName());
+		return sprintf('DELETE FROM %s WHERE `id` = :id', $this->getActiveRecordName());
 	}
 
 	/**
@@ -147,7 +169,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 */
 	public function exists()
 	{
-		return $this->id !== null;
+		return $this->getId() !== null;
 	}
 
 	/**
@@ -164,11 +186,13 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 * Set the PDO.
 	 *
 	 * @param \PDO $pdo
-	 * @return null
+	 * @return $this
 	 */
 	protected function setPdo($pdo)
 	{
 		$this->pdo = $pdo;
+
+		return $this;
 	}
 
 	/**
@@ -185,11 +209,13 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 * Set the ID.
 	 *
 	 * @param int $id
-	 * @return null
+	 * @return $this
 	 */
 	protected function setId($id)
 	{
 		$this->id = $id;
+
+		return $this;
 	}
 
 	/**
@@ -205,4 +231,23 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 * @return array the active record data.
 	 */
 	abstract protected function getActiveRecordData();
+
+	/**
+	 * Set the active record data.
+	 *
+	 * @param array $fetch
+	 * @return null
+	 */
+	protected function setActiveRecordData(array $fetch)
+	{
+		$data = $this->getActiveRecordData();
+
+		foreach ($data as $key => &$value) {
+			if (!isset($fetch[$key])) {
+				throw new ActiveRecordException(sprintf('Can\'t read the expected column "%s". It\'s not returnd by the database', $key));
+			}
+
+			$value = $fetch[$key];
+		}
+	}
 }
