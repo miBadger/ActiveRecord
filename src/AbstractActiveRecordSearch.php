@@ -44,7 +44,7 @@ abstract class AbstractActiveRecordSearch extends AbstractActiveRecord
 
 			return $result;
 		} catch (\PDOException $e) {
-			throw new ActiveRecordException('Can\'t search the record.', 0, $e);
+			throw new ActiveRecordException(sprintf('Can not search the record in the `%s` table.', $this->getActiveRecordName()), 0, $e);
 		}
 	}
 
@@ -62,7 +62,7 @@ abstract class AbstractActiveRecordSearch extends AbstractActiveRecord
 
 		foreach ($options as $key => $value) {
 			if (!in_array($key, $columns)) {
-				throw new ActiveRecordException(sprintf('Option key "%s" doesn\'t exists.', $key));
+				throw new ActiveRecordException(sprintf('Search option key `%s` does not exists.', $key));
 			}
 
 			if (is_numeric($value)) {
@@ -72,7 +72,7 @@ abstract class AbstractActiveRecordSearch extends AbstractActiveRecord
 			} elseif (is_array($value) && !empty($value)) {
 				$values[] = $key . ' IN(' . implode(',', array_fill(0, count($value), '?')) . ')';
 			} else {
-				throw new ActiveRecordException('Option value not supported.');
+				throw new ActiveRecordException(sprintf('Search option value of key `%s` is not supported.', $this->getActiveRecordName()));
 			}
 		}
 

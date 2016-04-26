@@ -37,7 +37,7 @@ class AbstractActiveRecordSearchTest extends \PHPUnit_Framework_TestCase
 	/**
 	 * @depends testSearch
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Can't search the record.
+	 * @expectedExceptionMessage Can not search the record in the `name2` table.
 	 */
 	public function testSearchException()
 	{
@@ -66,7 +66,7 @@ class AbstractActiveRecordSearchTest extends \PHPUnit_Framework_TestCase
 	/**
 	 * @depends testSearch
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Option key "field2" doesn't exists.
+	 * @expectedExceptionMessage Search option key `field2` does not exists.
 	 */
 	public function testSearchOptionKeyException()
 	{
@@ -77,7 +77,7 @@ class AbstractActiveRecordSearchTest extends \PHPUnit_Framework_TestCase
 	/**
 	 * @depends testSearch
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Option value not supported.
+	 * @expectedExceptionMessage Search option value of key `name` is not supported.
 	 */
 	public function testSearchOptionValueException()
 	{
