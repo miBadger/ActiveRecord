@@ -113,6 +113,39 @@ class AbstractActiveRecordSearchTest extends \PHPUnit_Framework_TestCase
 		$abstractActiveRecord = new AbstractActiveRecordSearchTestMock($this->pdo);
 		$abstractActiveRecord->search(['field' => new \stdClass()]);
 	}
+
+	/**
+	 * @depends testSearch
+	 */
+	public function testSearchSort()
+	{
+		$abstractActiveRecord = new AbstractActiveRecordSearchTestMock($this->pdo);
+		$result = $abstractActiveRecord->search([], ['id' => 'DESC']);
+
+		$this->assertCount(3, $result);
+	}
+
+	/**
+	 * @depends testSearch
+	 */
+	public function testSearchLimit()
+	{
+		$abstractActiveRecord = new AbstractActiveRecordSearchTestMock($this->pdo);
+		$result = $abstractActiveRecord->search([], [], 1);
+
+		$this->assertCount(1, $result);
+	}
+
+	/**
+	 * @depends testSearch
+	 */
+	public function testSearchOffset()
+	{
+		$abstractActiveRecord = new AbstractActiveRecordSearchTestMock($this->pdo);
+		$result = $abstractActiveRecord->search([], [], -1, 1);
+
+		$this->assertCount(2, $result);
+	}
 }
 
 /**

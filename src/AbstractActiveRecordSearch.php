@@ -20,11 +20,11 @@ abstract class AbstractActiveRecordSearch extends AbstractActiveRecord
 	/**
 	 * {@inheritdoc}
 	 */
-	public function search($options = [])
+	public function search($where = [], $sort = [], $limit = -1, $offset = 0)
 	{
 		try {
-			$pdoStatement = $this->getPdo()->prepare($this->getSearchQuery($options));
-			array_walk_recursive($options, function(&$value) use ($pdoStatement) {
+			$pdoStatement = $this->getPdo()->prepare($this->getSearchQuery($where, $sort, $limit, $offset));
+			array_walk_recursive($where, function(&$value) use ($pdoStatement) {
 				static $index = 1;
 
 				$pdoStatement->bindParam($index++, $value);
@@ -51,33 +51,41 @@ abstract class AbstractActiveRecordSearch extends AbstractActiveRecord
 	/**
 	 * Returns the search query with the given options.
 	 *
-	 * @param array $options = []
+	 * @param array $where = []
 	 * @return string the search query with the given options.
 	 */
-	private function getSearchQuery($options = [])
+	private function getSearchQuery($where = [], $sort = [], $limit = -1, $offset = 0)
 	{
 		$columns = array_keys($this->getActiveRecordData());
 		$columns[] = 'id';
-		$values = [];
+		$whereValues = [];
+		$sortValues = [];
 
-		foreach ($options as $key => $value) {
+		foreach ($where as $key => $value) {
 			if (!in_array($key, $columns)) {
 				throw new ActiveRecordException(sprintf('Search option key `%s` does not exists.', $key));
 			}
 
 			if (is_numeric($value)) {
-				$values[] = sprintf('`%s` = ?', $key);
+				$whereValues[] = sprintf('`%s` = ?', $key);
 			} elseif (is_string($value)) {
-				$values[] = sprintf('`%s` LIKE ?', $key);
+				$whereValues[] = sprintf('`%s` LIKE ?', $key);
 			} elseif (is_null($value)) {
-				$values[] = sprintf('`%s` IS ?', $key);
+				$whereValues[] = sprintf('`%s` IS ?', $key);
 			} elseif (is_array($value) && !empty($value)) {
-				$values[] = sprintf('`%s` IN (%s)', $key, implode(',', array_fill(0, count($value), '?')));
+				$whereValues[] = sprintf('`%s` IN (%s)', $key, implode(',', array_fill(0, count($value), '?')));
 			} else {
 				throw new ActiveRecordException(sprintf('Search option value of key `%s` is not supported.', $key));
 			}
 		}
 
-		return sprintf('SELECT * FROM `%s` %s', $this->getActiveRecordName(), empty($values) ? '' : 'WHERE ' . implode(' AND ', $values));
+		foreach ($sort as $key => $value) {
+			$sortValues[] = sprintf('`%s` %s', $key, $value == 'DESC' ? 'DESC' : 'ASC');
+		}
+
+		$where = empty($whereValues) ? '' : 'WHERE ' . implode(' AND ', $whereValues);
+		$orderby = empty($sortValues) ? '' : 'ORDER BY ' . implode(', ', $sortValues);
+
+		return sprintf('SELECT * FROM `%s` %s %s LIMIT %d OFFSET %d', $this->getActiveRecordName(), $where, $orderby, $limit, $offset);
 	}
 }

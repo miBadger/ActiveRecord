@@ -20,9 +20,12 @@ interface ActiveRecordSearchInterface extends ActiveRecordInterface
 	/**
 	 * Returns the records with the given options.
 	 *
-	 * @param array $options = []
+	 * @param array $where = []
+	 * @param array $sort = []
+	 * @param int $limit = -1
+	 * @param int $offset = 0
 	 * @return static[] the records with the given options.
 	 * @throws ActiveRecordException on failure.
 	 */
-	public function search($options = []);
+	public function search($where = [], $sort = [], $limit = -1, $offset = 0);
 }
