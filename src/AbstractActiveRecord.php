@@ -243,7 +243,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		$data = $this->getActiveRecordData();
 
 		foreach ($data as $key => &$value) {
-			if (!isset($fetch[$key])) {
+			if (!array_key_exists($key, $fetch)) {
 				throw new ActiveRecordException(sprintf('Can not read the expected column `%s`. It\'s not returnd by the `%s` table', $key, $this->getActiveRecordName()));
 			}
 
