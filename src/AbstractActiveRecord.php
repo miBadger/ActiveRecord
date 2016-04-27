@@ -46,8 +46,8 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 			$pdoStatement->execute($this->getActiveRecordData());
 
 			$this->setId(intval($this->getPdo()->lastInsertId()));
-		} catch(\PDOException $e) {
-			throw new ActiveRecordException('Can\'t create the record.', 0, $e);
+		} catch (\PDOException $e) {
+			throw new ActiveRecordException(sprintf('Can not create a new active record entry in the `%s` table.', $this->getActiveRecordName()), 0, $e);
 		}
 
 		return $this;
@@ -67,7 +67,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 			$values[] = ':' . $value;
 		}
 
-		return sprintf('INSERT INTO %s (%s) VALUES (%s)', $this->getActiveRecordName(), implode(', ', $columns), implode(', ', $values));
+		return sprintf('INSERT INTO `%s` (`%s`) VALUES (%s)', $this->getActiveRecordName(), implode('`, `', $columns), implode(', ', $values));
 	}
 
 	/**
@@ -82,7 +82,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 			$this->setActiveRecordData($pdoStatement->fetch());
 			$this->setId($id);
 		} catch (\PDOException $e) {
-			throw new ActiveRecordException('Can\'t read the record.', 0, $e);
+			throw new ActiveRecordException(sprintf('Can not read active record entry %d from the `%s` table.', $id, $this->getActiveRecordName()), 0, $e);
 		}
 
 		return $this;
@@ -104,14 +104,14 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	public function update()
 	{
 		if (!$this->exists()) {
-			throw new ActiveRecordException('Can\'t update a non-existent record.');
+			throw new ActiveRecordException(sprintf('Can not update a non-existent active record entry to the `%s` table.', $this->getActiveRecordName()));
 		}
 
 		try {
 			$pdoStatement = $this->getPdo()->prepare($this->getUpdateQuery());
 			$pdoStatement->execute(['id' => $this->getId()] + $this->getActiveRecordData());
 		} catch (\PDOException $e) {
-			throw new ActiveRecordException('Can\'t update the record.', 0, $e);
+			throw new ActiveRecordException(sprintf('Can not update active record entry %d to the `%s` table.', $this->getId(), $this->getActiveRecordName()), 0, $e);
 		}
 
 		return $this;
@@ -127,10 +127,10 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		$values = [];
 
 		foreach (array_keys($this->getActiveRecordData()) as $key => $value) {
-			$values[] = $value . ' = :' . $value;
+			$values[] = '`' . $value . '` = :' . $value;
 		}
 
-		return sprintf('UPDATE %s SET %s WHERE `id` = :id', $this->getActiveRecordName(), implode(', ', $values));
+		return sprintf('UPDATE `%s` SET %s WHERE `id` = :id', $this->getActiveRecordName(), implode(', ', $values));
 	}
 
 	/**
@@ -139,7 +139,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	public function delete()
 	{
 		if (!$this->exists()) {
-			throw new ActiveRecordException('Can\'t delete a non-existent record.');
+			throw new ActiveRecordException(sprintf('Can not delete a non-existent active record entry from the `%s` table.', $this->getActiveRecordName()));
 		}
 
 		try {
@@ -148,7 +148,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 
 			$this->setId(null);
 		} catch (\PDOException $e) {
-			throw new ActiveRecordException('Can\'t delete the record.', 0, $e);
+			throw new ActiveRecordException(sprintf('Can not delete active record entry %d from the `%s` table.', $this->getId(), $this->getActiveRecordName()), 0, $e);
 		}
 
 		return $this;
@@ -161,7 +161,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 */
 	private function getDeleteQuery()
 	{
-		return sprintf('DELETE FROM %s WHERE `id` = :id', $this->getActiveRecordName());
+		return sprintf('DELETE FROM `%s` WHERE `id` = :id', $this->getActiveRecordName());
 	}
 
 	/**
@@ -243,8 +243,8 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		$data = $this->getActiveRecordData();
 
 		foreach ($data as $key => &$value) {
-			if (!isset($fetch[$key])) {
-				throw new ActiveRecordException(sprintf('Can\'t read the expected column "%s". It\'s not returnd by the database', $key));
+			if (!array_key_exists($key, $fetch)) {
+				throw new ActiveRecordException(sprintf('Can not read the expected column `%s`. It\'s not returnd by the `%s` table', $key, $this->getActiveRecordName()));
 			}
 
 			$value = $fetch[$key];

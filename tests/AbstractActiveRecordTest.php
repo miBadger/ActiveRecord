@@ -45,7 +45,7 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 	/**
 	 * @depends testCreate
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Can't create the record.
+	 * @expectedExceptionMessage Can not create a new active record entry in the `name2` table.
 	 */
 	public function testCreateNameException()
 	{
@@ -56,7 +56,7 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 	/**
 	 * @depends testCreate
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Can't create the record.
+	 * @expectedExceptionMessage Can not create a new active record entry in the `name` table.
 	 */
 	public function testCreateDataException()
 	{
@@ -76,7 +76,7 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 	/**
 	 * @depends testRead
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Can't read the record.
+	 * @expectedExceptionMessage Can not read active record entry 1 from the `name2` table.
 	 */
 	public function testReadNameException()
 	{
@@ -87,7 +87,7 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 	/**
 	 * @depends testRead
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Can't read the expected column "field2". It's not returnd by the database
+	 * @expectedExceptionMessage Can not read the expected column `field2`. It's not returnd by the `name` table
 	 */
 	public function testReadDataException()
 	{
@@ -109,7 +109,7 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 	/**
 	 * @depends testUpdate
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Can't update a non-existent record.
+	 * @expectedExceptionMessage Can not update a non-existent active record entry to the `name` table.
 	 */
 	public function testUpdateIdException()
 	{
@@ -120,7 +120,7 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 	/**
 	 * @depends testUpdate
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Can't update the record.
+	 * @expectedExceptionMessage Can not update active record entry 1 to the `name2` table.
 	 */
 	public function testUpdateNameException()
 	{
@@ -131,7 +131,7 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 	/**
 	 * @depends testUpdate
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Can't update the record.
+	 * @expectedExceptionMessage Can not update active record entry 1 to the `name` table.
 	 */
 	public function testUpdateDataException()
 	{
@@ -152,7 +152,7 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 	/**
 	 * @depends testDelete
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Can't delete a non-existent record.
+	 * @expectedExceptionMessage Can not delete a non-existent active record entry from the `name` table.
 	 */
 	public function testDeleteIdException()
 	{
@@ -163,7 +163,7 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 	/**
 	 * @depends testDelete
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Can't delete the record.
+	 * @expectedExceptionMessage Can not delete active record entry 1 from the `name2` table.
 	 */
 	public function testDeleteNameException()
 	{

@@ -13,5 +13,4 @@ $activeRecord->getPdo();
 
 // Get the ID.
 $activeRecord->getId();
-
 ```

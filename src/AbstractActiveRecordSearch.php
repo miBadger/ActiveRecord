@@ -20,11 +20,11 @@ abstract class AbstractActiveRecordSearch extends AbstractActiveRecord
 	/**
 	 * {@inheritdoc}
 	 */
-	public function search($options = [])
+	public function search($where = [], $orderBy = [], $limit = -1, $offset = 0)
 	{
 		try {
-			$pdoStatement = $this->getPdo()->prepare($this->getSearchQuery($options));
-			array_walk_recursive($options, function (&$value) use ($pdoStatement) {
+			$pdoStatement = $this->getPdo()->prepare($this->getSearchQuery($where, $orderBy, $limit, $offset));
+			array_walk_recursive($where, function(&$value) use ($pdoStatement) {
 				static $index = 1;
 
 				$pdoStatement->bindParam($index++, $value);
@@ -44,38 +44,78 @@ abstract class AbstractActiveRecordSearch extends AbstractActiveRecord
 
 			return $result;
 		} catch (\PDOException $e) {
-			throw new ActiveRecordException('Can\'t search the record.', 0, $e);
+			throw new ActiveRecordException(sprintf('Can not search the record in the `%s` table.', $this->getActiveRecordName()), 0, $e);
 		}
 	}
 
 	/**
-	 * Returns the search query with the given options.
+	 * Returns the search query with the given where, order by, limit and offset clauses.
 	 *
-	 * @param array $options = []
-	 * @return string the search query with the given options.
+	 * @param array $where = []
+	 * @param array $orderBy = []
+	 * @param int $limit = -1
+	 * @param int $offset = 0
+	 * @return string the search query with the given where, order by, limit and offset clauses.
 	 */
-	private function getSearchQuery($options = [])
+	private function getSearchQuery($where = [], $orderBy = [], $limit = -1, $offset = 0)
+	{
+		return sprintf(
+			'SELECT * FROM `%s` %s %s LIMIT %d OFFSET %d',
+			$this->getActiveRecordName(),
+			$this->getSearchQueryWhereClause($where),
+			$this->getSearchQueryOrderByClause($orderBy),
+			$limit,
+			$offset
+		);
+	}
+
+	/**
+	 * Returns the search query where clause.
+	 *
+	 * @param array $where
+	 * @return string the search query where clause.
+	 */
+	private function getSearchQueryWhereClause($where)
 	{
 		$columns = array_keys($this->getActiveRecordData());
 		$columns[] = 'id';
-		$values = [];
+		$result = [];
 
-		foreach ($options as $key => $value) {
+		foreach ($where as $key => $value) {
 			if (!in_array($key, $columns)) {
-				throw new ActiveRecordException(sprintf('Option key "%s" doesn\'t exists.', $key));
+				throw new ActiveRecordException(sprintf('Search option key `%s` does not exists.', $key));
 			}
 
 			if (is_numeric($value)) {
-				$values[] = $key . ' = ?';
+				$result[] = sprintf('`%s` = ?', $key);
 			} elseif (is_string($value)) {
-				$values[] = $key . ' LIKE ?';
-			} elseif(is_array($value) && !empty($value)) {
-				$values[] = $key . ' IN(' . implode(',', array_fill(0, count($value), '?')) . ')';
+				$result[] = sprintf('`%s` LIKE ?', $key);
+			} elseif (is_null($value)) {
+				$result[] = sprintf('`%s` IS ?', $key);
+			} elseif (is_array($value) && !empty($value)) {
+				$result[] = sprintf('`%s` IN (%s)', $key, implode(',', array_fill(0, count($value), '?')));
 			} else {
-				throw new ActiveRecordException('Option value not supported.');
+				throw new ActiveRecordException(sprintf('Search option value of key `%s` is not supported.', $key));
 			}
 		}
 
-		return sprintf('SELECT * FROM %s %s %s', $this->getActiveRecordName(), empty($values) ? '' : 'WHERE', implode(' AND ', $values));
+		return empty($result) ? '' : 'WHERE ' . implode(' AND ', $result);
+	}
+
+	/**
+	 * Returns the search query order by clause.
+	 *
+	 * @param array $orderBy
+	 * @return string the search query order by clause.
+	 */
+	private function getSearchQueryOrderByClause($orderBy)
+	{
+		$result = [];
+
+		foreach ($orderBy as $key => $value) {
+			$result[] = sprintf('`%s` %s', $key, $value == 'DESC' ? 'DESC' : 'ASC');
+		}
+
+		return empty($result) ? '' : 'ORDER BY ' . implode(', ', $result);
 	}
 }
