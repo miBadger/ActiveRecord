@@ -69,6 +69,8 @@ abstract class AbstractActiveRecordSearch extends AbstractActiveRecord
 				$values[] = '`' . $key . '` = ?';
 			} elseif (is_string($value)) {
 				$values[] = '`' . $key . '` LIKE ?';
+			} elseif (is_null($value)) {
+				$values[] = '`' . $key . '` IS ?';
 			} elseif (is_array($value) && !empty($value)) {
 				$values[] = '`' . $key . '` IN(' . implode(',', array_fill(0, count($value), '?')) . ')';
 			} else {

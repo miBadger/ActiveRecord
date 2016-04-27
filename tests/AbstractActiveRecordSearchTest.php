@@ -63,6 +63,12 @@ class AbstractActiveRecordSearchTest extends \PHPUnit_Framework_TestCase
 		$abstractActiveRecord->search(['field' => ['test', 'test2']]);
 	}
 
+	public function testSearchOptionNull()
+	{
+		$abstractActiveRecord = new AbstractActiveRecordSearchTestMock($this->pdo);
+		$abstractActiveRecord->search(['field' => null]);
+	}
+
 	/**
 	 * @depends testSearch
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
