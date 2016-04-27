@@ -83,7 +83,7 @@ class AbstractActiveRecordSearchTest extends \PHPUnit_Framework_TestCase
 	/**
 	 * @depends testSearch
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Search option value of key `name` is not supported.
+	 * @expectedExceptionMessage Search option value of key `field` is not supported.
 	 */
 	public function testSearchOptionValueException()
 	{

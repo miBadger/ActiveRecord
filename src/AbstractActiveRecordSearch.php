@@ -74,7 +74,7 @@ abstract class AbstractActiveRecordSearch extends AbstractActiveRecord
 			} elseif (is_array($value) && !empty($value)) {
 				$values[] = sprintf('%s IN (%s)', $this->getPdo()->quote($key), implode(',', array_fill(0, count($value), '?')));
 			} else {
-				throw new ActiveRecordException(sprintf('Search option value of key `%s` is not supported.', $this->getActiveRecordName()));
+				throw new ActiveRecordException(sprintf('Search option value of key `%s` is not supported.', $key));
 			}
 		}
 
