@@ -117,7 +117,7 @@ class AbstractActiveRecordSearchTest extends \PHPUnit_Framework_TestCase
 	/**
 	 * @depends testSearch
 	 */
-	public function testSearchSort()
+	public function testSearchOrderBy()
 	{
 		$abstractActiveRecord = new AbstractActiveRecordSearchTestMock($this->pdo);
 		$result = $abstractActiveRecord->search([], ['id' => 'DESC']);

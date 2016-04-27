@@ -20,10 +20,10 @@ abstract class AbstractActiveRecordSearch extends AbstractActiveRecord
 	/**
 	 * {@inheritdoc}
 	 */
-	public function search($where = [], $sort = [], $limit = -1, $offset = 0)
+	public function search($where = [], $orderBy = [], $limit = -1, $offset = 0)
 	{
 		try {
-			$pdoStatement = $this->getPdo()->prepare($this->getSearchQuery($where, $sort, $limit, $offset));
+			$pdoStatement = $this->getPdo()->prepare($this->getSearchQuery($where, $orderBy, $limit, $offset));
 			array_walk_recursive($where, function(&$value) use ($pdoStatement) {
 				static $index = 1;
 
@@ -49,17 +49,37 @@ abstract class AbstractActiveRecordSearch extends AbstractActiveRecord
 	}
 
 	/**
-	 * Returns the search query with the given options.
+	 * Returns the search query with the given where, order by, limit and offset clauses.
 	 *
 	 * @param array $where = []
-	 * @return string the search query with the given options.
+	 * @param array $orderBy = []
+	 * @param int $limit = -1
+	 * @param int $offset = 0
+	 * @return string the search query with the given where, order by, limit and offset clauses.
 	 */
-	private function getSearchQuery($where = [], $sort = [], $limit = -1, $offset = 0)
+	private function getSearchQuery($where = [], $orderBy = [], $limit = -1, $offset = 0)
+	{
+		return sprintf(
+			'SELECT * FROM `%s` %s %s LIMIT %d OFFSET %d',
+			$this->getActiveRecordName(),
+			$this->getSearchQueryWhereClause($where),
+			$this->getSearchQueryOrderByClause($orderBy),
+			$limit,
+			$offset
+		);
+	}
+
+	/**
+	 * Returns the search query where clause.
+	 *
+	 * @param array $where
+	 * @return string the search query where clause.
+	 */
+	private function getSearchQueryWhereClause($where)
 	{
 		$columns = array_keys($this->getActiveRecordData());
 		$columns[] = 'id';
-		$whereValues = [];
-		$sortValues = [];
+		$result = [];
 
 		foreach ($where as $key => $value) {
 			if (!in_array($key, $columns)) {
@@ -67,25 +87,35 @@ abstract class AbstractActiveRecordSearch extends AbstractActiveRecord
 			}
 
 			if (is_numeric($value)) {
-				$whereValues[] = sprintf('`%s` = ?', $key);
+				$result[] = sprintf('`%s` = ?', $key);
 			} elseif (is_string($value)) {
-				$whereValues[] = sprintf('`%s` LIKE ?', $key);
+				$result[] = sprintf('`%s` LIKE ?', $key);
 			} elseif (is_null($value)) {
-				$whereValues[] = sprintf('`%s` IS ?', $key);
+				$result[] = sprintf('`%s` IS ?', $key);
 			} elseif (is_array($value) && !empty($value)) {
-				$whereValues[] = sprintf('`%s` IN (%s)', $key, implode(',', array_fill(0, count($value), '?')));
+				$result[] = sprintf('`%s` IN (%s)', $key, implode(',', array_fill(0, count($value), '?')));
 			} else {
 				throw new ActiveRecordException(sprintf('Search option value of key `%s` is not supported.', $key));
 			}
 		}
 
-		foreach ($sort as $key => $value) {
-			$sortValues[] = sprintf('`%s` %s', $key, $value == 'DESC' ? 'DESC' : 'ASC');
+		return empty($result) ? '' : 'WHERE ' . implode(' AND ', $result);
+	}
+
+	/**
+	 * Returns the search query order by clause.
+	 *
+	 * @param array $orderBy
+	 * @return string the search query order by clause.
+	 */
+	private function getSearchQueryOrderByClause($orderBy)
+	{
+		$result = [];
+
+		foreach ($orderBy as $key => $value) {
+			$result[] = sprintf('`%s` %s', $key, $value == 'DESC' ? 'DESC' : 'ASC');
 		}
 
-		$where = empty($whereValues) ? '' : 'WHERE ' . implode(' AND ', $whereValues);
-		$orderby = empty($sortValues) ? '' : 'ORDER BY ' . implode(', ', $sortValues);
-
-		return sprintf('SELECT * FROM `%s` %s %s LIMIT %d OFFSET %d', $this->getActiveRecordName(), $where, $orderby, $limit, $offset);
+		return empty($result) ? '' : 'ORDER BY ' . implode(', ', $result);
 	}
 }

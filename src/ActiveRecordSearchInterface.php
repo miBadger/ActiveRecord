@@ -18,14 +18,14 @@ namespace miBadger\ActiveRecord;
 interface ActiveRecordSearchInterface extends ActiveRecordInterface
 {
 	/**
-	 * Returns the records with the given options.
+	 * Returns the records with the given where, order by, limit and offset clauses.
 	 *
 	 * @param array $where = []
-	 * @param array $sort = []
+	 * @param array $orderBy = []
 	 * @param int $limit = -1
 	 * @param int $offset = 0
-	 * @return static[] the records with the given options.
+	 * @return static[] the records with the given where, order by, limit and offset clauses.
 	 * @throws ActiveRecordException on failure.
 	 */
-	public function search($where = [], $sort = [], $limit = -1, $offset = 0);
+	public function search($where = [], $orderBy = [], $limit = -1, $offset = 0);
 }
