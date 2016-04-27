@@ -67,7 +67,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 			$values[] = ':' . $value;
 		}
 
-		return sprintf('INSERT INTO %s (%s) VALUES (%s)', $this->getActiveRecordName(), implode(', ', $columns), implode(', ', $values));
+		return sprintf('INSERT INTO `%s` (`%s`) VALUES (%s)', $this->getActiveRecordName(), implode('`, `', $columns), implode(', ', $values));
 	}
 
 	/**
@@ -127,10 +127,10 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		$values = [];
 
 		foreach (array_keys($this->getActiveRecordData()) as $key => $value) {
-			$values[] = $value . ' = :' . $value;
+			$values[] = '`' . $value . '` = :' . $value;
 		}
 
-		return sprintf('UPDATE %s SET %s WHERE `id` = :id', $this->getActiveRecordName(), implode(', ', $values));
+		return sprintf('UPDATE `%s` SET %s WHERE `id` = :id', $this->getActiveRecordName(), implode(', ', $values));
 	}
 
 	/**
@@ -161,7 +161,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 */
 	private function getDeleteQuery()
 	{
-		return sprintf('DELETE FROM %s WHERE `id` = :id', $this->getActiveRecordName());
+		return sprintf('DELETE FROM `%s` WHERE `id` = :id', $this->getActiveRecordName());
 	}
 
 	/**

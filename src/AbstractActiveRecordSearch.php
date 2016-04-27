@@ -66,16 +66,16 @@ abstract class AbstractActiveRecordSearch extends AbstractActiveRecord
 			}
 
 			if (is_numeric($value)) {
-				$values[] = $key . ' = ?';
+				$values[] = '`' . $key . '` = ?';
 			} elseif (is_string($value)) {
-				$values[] = $key . ' LIKE ?';
+				$values[] = '`' . $key . '` LIKE ?';
 			} elseif (is_array($value) && !empty($value)) {
-				$values[] = $key . ' IN(' . implode(',', array_fill(0, count($value), '?')) . ')';
+				$values[] = '`' . $key . '` IN(' . implode(',', array_fill(0, count($value), '?')) . ')';
 			} else {
 				throw new ActiveRecordException(sprintf('Search option value of key `%s` is not supported.', $this->getActiveRecordName()));
 			}
 		}
 
-		return sprintf('SELECT * FROM %s %s %s', $this->getActiveRecordName(), empty($values) ? '' : 'WHERE', implode(' AND ', $values));
+		return sprintf('SELECT * FROM `%s` %s', $this->getActiveRecordName(), empty($values) ? '' : 'WHERE ' . implode(' AND ', $values));
 	}
 }
