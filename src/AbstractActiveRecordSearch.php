@@ -66,13 +66,13 @@ abstract class AbstractActiveRecordSearch extends AbstractActiveRecord
 			}
 
 			if (is_numeric($value)) {
-				$values[] = sprintf('%s = ?', $this->getPdo()->quote($key));
+				$values[] = sprintf('`%s` = ?', $key);
 			} elseif (is_string($value)) {
-				$values[] = sprintf('%s LIKE ?', $this->getPdo()->quote($key));
+				$values[] = sprintf('`%s` LIKE ?', $key);
 			} elseif (is_null($value)) {
-				$values[] = sprintf('%s IS ?', $this->getPdo()->quote($key));
+				$values[] = sprintf('`%s` IS ?', $key);
 			} elseif (is_array($value) && !empty($value)) {
-				$values[] = sprintf('%s IN (%s)', $this->getPdo()->quote($key), implode(',', array_fill(0, count($value), '?')));
+				$values[] = sprintf('`%s` IN (%s)', $key, implode(',', array_fill(0, count($value), '?')));
 			} else {
 				throw new ActiveRecordException(sprintf('Search option value of key `%s` is not supported.', $key));
 			}
