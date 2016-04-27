@@ -23,15 +23,18 @@ class AbstractActiveRecordSearchTest extends \PHPUnit_Framework_TestCase
 	public function setUp()
 	{
 		$this->pdo = new \PDO('sqlite::memory:');
-		$this->pdo->query('CREATE TABLE name (id PRIMARY KEY, field)');
-		$this->pdo->query('INSERT INTO name (field) VALUES ("test")');
-		$this->pdo->query('INSERT INTO name (field) VALUES ("test2")');
+		$this->pdo->query('CREATE TABLE `name` (`id` INT PRIMARY KEY, `field`)');
+		$this->pdo->query('INSERT INTO `name` (`id`, `field`) VALUES (1, "test")');
+		$this->pdo->query('INSERT INTO `name` (`id`, `field`) VALUES (2, "test2")');
+		$this->pdo->query('INSERT INTO `name` (`id`, `field`) VALUES (3, NULL)');
 	}
 
 	public function testSearch()
 	{
 		$abstractActiveRecord = new AbstractActiveRecordSearchTestMock($this->pdo);
-		$abstractActiveRecord->search();
+		$result = $abstractActiveRecord->search();
+
+		$this->assertCount(3, $result);
 	}
 
 	/**
@@ -45,28 +48,48 @@ class AbstractActiveRecordSearchTest extends \PHPUnit_Framework_TestCase
 		$abstractActiveRecord->search();
 	}
 
+	/**
+	 * @depends testSearch
+	 */
 	public function testSearchOptionNumeric()
 	{
 		$abstractActiveRecord = new AbstractActiveRecordSearchTestMock($this->pdo);
-		$abstractActiveRecord->search(['id' => 1]);
+		$result = $abstractActiveRecord->search(['id' => 1]);
+
+		$this->assertCount(1, $result);
 	}
 
+	/**
+	 * @depends testSearch
+	 */
 	public function testSearchOptionString()
 	{
 		$abstractActiveRecord = new AbstractActiveRecordSearchTestMock($this->pdo);
-		$abstractActiveRecord->search(['field' => 'test']);
+		$result = $abstractActiveRecord->search(['field' => 'test']);
+
+		$this->assertCount(1, $result);
 	}
 
+	/**
+	 * @depends testSearch
+	 */
 	public function testSearchOptionArray()
 	{
 		$abstractActiveRecord = new AbstractActiveRecordSearchTestMock($this->pdo);
-		$abstractActiveRecord->search(['field' => ['test', 'test2']]);
+		$result = $abstractActiveRecord->search(['field' => ['test', 'test2']]);
+
+		$this->assertCount(2, $result);
 	}
 
+	/**
+	 * @depends testSearch
+	 */
 	public function testSearchOptionNull()
 	{
 		$abstractActiveRecord = new AbstractActiveRecordSearchTestMock($this->pdo);
-		$abstractActiveRecord->search(['field' => null]);
+		$result = $abstractActiveRecord->search(['field' => null]);
+
+		$this->assertCount(1, $result);
 	}
 
 	/**
