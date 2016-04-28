@@ -60,12 +60,11 @@ abstract class AbstractActiveRecordSearch extends AbstractActiveRecord
 	private function getSearchQuery($where = [], $orderBy = [], $limit = -1, $offset = 0)
 	{
 		return sprintf(
-			'SELECT * FROM `%s` %s %s LIMIT %d OFFSET %d',
+			'SELECT * FROM `%s` %s %s %s',
 			$this->getActiveRecordName(),
 			$this->getSearchQueryWhereClause($where),
 			$this->getSearchQueryOrderByClause($orderBy),
-			$limit,
-			$offset
+			$this->getSearchQueryLimitClause($limit, $offset)
 		);
 	}
 
@@ -117,5 +116,21 @@ abstract class AbstractActiveRecordSearch extends AbstractActiveRecord
 		}
 
 		return empty($result) ? '' : 'ORDER BY ' . implode(', ', $result);
+	}
+
+	/**
+	 * Returns the search query limit and clause.
+	 *
+	 * @param int $limit = -1
+	 * @param int $offset = 0
+	 * @return string the search query limit and clause.
+	 */
+	private function getSearchQueryLimitClause($limit, $offset)
+	{
+		if ($limit == -1) {
+			return '';
+		}
+
+		return sprintf('LIMIT %d OFFSET %d', $limit, $offset);
 	}
 }

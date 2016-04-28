@@ -142,7 +142,7 @@ class AbstractActiveRecordSearchTest extends \PHPUnit_Framework_TestCase
 	public function testSearchOffset()
 	{
 		$abstractActiveRecord = new AbstractActiveRecordSearchTestMock($this->pdo);
-		$result = $abstractActiveRecord->search([], [], -1, 1);
+		$result = $abstractActiveRecord->search([], [], 10, 1);
 
 		$this->assertCount(2, $result);
 	}
