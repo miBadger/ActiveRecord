@@ -64,7 +64,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		$values = [];
 
 		foreach ($columns as $key => $value) {
-			$values[] = ':' . $value;
+			$values[] = sprintf(':%s', $value);
 		}
 
 		return sprintf('INSERT INTO `%s` (`%s`) VALUES (%s)', $this->getActiveRecordName(), implode('`, `', $columns), implode(', ', $values));
@@ -127,7 +127,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		$values = [];
 
 		foreach (array_keys($this->getActiveRecordData()) as $key => $value) {
-			$values[] = '`' . $value . '` = :' . $value;
+			$values[] = sprintf('`%s` = :%s', $value, $value);
 		}
 
 		return sprintf('UPDATE `%s` SET %s WHERE `id` = :id', $this->getActiveRecordName(), implode(', ', $values));
