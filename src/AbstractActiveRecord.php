@@ -78,8 +78,13 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		try {
 			$pdoStatement = $this->getPdo()->prepare($this->getReadQuery());
 			$pdoStatement->execute(['id' => $id]);
+			$result = $pdoStatement->fetch();
 
-			$this->setActiveRecordData($pdoStatement->fetch());
+			if ($result === false) {
+				throw new ActiveRecordException(sprintf('Can not read the non-existent active record entry %d from the `%s` table.', $id, $this->getActiveRecordName()));
+			}
+
+			$this->setActiveRecordData($result);
 			$this->setId($id);
 		} catch (\PDOException $e) {
 			throw new ActiveRecordException(sprintf('Can not read active record entry %d from the `%s` table.', $id, $this->getActiveRecordName()), 0, $e);
