@@ -64,7 +64,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		$values = [];
 
 		foreach ($columns as $key => $value) {
-			$values[] = ':' . $value;
+			$values[] = sprintf(':%s', $value);
 		}
 
 		return sprintf('INSERT INTO `%s` (`%s`) VALUES (%s)', $this->getActiveRecordName(), implode('`, `', $columns), implode(', ', $values));
@@ -78,8 +78,13 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		try {
 			$pdoStatement = $this->getPdo()->prepare($this->getReadQuery());
 			$pdoStatement->execute(['id' => $id]);
+			$result = $pdoStatement->fetch();
 
-			$this->setActiveRecordData($pdoStatement->fetch());
+			if ($result === false) {
+				throw new ActiveRecordException(sprintf('Can not read the non-existent active record entry %d from the `%s` table.', $id, $this->getActiveRecordName()));
+			}
+
+			$this->setActiveRecordData($result);
 			$this->setId($id);
 		} catch (\PDOException $e) {
 			throw new ActiveRecordException(sprintf('Can not read active record entry %d from the `%s` table.', $id, $this->getActiveRecordName()), 0, $e);
@@ -127,7 +132,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		$values = [];
 
 		foreach (array_keys($this->getActiveRecordData()) as $key => $value) {
-			$values[] = '`' . $value . '` = :' . $value;
+			$values[] = sprintf('`%s` = :%s', $value, $value);
 		}
 
 		return sprintf('UPDATE `%s` SET %s WHERE `id` = :id', $this->getActiveRecordName(), implode(', ', $values));

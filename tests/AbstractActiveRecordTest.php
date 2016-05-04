@@ -72,6 +72,17 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 		$this->assertEquals(1, $abstractActiveRecord->getId());
 		$this->assertEquals('test', $abstractActiveRecord->getField());
 	}
+	
+	/**
+	 * @depends testRead
+	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
+	 * @expectedExceptionMessage Can not read the non-existent active record entry 2 from the `name` table
+	 */
+	public function testReadNonExistentId()
+	{
+		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
+		$abstractActiveRecord->read(2);
+	}
 
 	/**
 	 * @depends testRead
