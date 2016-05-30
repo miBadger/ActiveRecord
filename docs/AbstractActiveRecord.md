@@ -1,6 +1,6 @@
 # AbstractActiveRecord
 
-The abstract active record class.
+The abstract active record class implements the active record interface.
 
 ## Example(s)
 

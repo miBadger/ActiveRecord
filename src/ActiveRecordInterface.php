@@ -20,6 +20,13 @@ namespace miBadger\ActiveRecord;
 interface ActiveRecordInterface
 {
 	/**
+	 * Returns true if the record exists.
+	 *
+	 * @return bool true if the records exists.
+	 */
+	public function exists();
+
+	/**
 	 * Create the record.
 	 *
 	 * @return $this
@@ -53,9 +60,23 @@ interface ActiveRecordInterface
 	public function delete();
 
 	/**
-	 * Returns true if the record exists.
+	 * Search
 	 *
-	 * @return bool true if the records exists.
+	 * @param array $where = []
+	 * @return $this
+	 * @throws ActiveRecordException on failure.
 	 */
-	public function exists();
+	public function searchByOne($where = []);
+
+	/**
+	 * Returns the records with the given where, order by, limit and offset clauses.
+	 *
+	 * @param array $where = []
+	 * @param array $orderBy = []
+	 * @param int $limit = -1
+	 * @param int $offset = 0
+	 * @return static[] the records with the given where, order by, limit and offset clauses.
+	 * @throws ActiveRecordException on failure.
+	 */
+	public function search($where = [], $orderBy = [], $limit = -1, $offset = 0);
 }

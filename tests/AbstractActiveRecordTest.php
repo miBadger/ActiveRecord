@@ -23,8 +23,10 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 	public function setUp()
 	{
 		$this->pdo = new \PDO('sqlite::memory:');
-		$this->pdo->query('CREATE TABLE IF NOT EXISTS name (id INTEGER PRIMARY KEY, field VARCHAR(255))');
-		$this->pdo->query('INSERT INTO name (field) VALUES ("test")');
+		$this->pdo->query('CREATE TABLE IF NOT EXISTS `name` (`id` INTEGER PRIMARY KEY, `field` VARCHAR(255))');
+		$this->pdo->query('INSERT INTO `name` (`id`, `field`) VALUES (1, "test")');
+		$this->pdo->query('INSERT INTO `name` (`id`, `field`) VALUES (2, "test2")');
+		$this->pdo->query('INSERT INTO `name` (`id`, `field`) VALUES (3, NULL)');
 	}
 
 	public function tearDown()
@@ -35,11 +37,11 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 	public function testCreate()
 	{
 		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
-		$abstractActiveRecord->setField('test');
+		$abstractActiveRecord->setField('new');
 		$abstractActiveRecord->create();
 
-		$pdoStatement = $this->pdo->query('SELECT * FROM name WHERE `id` = 2');
-		$this->assertEquals(['id' => '2', 'field' => 'test'], $pdoStatement->fetch());
+		$pdoStatement = $this->pdo->query('SELECT * FROM name WHERE `id` = 4');
+		$this->assertEquals(['id' => '4', 'field' => 'new'], $pdoStatement->fetch());
 	}
 
 	/**
@@ -72,16 +74,16 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 		$this->assertEquals(1, $abstractActiveRecord->getId());
 		$this->assertEquals('test', $abstractActiveRecord->getField());
 	}
-	
+
 	/**
 	 * @depends testRead
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Can not read the non-existent active record entry 2 from the `name` table
+	 * @expectedExceptionMessage Can not read the non-existent active record entry 4 from the `name` table
 	 */
 	public function testReadNonExistentId()
 	{
 		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
-		$abstractActiveRecord->read(2);
+		$abstractActiveRecord->read(4);
 	}
 
 	/**
@@ -189,6 +191,124 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 
 		$abstractActiveRecord->read(1);
 		$this->assertTrue($abstractActiveRecord->exists());
+	}
+
+	public function testSearch()
+	{
+		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
+		$result = $abstractActiveRecord->search();
+
+		$this->assertCount(3, $result);
+	}
+
+	/**
+	 * @depends testSearch
+	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
+	 * @expectedExceptionMessage Can not search the record in the `name2` table.
+	 */
+	public function testSearchException()
+	{
+		$abstractActiveRecord = new AbstractActiveRecordNameExceptionTestMock($this->pdo);
+		$abstractActiveRecord->search();
+	}
+
+	/**
+	 * @depends testSearch
+	 */
+	public function testSearchOptionNumeric()
+	{
+		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
+		$result = $abstractActiveRecord->search(['id' => 1]);
+
+		$this->assertCount(1, $result);
+	}
+
+	/**
+	 * @depends testSearch
+	 */
+	public function testSearchOptionString()
+	{
+		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
+		$result = $abstractActiveRecord->search(['field' => 'test']);
+
+		$this->assertCount(1, $result);
+	}
+
+	/**
+	 * @depends testSearch
+	 */
+	public function testSearchOptionArray()
+	{
+		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
+		$result = $abstractActiveRecord->search(['field' => ['test', 'test2']]);
+
+		$this->assertCount(2, $result);
+	}
+
+	/**
+	 * @depends testSearch
+	 */
+	public function testSearchOptionNull()
+	{
+		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
+		$result = $abstractActiveRecord->search(['field' => null]);
+
+		$this->assertCount(1, $result);
+	}
+
+	/**
+	 * @depends testSearch
+	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
+	 * @expectedExceptionMessage Search option key `field2` does not exists.
+	 */
+	public function testSearchOptionKeyException()
+	{
+		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
+		$abstractActiveRecord->search(['field2' => 'test']);
+	}
+
+	/**
+	 * @depends testSearch
+	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
+	 * @expectedExceptionMessage Search option value of key `field` is not supported.
+	 */
+	public function testSearchOptionValueException()
+	{
+		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
+		$abstractActiveRecord->search(['field' => new \stdClass()]);
+	}
+
+	/**
+	 * @depends testSearch
+	 */
+	public function testSearchOrderBy()
+	{
+		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
+		$result = $abstractActiveRecord->search([], ['id' => 'DESC']);
+
+		$this->assertCount(3, $result);
+	}
+
+	/**
+	 * @depends testSearch
+	 */
+	public function testSearchLimit()
+	{
+		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
+		$result = $abstractActiveRecord->search([], [], 1);
+
+		$this->assertCount(1, $result);
+	}
+
+	/**
+	 * @depends testSearch
+	 */
+	public function testSearchOffset()
+	{
+		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
+		$result = $abstractActiveRecord->search([], [], 10, 1);
+
+		$this->assertCount(2, $result);
 	}
 }
 
