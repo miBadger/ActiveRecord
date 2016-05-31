@@ -184,6 +184,21 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 		$abstractActiveRecord->delete();
 	}
 
+	public function testSyncCreate()
+	{
+		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
+		$abstractActiveRecord->read(1);
+		$abstractActiveRecord->delete();
+		$abstractActiveRecord->sync();
+	}
+
+	public function testSyncUpdate()
+	{
+		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
+		$abstractActiveRecord->read(1);
+		$abstractActiveRecord->sync();
+	}
+
 	public function testExists()
 	{
 		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
@@ -191,6 +206,31 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 
 		$abstractActiveRecord->read(1);
 		$this->assertTrue($abstractActiveRecord->exists());
+	}
+
+	public function testFill()
+	{
+		$attributesActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
+		$attributesActiveRecord->fill(['field' => 'new']);
+	}
+
+	public function testSearchFirst()
+	{
+		$attributesActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
+		$attributesActiveRecord->searchFirst(['field' => 'Test']);
+
+		$this->assertEquals(1, $attributesActiveRecord->getId());
+	}
+
+	/**
+	 * @depends testSearchFirst
+	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
+	 * @expectedExceptionMessage Can not search the record in the `name2` table.
+	 */
+	public function testSearchFirstException()
+	{
+		$abstractActiveRecord = new AbstractActiveRecordNameExceptionTestMock($this->pdo);
+		$abstractActiveRecord->searchFirst();
 	}
 
 	public function testSearch()
@@ -259,7 +299,7 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 	/**
 	 * @depends testSearch
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Search option key `field2` does not exists.
+	 * @expectedExceptionMessage Search attribute `field2` does not exists.
 	 */
 	public function testSearchOptionKeyException()
 	{
@@ -270,7 +310,7 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 	/**
 	 * @depends testSearch
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Search option value of key `field` is not supported.
+	 * @expectedExceptionMessage Search attribute `field` contains an unsupported type `object`.
 	 */
 	public function testSearchOptionValueException()
 	{
@@ -323,7 +363,7 @@ class AbstractActiveRecordTestMock extends AbstractActiveRecord
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function getActiveRecordName()
+	protected function getActiveRecordTable()
 	{
 		return 'name';
 	}
@@ -331,7 +371,7 @@ class AbstractActiveRecordTestMock extends AbstractActiveRecord
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function getActiveRecordData()
+	protected function getActiveRecordAttributes()
 	{
 		return [
 			'field' => &$this->field
@@ -376,7 +416,7 @@ class AbstractActiveRecordNameExceptionTestMock extends AbstractActiveRecordTest
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function getActiveRecordName()
+	protected function getActiveRecordTable()
 	{
 		return 'name2';
 	}
@@ -398,7 +438,7 @@ class AbstractActiveRecordDataExceptionTestMock extends AbstractActiveRecordTest
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function getActiveRecordData()
+	protected function getActiveRecordAttributes()
 	{
 		return [
 			'field' => &$this->field,

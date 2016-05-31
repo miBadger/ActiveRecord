@@ -43,11 +43,11 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	{
 		try {
 			$pdoStatement = $this->getPdo()->prepare($this->getCreateQuery());
-			$pdoStatement->execute($this->getActiveRecordData());
+			$pdoStatement->execute($this->getActiveRecordAttributes());
 
 			$this->setId(intval($this->getPdo()->lastInsertId()));
 		} catch (\PDOException $e) {
-			throw new ActiveRecordException(sprintf('Can not create a new active record entry in the `%s` table.', $this->getActiveRecordName()), 0, $e);
+			throw new ActiveRecordException(sprintf('Can not create a new active record entry in the `%s` table.', $this->getActiveRecordTable()), 0, $e);
 		}
 
 		return $this;
@@ -60,14 +60,14 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 */
 	private function getCreateQuery()
 	{
-		$columns = array_keys($this->getActiveRecordData());
+		$columns = array_keys($this->getActiveRecordAttributes());
 		$values = [];
 
 		foreach ($columns as $key => $value) {
 			$values[] = sprintf(':%s', $value);
 		}
 
-		return sprintf('INSERT INTO `%s` (`%s`) VALUES (%s)', $this->getActiveRecordName(), implode('`, `', $columns), implode(', ', $values));
+		return sprintf('INSERT INTO `%s` (`%s`) VALUES (%s)', $this->getActiveRecordTable(), implode('`, `', $columns), implode(', ', $values));
 	}
 
 	/**
@@ -81,13 +81,13 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 			$result = $pdoStatement->fetch();
 
 			if ($result === false) {
-				throw new ActiveRecordException(sprintf('Can not read the non-existent active record entry %d from the `%s` table.', $id, $this->getActiveRecordName()));
+				throw new ActiveRecordException(sprintf('Can not read the non-existent active record entry %d from the `%s` table.', $id, $this->getActiveRecordTable()));
 			}
 
-			$this->setActiveRecordData($result);
+			$this->fill($result);
 			$this->setId($id);
 		} catch (\PDOException $e) {
-			throw new ActiveRecordException(sprintf('Can not read active record entry %d from the `%s` table.', $id, $this->getActiveRecordName()), 0, $e);
+			throw new ActiveRecordException(sprintf('Can not read active record entry %d from the `%s` table.', $id, $this->getActiveRecordTable()), 0, $e);
 		}
 
 		return $this;
@@ -100,7 +100,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 */
 	private function getReadQuery()
 	{
-		return sprintf('SELECT * FROM `%s` WHERE `id` = :id', $this->getActiveRecordName());
+		return sprintf('SELECT * FROM `%s` WHERE `id` = :id', $this->getActiveRecordTable());
 	}
 
 	/**
@@ -109,14 +109,14 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	public function update()
 	{
 		if (!$this->exists()) {
-			throw new ActiveRecordException(sprintf('Can not update a non-existent active record entry to the `%s` table.', $this->getActiveRecordName()));
+			throw new ActiveRecordException(sprintf('Can not update a non-existent active record entry to the `%s` table.', $this->getActiveRecordTable()));
 		}
 
 		try {
 			$pdoStatement = $this->getPdo()->prepare($this->getUpdateQuery());
-			$pdoStatement->execute(['id' => $this->getId()] + $this->getActiveRecordData());
+			$pdoStatement->execute(['id' => $this->getId()] + $this->getActiveRecordAttributes());
 		} catch (\PDOException $e) {
-			throw new ActiveRecordException(sprintf('Can not update active record entry %d to the `%s` table.', $this->getId(), $this->getActiveRecordName()), 0, $e);
+			throw new ActiveRecordException(sprintf('Can not update active record entry %d to the `%s` table.', $this->getId(), $this->getActiveRecordTable()), 0, $e);
 		}
 
 		return $this;
@@ -131,11 +131,11 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	{
 		$values = [];
 
-		foreach (array_keys($this->getActiveRecordData()) as $key => $value) {
+		foreach (array_keys($this->getActiveRecordAttributes()) as $key => $value) {
 			$values[] = sprintf('`%s` = :%s', $value, $value);
 		}
 
-		return sprintf('UPDATE `%s` SET %s WHERE `id` = :id', $this->getActiveRecordName(), implode(', ', $values));
+		return sprintf('UPDATE `%s` SET %s WHERE `id` = :id', $this->getActiveRecordTable(), implode(', ', $values));
 	}
 
 	/**
@@ -144,7 +144,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	public function delete()
 	{
 		if (!$this->exists()) {
-			throw new ActiveRecordException(sprintf('Can not delete a non-existent active record entry from the `%s` table.', $this->getActiveRecordName()));
+			throw new ActiveRecordException(sprintf('Can not delete a non-existent active record entry from the `%s` table.', $this->getActiveRecordTable()));
 		}
 
 		try {
@@ -153,7 +153,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 
 			$this->setId(null);
 		} catch (\PDOException $e) {
-			throw new ActiveRecordException(sprintf('Can not delete active record entry %d from the `%s` table.', $this->getId(), $this->getActiveRecordName()), 0, $e);
+			throw new ActiveRecordException(sprintf('Can not delete active record entry %d from the `%s` table.', $this->getId(), $this->getActiveRecordTable()), 0, $e);
 		}
 
 		return $this;
@@ -166,7 +166,19 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 */
 	private function getDeleteQuery()
 	{
-		return sprintf('DELETE FROM `%s` WHERE `id` = :id', $this->getActiveRecordName());
+		return sprintf('DELETE FROM `%s` WHERE `id` = :id', $this->getActiveRecordTable());
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function sync()
+	{
+		if (!$this->exists()) {
+			return $this->create();
+		}
+
+		return $this->update();
 	}
 
 	/**
@@ -178,9 +190,53 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	}
 
 	/**
+	 * Fill the active record
+	 *
+	 * @param array $fetch
+	 * @return null
+	 */
+	public function fill(array $fetch)
+	{
+		$data = $this->getActiveRecordAttributes();
+
+		foreach ($data as $key => &$value) {
+			if (!array_key_exists($key, $fetch)) {
+				throw new ActiveRecordException(sprintf('Can not read the expected column `%s`. It\'s not returnd by the `%s` table', $key, $this->getActiveRecordTable()));
+			}
+
+			$value = $fetch[$key];
+		}
+	}
+
+	/**
 	 * {@inheritdoc}
 	 */
-	public function search($where = [], $orderBy = [], $limit = -1, $offset = 0)
+	public function searchFirst(array $where = [], array $orderBy = [])
+	{
+		try {
+			$pdoStatement = $this->getPdo()->prepare($this->getSearchQuery($where, $orderBy, 1, 0));
+			array_walk_recursive($where, function(&$value) use ($pdoStatement) {
+				static $index = 1;
+
+				$pdoStatement->bindParam($index++, $value);
+			});
+
+			$pdoStatement->execute();
+			$fetch = $pdoStatement->fetch();
+
+			$this->setId(intval($fetch['id']));
+			$this->fill($fetch);
+
+			return $this;
+		} catch (\PDOException $e) {
+			throw new ActiveRecordException(sprintf('Can not search the record in the `%s` table.', $this->getActiveRecordTable()), 0, $e);
+		}
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function search(array $where = [], array $orderBy = [], $limit = -1, $offset = 0)
 	{
 		try {
 			$pdoStatement = $this->getPdo()->prepare($this->getSearchQuery($where, $orderBy, $limit, $offset));
@@ -197,14 +253,14 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 				$new = new static($this->getPdo());
 
 				$new->setId(intval($fetch['id']));
-				$new->setActiveRecordData($fetch);
+				$new->fill($fetch);
 
 				$result[] = $new;
 			}
 
 			return $result;
 		} catch (\PDOException $e) {
-			throw new ActiveRecordException(sprintf('Can not search the record in the `%s` table.', $this->getActiveRecordName()), 0, $e);
+			throw new ActiveRecordException(sprintf('Can not search the record in the `%s` table.', $this->getActiveRecordTable()), 0, $e);
 		}
 	}
 
@@ -221,11 +277,34 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	{
 		return sprintf(
 			'SELECT * FROM `%s` %s %s %s',
-			$this->getActiveRecordName(),
-			$this->getSearchQueryWhereClause($where),
+			$this->getActiveRecordTable(),
+			$this->getSearchQueryWhereClauses($where),
 			$this->getSearchQueryOrderByClause($orderBy),
 			$this->getSearchQueryLimitClause($limit, $offset)
 		);
+	}
+
+	/**
+	 * Returns the search query where clauses.
+	 *
+	 * @param array $where
+	 * @return string the search query where clauses.
+	 */
+	private function getSearchQueryWhereClauses($where)
+	{
+		$columns = array_keys($this->getActiveRecordAttributes());
+		$columns[] = 'id';
+		$result = [];
+
+		foreach ($where as $key => $value) {
+			if (!in_array($key, $columns)) {
+				throw new ActiveRecordException(sprintf('Search attribute `%s` does not exists.', $key));
+			}
+
+			$result[] = $this->getSearchQueryWhereClause($key, $value);
+		}
+
+		return empty($result) ? '' : 'WHERE ' . implode(' AND ', $result);
 	}
 
 	/**
@@ -234,31 +313,19 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 * @param array $where
 	 * @return string the search query where clause.
 	 */
-	private function getSearchQueryWhereClause($where)
+	private function getSearchQueryWhereClause($key, $value)
 	{
-		$columns = array_keys($this->getActiveRecordData());
-		$columns[] = 'id';
-		$result = [];
-
-		foreach ($where as $key => $value) {
-			if (!in_array($key, $columns)) {
-				throw new ActiveRecordException(sprintf('Search option key `%s` does not exists.', $key));
-			}
-
-			if (is_numeric($value)) {
-				$result[] = sprintf('`%s` = ?', $key);
-			} elseif (is_string($value)) {
-				$result[] = sprintf('`%s` LIKE ?', $key);
-			} elseif (is_null($value)) {
-				$result[] = sprintf('`%s` IS ?', $key);
-			} elseif (is_array($value) && !empty($value)) {
-				$result[] = sprintf('`%s` IN (%s)', $key, implode(',', array_fill(0, count($value), '?')));
-			} else {
-				throw new ActiveRecordException(sprintf('Search option value of key `%s` is not supported.', $key));
-			}
+		if (is_numeric($value)) {
+			return sprintf('`%s` = ?', $key);
+		} elseif (is_string($value)) {
+			return sprintf('`%s` LIKE ?', $key);
+		} elseif (is_null($value)) {
+			return sprintf('`%s` IS ?', $key);
+		} elseif (is_array($value) && !empty($value)) {
+			return sprintf('`%s` IN (%s)', $key, implode(',', array_fill(0, count($value), '?')));
 		}
 
-		return empty($result) ? '' : 'WHERE ' . implode(' AND ', $result);
+		throw new ActiveRecordException(sprintf('Search attribute `%s` contains an unsupported type `%s`.', $key, gettype($value)));
 	}
 
 	/**
@@ -341,35 +408,16 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	}
 
 	/**
-	 * Returns the active record name.
+	 * Returns the active record table.
 	 *
-	 * @return string the active record name.
+	 * @return string the active record table.
 	 */
-	abstract protected function getActiveRecordName();
+	abstract protected function getActiveRecordTable();
 
 	/**
-	 * Returns the active record data.
+	 * Returns the active record attributes.
 	 *
-	 * @return array the active record data.
+	 * @return array the active record attributes.
 	 */
-	abstract protected function getActiveRecordData();
-
-	/**
-	 * Set the active record data.
-	 *
-	 * @param array $fetch
-	 * @return null
-	 */
-	protected function setActiveRecordData(array $fetch)
-	{
-		$data = $this->getActiveRecordData();
-
-		foreach ($data as $key => &$value) {
-			if (!array_key_exists($key, $fetch)) {
-				throw new ActiveRecordException(sprintf('Can not read the expected column `%s`. It\'s not returnd by the `%s` table', $key, $this->getActiveRecordName()));
-			}
-
-			$value = $fetch[$key];
-		}
-	}
+	abstract protected function getActiveRecordAttributes();
 }
