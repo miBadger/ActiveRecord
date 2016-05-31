@@ -53,7 +53,7 @@ interface ActiveRecordInterface
 	public function delete();
 
 	/**
-	 * Returns this record after synchronicing it with the corresponding entry.
+	 * Returns this record after synchronizing it with the corresponding entry.
 	 * A new entry is created if this active record does not have a corresponding entry.
 	 *
 	 * @return $this
@@ -64,7 +64,7 @@ interface ActiveRecordInterface
 	/**
 	 * Returns true if this active record has a corresponding entry.
 	 *
-	 * @return bool true if this active record has a corresponding antry.
+	 * @return bool true if this active record has a corresponding entry.
 	 */
 	public function exists();
 
@@ -78,7 +78,7 @@ interface ActiveRecordInterface
 	public function fill(array $attributes);
 
 	/**
-	 * Returns this reacord after filling it with the attributes of the first entry with the given where and order by clauses.
+	 * Returns this record after filling it with the attributes of the first entry with the given where and order by clauses.
 	 *
 	 * @param array $where = []
 	 * @param array $orderBy = []
