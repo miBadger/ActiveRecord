@@ -20,14 +20,7 @@ namespace miBadger\ActiveRecord;
 interface ActiveRecordInterface
 {
 	/**
-	 * Returns true if the record exists.
-	 *
-	 * @return bool true if the records exists.
-	 */
-	public function exists();
-
-	/**
-	 * Create the record.
+	 * Returns this active record after creating an entry with the records attributes.
 	 *
 	 * @return $this
 	 * @throws ActiveRecordException on failure.
@@ -35,16 +28,16 @@ interface ActiveRecordInterface
 	public function create();
 
 	/**
-	 * Read the record with the given ID.
+	 * Returns this active record after reading the attributes from the entry with the given identifier.
 	 *
-	 * @param int $id
+	 * @param mixed $id
 	 * @return $this
 	 * @throws ActiveRecordException on failure.
 	 */
 	public function read($id);
 
 	/**
-	 * Update the record.
+	 * Returns this active record after updating the attributes to the corresponding entry.
 	 *
 	 * @return $this
 	 * @throws ActiveRecordException on failure.
@@ -52,7 +45,7 @@ interface ActiveRecordInterface
 	public function update();
 
 	/**
-	 * Delete the record.
+	 * Returns this record after deleting the corresponding entry.
 	 *
 	 * @return $this
 	 * @throws ActiveRecordException on failure.
@@ -60,13 +53,11 @@ interface ActiveRecordInterface
 	public function delete();
 
 	/**
-	 * Search
+	 * Returns true if this active record has a corresponding entry.
 	 *
-	 * @param array $where = []
-	 * @return $this
-	 * @throws ActiveRecordException on failure.
+	 * @return bool true if this active record has a corresponding antry.
 	 */
-	public function searchByOne($where = []);
+	public function exists();
 
 	/**
 	 * Returns the records with the given where, order by, limit and offset clauses.
@@ -78,5 +69,5 @@ interface ActiveRecordInterface
 	 * @return static[] the records with the given where, order by, limit and offset clauses.
 	 * @throws ActiveRecordException on failure.
 	 */
-	public function search($where = [], $orderBy = [], $limit = -1, $offset = 0);
+	public function search(array $where = [], array $orderBy = [], $limit = -1, $offset = 0);
 }
