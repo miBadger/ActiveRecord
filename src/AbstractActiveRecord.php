@@ -310,7 +310,8 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	/**
 	 * Returns the search query where clause.
 	 *
-	 * @param array $where
+	 * @param string $key
+	 * @param mixed $value
 	 * @return string the search query where clause.
 	 */
 	private function getSearchQueryWhereClause($key, $value)
