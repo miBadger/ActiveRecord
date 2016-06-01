@@ -43,7 +43,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	{
 		try {
 			$pdoStatement = $this->getPdo()->prepare($this->getCreateQuery());
-			$pdoStatement->execute($this->getActiveRecordAttributes());
+			$pdoStatement->execute($this->getActiveRecordColumns());
 
 			$this->setId(intval($this->getPdo()->lastInsertId()));
 		} catch (\PDOException $e) {
@@ -60,7 +60,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 */
 	private function getCreateQuery()
 	{
-		$columns = array_keys($this->getActiveRecordAttributes());
+		$columns = array_keys($this->getActiveRecordColumns());
 		$values = [];
 
 		foreach ($columns as $key => $value) {
@@ -114,7 +114,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 
 		try {
 			$pdoStatement = $this->getPdo()->prepare($this->getUpdateQuery());
-			$pdoStatement->execute(['id' => $this->getId()] + $this->getActiveRecordAttributes());
+			$pdoStatement->execute(['id' => $this->getId()] + $this->getActiveRecordColumns());
 		} catch (\PDOException $e) {
 			throw new ActiveRecordException(sprintf('Can not update active record entry %d to the `%s` table.', $this->getId(), $this->getActiveRecordTable()), 0, $e);
 		}
@@ -131,7 +131,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	{
 		$values = [];
 
-		foreach (array_keys($this->getActiveRecordAttributes()) as $key => $value) {
+		foreach (array_keys($this->getActiveRecordColumns()) as $key => $value) {
 			$values[] = sprintf('`%s` = :%s', $value, $value);
 		}
 
@@ -197,7 +197,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 */
 	public function fill(array $fetch)
 	{
-		$data = $this->getActiveRecordAttributes();
+		$data = $this->getActiveRecordColumns();
 
 		foreach ($data as $key => &$value) {
 			if (!array_key_exists($key, $fetch)) {
@@ -292,7 +292,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 */
 	private function getSearchQueryWhereClauses($where)
 	{
-		$columns = array_keys($this->getActiveRecordAttributes());
+		$columns = array_keys($this->getActiveRecordColumns());
 		$columns[] = 'id';
 		$result = [];
 
@@ -416,9 +416,9 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	abstract protected function getActiveRecordTable();
 
 	/**
-	 * Returns the active record attributes.
+	 * Returns the active record columns.
 	 *
-	 * @return array the active record attributes.
+	 * @return array the active record columns.
 	 */
-	abstract protected function getActiveRecordAttributes();
+	abstract protected function getActiveRecordColumns();
 }

@@ -371,7 +371,7 @@ class AbstractActiveRecordTestMock extends AbstractActiveRecord
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function getActiveRecordAttributes()
+	protected function getActiveRecordColumns()
 	{
 		return [
 			'field' => &$this->field
@@ -438,7 +438,7 @@ class AbstractActiveRecordDataExceptionTestMock extends AbstractActiveRecordTest
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function getActiveRecordAttributes()
+	protected function getActiveRecordColumns()
 	{
 		return [
 			'field' => &$this->field,
