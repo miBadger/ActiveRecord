@@ -44,7 +44,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	public function create()
 	{
 		try {
-			$queryResult = (new Query($this->getPdo(), $this->getActiveRecordTable()))
+			(new Query($this->getPdo(), $this->getActiveRecordTable()))
 				->insert($this->getActiveRecordColumns())
 				->execute();
 
@@ -91,7 +91,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		}
 
 		try {
-			$queryResult = (new Query($this->getPdo(), $this->getActiveRecordTable()))
+			(new Query($this->getPdo(), $this->getActiveRecordTable()))
 				->update($this->getActiveRecordColumns())
 				->where('id', '=', $this->getId())
 				->execute();
@@ -112,7 +112,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		}
 
 		try {
-			$queryResult = (new Query($this->getPdo(), $this->getActiveRecordTable()))
+			(new Query($this->getPdo(), $this->getActiveRecordTable()))
 				->delete()
 				->where('id', '=', $this->getId())
 				->execute();
