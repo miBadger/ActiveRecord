@@ -10,6 +10,8 @@
 
 namespace miBadger\ActiveRecord;
 
+use miBadger\Query\Query;
+
 /**
  * The abstract active record class.
  *
@@ -42,32 +44,16 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	public function create()
 	{
 		try {
-			$pdoStatement = $this->getPdo()->prepare($this->getCreateQuery());
-			$pdoStatement->execute($this->getActiveRecordData());
+			(new Query($this->getPdo(), $this->getActiveRecordTable()))
+				->insert($this->getActiveRecordColumns())
+				->execute();
 
 			$this->setId(intval($this->getPdo()->lastInsertId()));
 		} catch (\PDOException $e) {
-			throw new ActiveRecordException(sprintf('Can not create a new active record entry in the `%s` table.', $this->getActiveRecordName()), 0, $e);
+			throw new ActiveRecordException($e->getMessage(), 0, $e);
 		}
 
 		return $this;
-	}
-
-	/**
-	 * Returns the create query.
-	 *
-	 * @return string the create query.
-	 */
-	private function getCreateQuery()
-	{
-		$columns = array_keys($this->getActiveRecordData());
-		$values = [];
-
-		foreach ($columns as $key => $value) {
-			$values[] = sprintf(':%s', $value);
-		}
-
-		return sprintf('INSERT INTO `%s` (`%s`) VALUES (%s)', $this->getActiveRecordName(), implode('`, `', $columns), implode(', ', $values));
 	}
 
 	/**
@@ -76,31 +62,23 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	public function read($id)
 	{
 		try {
-			$pdoStatement = $this->getPdo()->prepare($this->getReadQuery());
-			$pdoStatement->execute(['id' => $id]);
-			$result = $pdoStatement->fetch();
+			$result = (new Query($this->getPdo(), $this->getActiveRecordTable()))
+				->select()
+				->where('id', '=', $id)
+				->execute()
+				->fetch();
 
 			if ($result === false) {
-				throw new ActiveRecordException(sprintf('Can not read the non-existent active record entry %d from the `%s` table.', $id, $this->getActiveRecordName()));
+				throw new ActiveRecordException(sprintf('Can not read the non-existent active record entry %d from the `%s` table.', $id, $this->getActiveRecordTable()));
 			}
 
-			$this->setActiveRecordData($result);
+			$this->fill($result);
 			$this->setId($id);
 		} catch (\PDOException $e) {
-			throw new ActiveRecordException(sprintf('Can not read active record entry %d from the `%s` table.', $id, $this->getActiveRecordName()), 0, $e);
+			throw new ActiveRecordException($e->getMessage(), 0, $e);
 		}
 
 		return $this;
-	}
-
-	/**
-	 * Returns the read query.
-	 *
-	 * @return string the read query.
-	 */
-	private function getReadQuery()
-	{
-		return sprintf('SELECT * FROM `%s` WHERE `id` = :id', $this->getActiveRecordName());
 	}
 
 	/**
@@ -109,33 +87,19 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	public function update()
 	{
 		if (!$this->exists()) {
-			throw new ActiveRecordException(sprintf('Can not update a non-existent active record entry to the `%s` table.', $this->getActiveRecordName()));
+			throw new ActiveRecordException(sprintf('Can not update a non-existent active record entry to the `%s` table.', $this->getActiveRecordTable()));
 		}
 
 		try {
-			$pdoStatement = $this->getPdo()->prepare($this->getUpdateQuery());
-			$pdoStatement->execute(['id' => $this->getId()] + $this->getActiveRecordData());
+			(new Query($this->getPdo(), $this->getActiveRecordTable()))
+				->update($this->getActiveRecordColumns())
+				->where('id', '=', $this->getId())
+				->execute();
 		} catch (\PDOException $e) {
-			throw new ActiveRecordException(sprintf('Can not update active record entry %d to the `%s` table.', $this->getId(), $this->getActiveRecordName()), 0, $e);
+			throw new ActiveRecordException($e->getMessage(), 0, $e);
 		}
 
 		return $this;
-	}
-
-	/**
-	 * Returns the update query.
-	 *
-	 * @return string the update query.
-	 */
-	private function getUpdateQuery()
-	{
-		$values = [];
-
-		foreach (array_keys($this->getActiveRecordData()) as $key => $value) {
-			$values[] = sprintf('`%s` = :%s', $value, $value);
-		}
-
-		return sprintf('UPDATE `%s` SET %s WHERE `id` = :id', $this->getActiveRecordName(), implode(', ', $values));
 	}
 
 	/**
@@ -144,29 +108,33 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	public function delete()
 	{
 		if (!$this->exists()) {
-			throw new ActiveRecordException(sprintf('Can not delete a non-existent active record entry from the `%s` table.', $this->getActiveRecordName()));
+			throw new ActiveRecordException(sprintf('Can not delete a non-existent active record entry from the `%s` table.', $this->getActiveRecordTable()));
 		}
 
 		try {
-			$pdoStatement = $this->getPdo()->prepare($this->getDeleteQuery());
-			$pdoStatement->execute(['id' => $this->getId()]);
+			(new Query($this->getPdo(), $this->getActiveRecordTable()))
+				->delete()
+				->where('id', '=', $this->getId())
+				->execute();
 
 			$this->setId(null);
 		} catch (\PDOException $e) {
-			throw new ActiveRecordException(sprintf('Can not delete active record entry %d from the `%s` table.', $this->getId(), $this->getActiveRecordName()), 0, $e);
+			throw new ActiveRecordException($e->getMessage(), 0, $e);
 		}
 
 		return $this;
 	}
 
 	/**
-	 * Returns the delete query.
-	 *
-	 * @return string the delete query.
+	 * {@inheritdoc}
 	 */
-	private function getDeleteQuery()
+	public function sync()
 	{
-		return sprintf('DELETE FROM `%s` WHERE `id` = :id', $this->getActiveRecordName());
+		if (!$this->exists()) {
+			return $this->create();
+		}
+
+		return $this->update();
 	}
 
 	/**
@@ -175,6 +143,141 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	public function exists()
 	{
 		return $this->getId() !== null;
+	}
+
+	/**
+	 * Fill the active record
+	 *
+	 * @param array $fetch
+	 * @return null
+	 */
+	public function fill(array $fetch)
+	{
+		$data = $this->getActiveRecordColumns();
+
+		foreach ($data as $key => &$value) {
+			if (!array_key_exists($key, $fetch)) {
+				throw new ActiveRecordException(sprintf('Can not read the expected column `%s`. It\'s not returnd by the `%s` table', $key, $this->getActiveRecordTable()));
+			}
+
+			$value = $fetch[$key];
+		}
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function searchOne(array $where = [], array $orderBy = [])
+	{
+		try {
+			$result = $this->getSearchQueryResult($where, $orderBy, 1)->fetch();
+
+			if ($result === false) {
+				throw new ActiveRecordException(sprintf('Can not search one non-existent entry from the `%s` table.', $this->getActiveRecordTable()));
+			}
+
+			$this->fill($result);
+			$this->setId(intval($result['id']));
+
+			return $this;
+		} catch (\PDOException $e) {
+			throw new ActiveRecordException($e->getMessage(), 0, $e);
+		}
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	public function search(array $where = [], array $orderBy = [], $limit = -1, $offset = 0)
+	{
+		try {
+			$queryResult = $this->getSearchQueryResult($where, $orderBy, $limit, $offset);
+			$result = [];
+
+			foreach ($queryResult as $fetch) {
+				$new = new static($this->getPdo());
+
+				$new->setId(intval($fetch['id']));
+				$new->fill($fetch);
+
+				$result[] = $new;
+			}
+
+			return $result;
+		} catch (\PDOException $e) {
+			throw new ActiveRecordException($e->getMessage(), 0, $e);
+		}
+	}
+
+	/**
+	 * Returns the search query result with the given where, order by, limit and offset clauses.
+	 *
+	 * @param array $where = []
+	 * @param array $orderBy = []
+	 * @param int $limit = -1
+	 * @param int $offset = 0
+	 * @return \miBadger\Query\QueryResult the search query result with the given where, order by, limit and offset clauses.
+	 */
+	private function getSearchQueryResult(array $where = [], array $orderBy = [], $limit = -1, $offset = 0)
+	{
+		$query = (new Query($this->getPdo(), $this->getActiveRecordTable()))
+			->select();
+
+		$this->getSearchQueryWhere($query, $where);
+		$this->getSearchQueryOrderBy($query, $orderBy);
+		$this->getSearchQueryLimit($query, $limit, $offset);
+
+		return $query->execute();
+	}
+
+	/**
+	 * Returns the given query after adding the given where conditions.
+	 *
+	 * @param \miBadger\Query\Query $query
+	 * @param array $where
+	 * @return \miBadger\Query\Query the given query after adding the given where conditions.
+	 */
+	private function getSearchQueryWhere($query, $where)
+	{
+		foreach ($where as $key => $value) {
+			$query->where($value[0], $value[1], $value[2]);
+		}
+
+		return $query;
+	}
+
+	/**
+	 * Returns the given query after adding the given order by conditions.
+	 *
+	 * @param \miBadger\Query\Query $query
+	 * @param array $orderBy
+	 * @return \miBadger\Query\Query the given query after adding the given order by conditions.
+	 */
+	private function getSearchQueryOrderBy($query, $orderBy)
+	{
+		foreach ($orderBy as $key => $value) {
+			$query->orderBy($key, $value);
+		}
+
+		return $query;
+	}
+
+	/**
+	 * Returns the given query after adding the given limit and offset conditions.
+	 *
+	 * @param \miBadger\Query\Query $query
+	 * @param int $limit
+	 * @param int $offset
+	 * @return \miBadger\Query\Query the given query after adding the given limit and offset conditions.
+	 */
+	private function getSearchQueryLimit($query, $limit, $offset)
+	{
+		if ($limit > -1) {
+			$query->limit($limit);
+			$query->offset($offset);
+		}
+
+		return $query;
 	}
 
 	/**
@@ -224,35 +327,16 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	}
 
 	/**
-	 * Returns the active record name.
+	 * Returns the active record table.
 	 *
-	 * @return string the active record name.
+	 * @return string the active record table.
 	 */
-	abstract protected function getActiveRecordName();
+	abstract protected function getActiveRecordTable();
 
 	/**
-	 * Returns the active record data.
+	 * Returns the active record columns.
 	 *
-	 * @return array the active record data.
+	 * @return array the active record columns.
 	 */
-	abstract protected function getActiveRecordData();
-
-	/**
-	 * Set the active record data.
-	 *
-	 * @param array $fetch
-	 * @return null
-	 */
-	protected function setActiveRecordData(array $fetch)
-	{
-		$data = $this->getActiveRecordData();
-
-		foreach ($data as $key => &$value) {
-			if (!array_key_exists($key, $fetch)) {
-				throw new ActiveRecordException(sprintf('Can not read the expected column `%s`. It\'s not returnd by the `%s` table', $key, $this->getActiveRecordName()));
-			}
-
-			$value = $fetch[$key];
-		}
-	}
+	abstract protected function getActiveRecordColumns();
 }

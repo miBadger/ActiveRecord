@@ -19,4 +19,9 @@ $activeRecord->delete();
 
 // Check if the active record exists.
 $activeRecord->exists();
+
+// Search the active record.
+$activeRecord->search([
+	'id' => 1
+]);
 ```

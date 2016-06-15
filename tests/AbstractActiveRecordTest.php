@@ -23,8 +23,10 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 	public function setUp()
 	{
 		$this->pdo = new \PDO('sqlite::memory:');
-		$this->pdo->query('CREATE TABLE IF NOT EXISTS name (id INTEGER PRIMARY KEY, field VARCHAR(255))');
-		$this->pdo->query('INSERT INTO name (field) VALUES ("test")');
+		$this->pdo->query('CREATE TABLE IF NOT EXISTS `name` (`id` INTEGER PRIMARY KEY, `field` VARCHAR(255))');
+		$this->pdo->query('INSERT INTO `name` (`id`, `field`) VALUES (1, "test")');
+		$this->pdo->query('INSERT INTO `name` (`id`, `field`) VALUES (2, "test2")');
+		$this->pdo->query('INSERT INTO `name` (`id`, `field`) VALUES (3, NULL)');
 	}
 
 	public function tearDown()
@@ -35,17 +37,17 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 	public function testCreate()
 	{
 		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
-		$abstractActiveRecord->setField('test');
+		$abstractActiveRecord->setField('new');
 		$abstractActiveRecord->create();
 
-		$pdoStatement = $this->pdo->query('SELECT * FROM name WHERE `id` = 2');
-		$this->assertEquals(['id' => '2', 'field' => 'test'], $pdoStatement->fetch());
+		$pdoStatement = $this->pdo->query('SELECT * FROM name WHERE `id` = 4');
+		$this->assertEquals(['id' => '4', 'field' => 'new'], $pdoStatement->fetch());
 	}
 
 	/**
 	 * @depends testCreate
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Can not create a new active record entry in the `name2` table.
+	 * @expectedExceptionMessage SQLSTATE[HY000]: General error: 1 no such table: name2
 	 */
 	public function testCreateNameException()
 	{
@@ -56,7 +58,7 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 	/**
 	 * @depends testCreate
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Can not create a new active record entry in the `name` table.
+	 * @expectedExceptionMessage SQLSTATE[HY000]: General error: 1 table name has no column named field2
 	 */
 	public function testCreateDataException()
 	{
@@ -72,22 +74,22 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 		$this->assertEquals(1, $abstractActiveRecord->getId());
 		$this->assertEquals('test', $abstractActiveRecord->getField());
 	}
-	
+
 	/**
 	 * @depends testRead
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Can not read the non-existent active record entry 2 from the `name` table
+	 * @expectedExceptionMessage Can not read the non-existent active record entry 4 from the `name` table
 	 */
 	public function testReadNonExistentId()
 	{
 		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
-		$abstractActiveRecord->read(2);
+		$abstractActiveRecord->read(4);
 	}
 
 	/**
 	 * @depends testRead
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Can not read active record entry 1 from the `name2` table.
+	 * @expectedExceptionMessage SQLSTATE[HY000]: General error: 1 no such table: name2
 	 */
 	public function testReadNameException()
 	{
@@ -131,7 +133,7 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 	/**
 	 * @depends testUpdate
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Can not update active record entry 1 to the `name2` table.
+	 * @expectedExceptionMessage SQLSTATE[HY000]: General error: 1 no such table: name2
 	 */
 	public function testUpdateNameException()
 	{
@@ -142,7 +144,7 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 	/**
 	 * @depends testUpdate
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Can not update active record entry 1 to the `name` table.
+	 * @expectedExceptionMessage SQLSTATE[HY000]: General error: 1 no such column: field2
 	 */
 	public function testUpdateDataException()
 	{
@@ -174,12 +176,27 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 	/**
 	 * @depends testDelete
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Can not delete active record entry 1 from the `name2` table.
+	 * @expectedExceptionMessage SQLSTATE[HY000]: General error: 1 no such table: name2
 	 */
 	public function testDeleteNameException()
 	{
 		$abstractActiveRecord = new AbstractActiveRecordNameExceptionTestMock($this->pdo);
 		$abstractActiveRecord->delete();
+	}
+
+	public function testSyncCreate()
+	{
+		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
+		$abstractActiveRecord->read(1);
+		$abstractActiveRecord->delete();
+		$abstractActiveRecord->sync();
+	}
+
+	public function testSyncUpdate()
+	{
+		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
+		$abstractActiveRecord->read(1);
+		$abstractActiveRecord->sync();
 	}
 
 	public function testExists()
@@ -189,6 +206,149 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 
 		$abstractActiveRecord->read(1);
 		$this->assertTrue($abstractActiveRecord->exists());
+	}
+
+	public function testFill()
+	{
+		$attributesActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
+		$attributesActiveRecord->fill(['field' => 'new']);
+	}
+
+	public function testSearchOne()
+	{
+		$attributesActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
+		$attributesActiveRecord->searchOne([['field', 'LIKE', 'Test']]);
+
+		$this->assertEquals(1, $attributesActiveRecord->getId());
+	}
+
+	/**
+	 * @depends testRead
+	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
+	 * @expectedExceptionMessage Can not search one non-existent entry from the `name` table.
+	 */
+	public function testSearchOneNonExistentId()
+	{
+		$attributesActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
+		$attributesActiveRecord->searchOne([['id', '=', 4]]);
+	}
+
+	/**
+	 * @depends testSearchOne
+	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
+	 * @expectedExceptionMessage SQLSTATE[HY000]: General error: 1 no such table: name2
+	 */
+	public function testSearchOneException()
+	{
+		$abstractActiveRecord = new AbstractActiveRecordNameExceptionTestMock($this->pdo);
+		$abstractActiveRecord->searchOne();
+	}
+
+	public function testSearch()
+	{
+		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
+		$result = $abstractActiveRecord->search();
+
+		$this->assertCount(3, $result);
+	}
+
+	/**
+	 * @depends testSearch
+	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
+	 * @expectedExceptionMessage SQLSTATE[HY000]: General error: 1 no such table: name2
+	 */
+	public function testSearchException()
+	{
+		$abstractActiveRecord = new AbstractActiveRecordNameExceptionTestMock($this->pdo);
+		$abstractActiveRecord->search();
+	}
+
+	/**
+	 * @depends testSearch
+	 */
+	public function testSearchOptionNumeric()
+	{
+		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
+		$result = $abstractActiveRecord->search([['id', '=', 1]]);
+
+		$this->assertCount(1, $result);
+	}
+
+	/**
+	 * @depends testSearch
+	 */
+	public function testSearchOptionString()
+	{
+		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
+		$result = $abstractActiveRecord->search([['field', 'LIKE', 'test']]);
+
+		$this->assertCount(1, $result);
+	}
+
+	/**
+	 * @depends testSearch
+	 */
+	public function testSearchOptionArray()
+	{
+		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
+		$result = $abstractActiveRecord->search([['field', 'IN', ['test', 'test2']]]);
+
+		$this->assertCount(2, $result);
+	}
+
+	/**
+	 * @depends testSearch
+	 */
+	public function testSearchOptionNull()
+	{
+		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
+		$result = $abstractActiveRecord->search([['field', 'IS', null]]);
+
+		$this->assertCount(1, $result);
+	}
+
+	/**
+	 * @depends testSearch
+	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
+	 * @expectedExceptionMessage SQLSTATE[HY000]: General error: 1 no such column: field2
+	 */
+	public function testSearchOptionKeyException()
+	{
+		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
+		$abstractActiveRecord->search([['field2', 'LIKE', 'test']]);
+	}
+
+	/**
+	 * @depends testSearch
+	 */
+	public function testSearchOrderBy()
+	{
+		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
+		$result = $abstractActiveRecord->search([], ['id' => 'DESC']);
+
+		$this->assertCount(3, $result);
+	}
+
+	/**
+	 * @depends testSearch
+	 */
+	public function testSearchLimit()
+	{
+		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
+		$result = $abstractActiveRecord->search([], [], 1);
+
+		$this->assertCount(1, $result);
+	}
+
+	/**
+	 * @depends testSearch
+	 */
+	public function testSearchOffset()
+	{
+		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
+		$result = $abstractActiveRecord->search([], [], 10, 1);
+
+		$this->assertCount(2, $result);
 	}
 }
 
@@ -203,7 +363,7 @@ class AbstractActiveRecordTestMock extends AbstractActiveRecord
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function getActiveRecordName()
+	protected function getActiveRecordTable()
 	{
 		return 'name';
 	}
@@ -211,7 +371,7 @@ class AbstractActiveRecordTestMock extends AbstractActiveRecord
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function getActiveRecordData()
+	protected function getActiveRecordColumns()
 	{
 		return [
 			'field' => &$this->field
@@ -256,7 +416,7 @@ class AbstractActiveRecordNameExceptionTestMock extends AbstractActiveRecordTest
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function getActiveRecordName()
+	protected function getActiveRecordTable()
 	{
 		return 'name2';
 	}
@@ -278,7 +438,7 @@ class AbstractActiveRecordDataExceptionTestMock extends AbstractActiveRecordTest
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function getActiveRecordData()
+	protected function getActiveRecordColumns()
 	{
 		return [
 			'field' => &$this->field,
