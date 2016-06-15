@@ -85,7 +85,7 @@ interface ActiveRecordInterface
 	 * @return $this
 	 * @throws ActiveRecordException on failure.
 	 */
-	public function searchFirst(array $where = [], array $orderBy = []);
+	public function searchOne(array $where = [], array $orderBy = []);
 
 	/**
 	 * Returns the records with the given where, order by, limit and offset clauses.

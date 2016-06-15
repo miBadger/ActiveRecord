@@ -10,6 +10,8 @@
 
 namespace miBadger\ActiveRecord;
 
+use miBadger\Query\Query;
+
 /**
  * The abstract active record class.
  *
@@ -42,32 +44,16 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	public function create()
 	{
 		try {
-			$pdoStatement = $this->getPdo()->prepare($this->getCreateQuery());
-			$pdoStatement->execute($this->getActiveRecordColumns());
+			$queryResult = (new Query($this->getPdo(), $this->getActiveRecordTable()))
+				->insert($this->getActiveRecordColumns())
+				->execute();
 
 			$this->setId(intval($this->getPdo()->lastInsertId()));
 		} catch (\PDOException $e) {
-			throw new ActiveRecordException(sprintf('Can not create a new active record entry in the `%s` table.', $this->getActiveRecordTable()), 0, $e);
+			throw new ActiveRecordException($e->getMessage(), 0, $e);
 		}
 
 		return $this;
-	}
-
-	/**
-	 * Returns the create query.
-	 *
-	 * @return string the create query.
-	 */
-	private function getCreateQuery()
-	{
-		$columns = array_keys($this->getActiveRecordColumns());
-		$values = [];
-
-		foreach ($columns as $key => $value) {
-			$values[] = sprintf(':%s', $value);
-		}
-
-		return sprintf('INSERT INTO `%s` (`%s`) VALUES (%s)', $this->getActiveRecordTable(), implode('`, `', $columns), implode(', ', $values));
 	}
 
 	/**
@@ -76,9 +62,11 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	public function read($id)
 	{
 		try {
-			$pdoStatement = $this->getPdo()->prepare($this->getReadQuery());
-			$pdoStatement->execute(['id' => $id]);
-			$result = $pdoStatement->fetch();
+			$result = (new Query($this->getPdo(), $this->getActiveRecordTable()))
+				->select()
+				->where('id', '=', $id)
+				->execute()
+				->fetch();
 
 			if ($result === false) {
 				throw new ActiveRecordException(sprintf('Can not read the non-existent active record entry %d from the `%s` table.', $id, $this->getActiveRecordTable()));
@@ -87,20 +75,10 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 			$this->fill($result);
 			$this->setId($id);
 		} catch (\PDOException $e) {
-			throw new ActiveRecordException(sprintf('Can not read active record entry %d from the `%s` table.', $id, $this->getActiveRecordTable()), 0, $e);
+			throw new ActiveRecordException($e->getMessage(), 0, $e);
 		}
 
 		return $this;
-	}
-
-	/**
-	 * Returns the read query.
-	 *
-	 * @return string the read query.
-	 */
-	private function getReadQuery()
-	{
-		return sprintf('SELECT * FROM `%s` WHERE `id` = :id', $this->getActiveRecordTable());
 	}
 
 	/**
@@ -113,29 +91,15 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		}
 
 		try {
-			$pdoStatement = $this->getPdo()->prepare($this->getUpdateQuery());
-			$pdoStatement->execute(['id' => $this->getId()] + $this->getActiveRecordColumns());
+			$queryResult = (new Query($this->getPdo(), $this->getActiveRecordTable()))
+				->update($this->getActiveRecordColumns())
+				->where('id', '=', $this->getId())
+				->execute();
 		} catch (\PDOException $e) {
-			throw new ActiveRecordException(sprintf('Can not update active record entry %d to the `%s` table.', $this->getId(), $this->getActiveRecordTable()), 0, $e);
+			throw new ActiveRecordException($e->getMessage(), 0, $e);
 		}
 
 		return $this;
-	}
-
-	/**
-	 * Returns the update query.
-	 *
-	 * @return string the update query.
-	 */
-	private function getUpdateQuery()
-	{
-		$values = [];
-
-		foreach (array_keys($this->getActiveRecordColumns()) as $key => $value) {
-			$values[] = sprintf('`%s` = :%s', $value, $value);
-		}
-
-		return sprintf('UPDATE `%s` SET %s WHERE `id` = :id', $this->getActiveRecordTable(), implode(', ', $values));
 	}
 
 	/**
@@ -148,25 +112,17 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		}
 
 		try {
-			$pdoStatement = $this->getPdo()->prepare($this->getDeleteQuery());
-			$pdoStatement->execute(['id' => $this->getId()]);
+			$queryResult = (new Query($this->getPdo(), $this->getActiveRecordTable()))
+				->delete()
+				->where('id', '=', $this->getId())
+				->execute();
 
 			$this->setId(null);
 		} catch (\PDOException $e) {
-			throw new ActiveRecordException(sprintf('Can not delete active record entry %d from the `%s` table.', $this->getId(), $this->getActiveRecordTable()), 0, $e);
+			throw new ActiveRecordException($e->getMessage(), 0, $e);
 		}
 
 		return $this;
-	}
-
-	/**
-	 * Returns the delete query.
-	 *
-	 * @return string the delete query.
-	 */
-	private function getDeleteQuery()
-	{
-		return sprintf('DELETE FROM `%s` WHERE `id` = :id', $this->getActiveRecordTable());
 	}
 
 	/**
@@ -211,25 +167,21 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	/**
 	 * {@inheritdoc}
 	 */
-	public function searchFirst(array $where = [], array $orderBy = [])
+	public function searchOne(array $where = [], array $orderBy = [])
 	{
 		try {
-			$pdoStatement = $this->getPdo()->prepare($this->getSearchQuery($where, $orderBy, 1, 0));
-			array_walk_recursive($where, function(&$value) use ($pdoStatement) {
-				static $index = 1;
+			$result = $this->getSearchQueryResult($where, $orderBy, 1)->fetch();
 
-				$pdoStatement->bindParam($index++, $value);
-			});
+			if ($result === false) {
+				throw new ActiveRecordException(sprintf('Can not search one non-existent entry from the `%s` table.', $this->getActiveRecordTable()));
+			}
 
-			$pdoStatement->execute();
-			$fetch = $pdoStatement->fetch();
-
-			$this->setId(intval($fetch['id']));
-			$this->fill($fetch);
+			$this->fill($result);
+			$this->setId(intval($result['id']));
 
 			return $this;
 		} catch (\PDOException $e) {
-			throw new ActiveRecordException(sprintf('Can not search the record in the `%s` table.', $this->getActiveRecordTable()), 0, $e);
+			throw new ActiveRecordException($e->getMessage(), 0, $e);
 		}
 	}
 
@@ -239,17 +191,10 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	public function search(array $where = [], array $orderBy = [], $limit = -1, $offset = 0)
 	{
 		try {
-			$pdoStatement = $this->getPdo()->prepare($this->getSearchQuery($where, $orderBy, $limit, $offset));
-			array_walk_recursive($where, function(&$value) use ($pdoStatement) {
-				static $index = 1;
-
-				$pdoStatement->bindParam($index++, $value);
-			});
-
-			$pdoStatement->execute();
+			$queryResult = $this->getSearchQueryResult($where, $orderBy, $limit, $offset);
 			$result = [];
 
-			while ($fetch = $pdoStatement->fetch()) {
+			foreach ($queryResult as $fetch) {
 				$new = new static($this->getPdo());
 
 				$new->setId(intval($fetch['id']));
@@ -260,106 +205,57 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 
 			return $result;
 		} catch (\PDOException $e) {
-			throw new ActiveRecordException(sprintf('Can not search the record in the `%s` table.', $this->getActiveRecordTable()), 0, $e);
+			throw new ActiveRecordException($e->getMessage(), 0, $e);
 		}
 	}
 
 	/**
-	 * Returns the search query with the given where, order by, limit and offset clauses.
+	 * Returns the search query result with the given where, order by, limit and offset clauses.
 	 *
 	 * @param array $where = []
 	 * @param array $orderBy = []
 	 * @param int $limit = -1
 	 * @param int $offset = 0
-	 * @return string the search query with the given where, order by, limit and offset clauses.
+	 * @return Query the search query result with the given where, order by, limit and offset clauses.
 	 */
-	private function getSearchQuery($where = [], $orderBy = [], $limit = -1, $offset = 0)
+	private function getSearchQueryResult(array $where = [], array $orderBy = [], $limit = -1, $offset = 0)
 	{
-		return sprintf(
-			'SELECT * FROM `%s` %s %s %s',
-			$this->getActiveRecordTable(),
-			$this->getSearchQueryWhereClauses($where),
-			$this->getSearchQueryOrderByClause($orderBy),
-			$this->getSearchQueryLimitClause($limit, $offset)
-		);
+		$query = (new Query($this->getPdo(), $this->getActiveRecordTable()))
+			->select();
+
+		$this->getSearchQueryWhere($query, $where);
+		$this->getSearchQueryOrderBy($query, $orderBy);
+		$this->getSearchQueryLimit($query, $limit, $offset);
+
+		return $query->execute();
 	}
 
-	/**
-	 * Returns the search query where clauses.
-	 *
-	 * @param array $where
-	 * @return string the search query where clauses.
-	 */
-	private function getSearchQueryWhereClauses($where)
+	private function getSearchQueryWhere($query, $where)
 	{
-		$columns = array_keys($this->getActiveRecordColumns());
-		$columns[] = 'id';
-		$result = [];
-
 		foreach ($where as $key => $value) {
-			if (!in_array($key, $columns)) {
-				throw new ActiveRecordException(sprintf('Search attribute `%s` does not exists.', $key));
-			}
-
-			$result[] = $this->getSearchQueryWhereClause($key, $value);
+			$query->where($value[0], $value[1], $value[2]);
 		}
 
-		return empty($result) ? '' : 'WHERE ' . implode(' AND ', $result);
+		return $query;
 	}
 
-	/**
-	 * Returns the search query where clause.
-	 *
-	 * @param string $key
-	 * @param mixed $value
-	 * @return string the search query where clause.
-	 */
-	private function getSearchQueryWhereClause($key, $value)
+	private function getSearchQueryOrderBy($query, $orderBy)
 	{
-		if (is_numeric($value)) {
-			return sprintf('`%s` = ?', $key);
-		} elseif (is_string($value)) {
-			return sprintf('`%s` LIKE ?', $key);
-		} elseif (is_null($value)) {
-			return sprintf('`%s` IS ?', $key);
-		} elseif (is_array($value) && !empty($value)) {
-			return sprintf('`%s` IN (%s)', $key, implode(',', array_fill(0, count($value), '?')));
-		}
-
-		throw new ActiveRecordException(sprintf('Search attribute `%s` contains an unsupported type `%s`.', $key, gettype($value)));
-	}
-
-	/**
-	 * Returns the search query order by clause.
-	 *
-	 * @param array $orderBy
-	 * @return string the search query order by clause.
-	 */
-	private function getSearchQueryOrderByClause($orderBy)
-	{
-		$result = [];
-
 		foreach ($orderBy as $key => $value) {
-			$result[] = sprintf('`%s` %s', $key, $value == 'DESC' ? 'DESC' : 'ASC');
+			$query->orderBy($key, $value);
 		}
 
-		return empty($result) ? '' : 'ORDER BY ' . implode(', ', $result);
+		return $query;
 	}
 
-	/**
-	 * Returns the search query limit and clause.
-	 *
-	 * @param int $limit = -1
-	 * @param int $offset = 0
-	 * @return string the search query limit and clause.
-	 */
-	private function getSearchQueryLimitClause($limit, $offset)
+	private function getSearchQueryLimit($query, $limit, $offset)
 	{
-		if ($limit == -1) {
-			return '';
+		if ($limit > -1) {
+			$query->limit($limit);
+			$query->offset($offset);
 		}
 
-		return sprintf('LIMIT %d OFFSET %d', $limit, $offset);
+		return $query;
 	}
 
 	/**
