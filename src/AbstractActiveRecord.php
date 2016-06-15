@@ -216,7 +216,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 * @param array $orderBy = []
 	 * @param int $limit = -1
 	 * @param int $offset = 0
-	 * @return Query the search query result with the given where, order by, limit and offset clauses.
+	 * @return \miBadger\Query\QueryResult the search query result with the given where, order by, limit and offset clauses.
 	 */
 	private function getSearchQueryResult(array $where = [], array $orderBy = [], $limit = -1, $offset = 0)
 	{
