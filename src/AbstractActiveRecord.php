@@ -230,6 +230,13 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		return $query->execute();
 	}
 
+	/**
+	 * Returns the given query after adding the given where conditions.
+	 *
+	 * @param \miBadger\Query\Query $query
+	 * @param array $where
+	 * @return \miBadger\Query\Query the given query after adding the given where conditions.
+	 */
 	private function getSearchQueryWhere($query, $where)
 	{
 		foreach ($where as $key => $value) {
@@ -239,6 +246,13 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		return $query;
 	}
 
+	/**
+	 * Returns the given query after adding the given order by conditions.
+	 *
+	 * @param \miBadger\Query\Query $query
+	 * @param array $orderBy
+	 * @return \miBadger\Query\Query the given query after adding the given order by conditions.
+	 */
 	private function getSearchQueryOrderBy($query, $orderBy)
 	{
 		foreach ($orderBy as $key => $value) {
@@ -248,6 +262,14 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		return $query;
 	}
 
+	/**
+	 * Returns the given query after adding the given limit and offset conditions.
+	 *
+	 * @param \miBadger\Query\Query $query
+	 * @param int $limit
+	 * @param int $offset
+	 * @return \miBadger\Query\Query the given query after adding the given limit and offset conditions.
+	 */
 	private function getSearchQueryLimit($query, $limit, $offset)
 	{
 		if ($limit > -1) {
