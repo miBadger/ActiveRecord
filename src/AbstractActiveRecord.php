@@ -26,7 +26,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	private $id;
 
 	/**
-	 * Construct an abstract pdo active record with the given pdo.
+	 * Construct an abstract active record with the given PDO.
 	 *
 	 * @param \PDO $pdo
 	 */
