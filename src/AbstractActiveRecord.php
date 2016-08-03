@@ -153,7 +153,9 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 			$this->setId($attributes['id']);
 		}
 
-		foreach ($this->getActiveRecordColumns() as $key => &$value) {
+		$columns = $this->getActiveRecordColumns();
+
+		foreach ($columns as $key => &$value) {
 			if (!array_key_exists($key, $attributes)) {
 				throw new ActiveRecordException(sprintf('Can not read the expected column `%s`. It\'s not returnd by the `%s` table', $key, $this->getActiveRecordTable()));
 			}
