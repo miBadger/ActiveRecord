@@ -62,18 +62,17 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	public function read($id)
 	{
 		try {
-			$result = (new Query($this->getPdo(), $this->getActiveRecordTable()))
+			$row = (new Query($this->getPdo(), $this->getActiveRecordTable()))
 				->select()
 				->where('id', '=', $id)
 				->execute()
 				->fetch();
 
-			if ($result === false) {
+			if ($row === false) {
 				throw new ActiveRecordException(sprintf('Can not read the non-existent active record entry %d from the `%s` table.', $id, $this->getActiveRecordTable()));
 			}
 
-			$this->fill($result);
-			$this->setId($id);
+			$this->fill($row)->setId($id);
 		} catch (\PDOException $e) {
 			throw new ActiveRecordException($e->getMessage(), 0, $e);
 		}
@@ -86,10 +85,6 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 */
 	public function update()
 	{
-		if (!$this->exists()) {
-			throw new ActiveRecordException(sprintf('Can not update a non-existent active record entry to the `%s` table.', $this->getActiveRecordTable()));
-		}
-
 		try {
 			(new Query($this->getPdo(), $this->getActiveRecordTable()))
 				->update($this->getActiveRecordColumns())
@@ -107,10 +102,6 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 */
 	public function delete()
 	{
-		if (!$this->exists()) {
-			throw new ActiveRecordException(sprintf('Can not delete a non-existent active record entry from the `%s` table.', $this->getActiveRecordTable()));
-		}
-
 		try {
 			(new Query($this->getPdo(), $this->getActiveRecordTable()))
 				->delete()
@@ -146,22 +137,20 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	}
 
 	/**
-	 * Fill the active record
-	 *
-	 * @param array $fetch
-	 * @return null
+	 * {@inheritdoc}
 	 */
-	public function fill(array $fetch)
+	public function fill(array $attributes)
 	{
-		$data = $this->getActiveRecordColumns();
+		$columns = $this->getActiveRecordColumns();
+		$columns['id'] = &$this->id;
 
-		foreach ($data as $key => &$value) {
-			if (!array_key_exists($key, $fetch)) {
-				throw new ActiveRecordException(sprintf('Can not read the expected column `%s`. It\'s not returnd by the `%s` table', $key, $this->getActiveRecordTable()));
+		foreach ($attributes as $key => $value) {
+			if (array_key_exists($key, $columns)) {
+				$columns[$key] = $value;
 			}
-
-			$value = $fetch[$key];
 		}
+
+		return $this;
 	}
 
 	/**
@@ -170,16 +159,13 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	public function searchOne(array $where = [], array $orderBy = [])
 	{
 		try {
-			$result = $this->getSearchQueryResult($where, $orderBy, 1)->fetch();
+			$row = $this->getSearchQueryResult($where, $orderBy, 1)->fetch();
 
-			if ($result === false) {
+			if ($row === false) {
 				throw new ActiveRecordException(sprintf('Can not search one non-existent entry from the `%s` table.', $this->getActiveRecordTable()));
 			}
 
-			$this->fill($result);
-			$this->setId(intval($result['id']));
-
-			return $this;
+			return $this->fill($row)->setId($row['id']);
 		} catch (\PDOException $e) {
 			throw new ActiveRecordException($e->getMessage(), 0, $e);
 		}
@@ -194,13 +180,10 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 			$queryResult = $this->getSearchQueryResult($where, $orderBy, $limit, $offset);
 			$result = [];
 
-			foreach ($queryResult as $fetch) {
-				$new = new static($this->getPdo());
+			foreach ($queryResult as $row) {
+				$new = clone $this;
 
-				$new->setId(intval($fetch['id']));
-				$new->fill($fetch);
-
-				$result[] = $new;
+				$result[] = $new->fill($row)->setId($row['id']);
 			}
 
 			return $result;

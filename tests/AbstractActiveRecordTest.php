@@ -97,17 +97,6 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 		$abstractActiveRecord->read(1);
 	}
 
-	/**
-	 * @depends testRead
-	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Can not read the expected column `field2`. It's not returnd by the `name` table
-	 */
-	public function testReadDataException()
-	{
-		$abstractActiveRecord = new AbstractActiveRecordDataExceptionTestMock($this->pdo);
-		$abstractActiveRecord->read(1);
-	}
-
 	public function testUpdate()
 	{
 		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
@@ -117,17 +106,6 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 
 		$pdoStatement = $this->pdo->query('SELECT * FROM name WHERE `id` = 1');
 		$this->assertEquals(['id' => '1', 'field' => 'test2'], $pdoStatement->fetch());
-	}
-
-	/**
-	 * @depends testUpdate
-	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Can not update a non-existent active record entry to the `name` table.
-	 */
-	public function testUpdateIdException()
-	{
-		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
-		$abstractActiveRecord->update();
 	}
 
 	/**
@@ -160,17 +138,6 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 
 		$pdoStatement = $this->pdo->query('SELECT * FROM name WHERE `id` = 1');
 		$this->assertFalse($pdoStatement->fetch());
-	}
-
-	/**
-	 * @depends testDelete
-	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Can not delete a non-existent active record entry from the `name` table.
-	 */
-	public function testDeleteIdException()
-	{
-		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
-		$abstractActiveRecord->delete();
 	}
 
 	/**
