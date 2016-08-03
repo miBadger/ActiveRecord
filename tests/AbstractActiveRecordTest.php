@@ -97,17 +97,6 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 		$abstractActiveRecord->read(1);
 	}
 
-	/**
-	 * @depends testRead
-	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Can not read the expected column `field2`. It's not returnd by the `name` table
-	 */
-	public function testReadDataException()
-	{
-		$abstractActiveRecord = new AbstractActiveRecordDataExceptionTestMock($this->pdo);
-		$abstractActiveRecord->read(1);
-	}
-
 	public function testUpdate()
 	{
 		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
