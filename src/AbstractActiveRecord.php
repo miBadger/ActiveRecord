@@ -85,10 +85,6 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 */
 	public function update()
 	{
-		if (!$this->exists()) {
-			throw new ActiveRecordException(sprintf('Can not update a non-existent active record entry to the `%s` table.', $this->getActiveRecordTable()));
-		}
-
 		try {
 			(new Query($this->getPdo(), $this->getActiveRecordTable()))
 				->update($this->getActiveRecordColumns())
@@ -106,10 +102,6 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 */
 	public function delete()
 	{
-		if (!$this->exists()) {
-			throw new ActiveRecordException(sprintf('Can not delete a non-existent active record entry from the `%s` table.', $this->getActiveRecordTable()));
-		}
-
 		try {
 			(new Query($this->getPdo(), $this->getActiveRecordTable()))
 				->delete()

@@ -122,17 +122,6 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 	/**
 	 * @depends testUpdate
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Can not update a non-existent active record entry to the `name` table.
-	 */
-	public function testUpdateIdException()
-	{
-		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
-		$abstractActiveRecord->update();
-	}
-
-	/**
-	 * @depends testUpdate
-	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
 	 * @expectedExceptionMessage SQLSTATE[HY000]: General error: 1 no such table: name2
 	 */
 	public function testUpdateNameException()
@@ -160,17 +149,6 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 
 		$pdoStatement = $this->pdo->query('SELECT * FROM name WHERE `id` = 1');
 		$this->assertFalse($pdoStatement->fetch());
-	}
-
-	/**
-	 * @depends testDelete
-	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Can not delete a non-existent active record entry from the `name` table.
-	 */
-	public function testDeleteIdException()
-	{
-		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
-		$abstractActiveRecord->delete();
 	}
 
 	/**
