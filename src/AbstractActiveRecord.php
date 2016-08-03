@@ -148,19 +148,18 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	/**
 	 * Fill the active record
 	 *
-	 * @param array $fetch
 	 * @return null
+	 * @param array $attributes
 	 */
-	public function fill(array $fetch)
+	public function fill(array $attributes)
 	{
-		$data = $this->getActiveRecordColumns();
 
-		foreach ($data as $key => &$value) {
-			if (!array_key_exists($key, $fetch)) {
+		foreach ($this->getActiveRecordColumns() as $key => &$value) {
+			if (!array_key_exists($key, $attributes)) {
 				throw new ActiveRecordException(sprintf('Can not read the expected column `%s`. It\'s not returnd by the `%s` table', $key, $this->getActiveRecordTable()));
 			}
 
-			$value = $fetch[$key];
+			$value = $attributes[$key];
 		}
 	}
 
