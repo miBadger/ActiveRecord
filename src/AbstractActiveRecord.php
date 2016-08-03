@@ -192,7 +192,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 			$result = [];
 
 			foreach ($queryResult as $fetch) {
-				$new = new static($this->getPdo());
+				$new = clone $this;
 
 				$result[] = $new->fill($fetch);
 			}
