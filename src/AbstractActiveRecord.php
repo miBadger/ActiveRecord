@@ -62,17 +62,17 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	public function read($id)
 	{
 		try {
-			$result = (new Query($this->getPdo(), $this->getActiveRecordTable()))
+			$row = (new Query($this->getPdo(), $this->getActiveRecordTable()))
 				->select()
 				->where('id', '=', $id)
 				->execute()
 				->fetch();
 
-			if ($result === false) {
+			if ($row === false) {
 				throw new ActiveRecordException(sprintf('Can not read the non-existent active record entry %d from the `%s` table.', $id, $this->getActiveRecordTable()));
 			}
 
-			$this->fill($result);
+			$this->fill($row)->setId($id);
 		} catch (\PDOException $e) {
 			throw new ActiveRecordException($e->getMessage(), 0, $e);
 		}
@@ -172,13 +172,13 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	public function searchOne(array $where = [], array $orderBy = [])
 	{
 		try {
-			$result = $this->getSearchQueryResult($where, $orderBy, 1)->fetch();
+			$row = $this->getSearchQueryResult($where, $orderBy, 1)->fetch();
 
-			if ($result === false) {
+			if ($row === false) {
 				throw new ActiveRecordException(sprintf('Can not search one non-existent entry from the `%s` table.', $this->getActiveRecordTable()));
 			}
 
-			return $this->fill($result);
+			return $this->fill($row)->setId($row['id']);
 		} catch (\PDOException $e) {
 			throw new ActiveRecordException($e->getMessage(), 0, $e);
 		}
@@ -193,10 +193,10 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 			$queryResult = $this->getSearchQueryResult($where, $orderBy, $limit, $offset);
 			$result = [];
 
-			foreach ($queryResult as $fetch) {
+			foreach ($queryResult as $row) {
 				$new = clone $this;
 
-				$result[] = $new->fill($fetch);
+				$result[] = $new->fill($row)->setId($row['id']);
 			}
 
 			return $result;
