@@ -73,7 +73,6 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 			}
 
 			$this->fill($result);
-			$this->setId($id);
 		} catch (\PDOException $e) {
 			throw new ActiveRecordException($e->getMessage(), 0, $e);
 		}
@@ -150,6 +149,9 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 */
 	public function fill(array $attributes)
 	{
+		if (isset($attributes['id'])) {
+			$this->setId($attributes['id']);
+		}
 
 		foreach ($this->getActiveRecordColumns() as $key => &$value) {
 			if (!array_key_exists($key, $attributes)) {
@@ -174,10 +176,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 				throw new ActiveRecordException(sprintf('Can not search one non-existent entry from the `%s` table.', $this->getActiveRecordTable()));
 			}
 
-			$this->fill($result);
-			$this->setId(intval($result['id']));
-
-			return $this;
+			return $this->fill($result);
 		} catch (\PDOException $e) {
 			throw new ActiveRecordException($e->getMessage(), 0, $e);
 		}
@@ -195,10 +194,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 			foreach ($queryResult as $fetch) {
 				$new = new static($this->getPdo());
 
-				$new->setId(intval($fetch['id']));
-				$new->fill($fetch);
-
-				$result[] = $new;
+				$result[] = $new->fill($fetch);
 			}
 
 			return $result;
