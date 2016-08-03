@@ -11,7 +11,7 @@ The Active Record Component.
 ```php
 <?php
 
-use miBadger/ActiveRecord/AbstractActiveRecord;
+use miBadger\ActiveRecord\AbstractActiveRecord;
 
 /**
  * The user class.
