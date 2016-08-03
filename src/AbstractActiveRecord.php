@@ -146,10 +146,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	}
 
 	/**
-	 * Fill the active record
-	 *
-	 * @return null
-	 * @param array $attributes
+	 * {@inheritdoc}
 	 */
 	public function fill(array $attributes)
 	{
@@ -161,6 +158,8 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 
 			$value = $attributes[$key];
 		}
+
+		return $this;
 	}
 
 	/**
