@@ -31,7 +31,7 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 
 	public function tearDown()
 	{
-		$this->pdo->query('DROP TABLE name');
+		$this->pdo->query('DROP TABLE `name`');
 	}
 
 	public function testCreate()
@@ -49,9 +49,9 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
 	 * @expectedExceptionMessage SQLSTATE[HY000]: General error: 1 no such table: name2
 	 */
-	public function testCreateNameException()
+	public function testCreateTableException()
 	{
-		$abstractActiveRecord = new AbstractActiveRecordNameExceptionTestMock($this->pdo);
+		$abstractActiveRecord = new AbstractActiveRecordTableExceptionTestMock($this->pdo);
 		$abstractActiveRecord->create();
 	}
 
@@ -60,9 +60,9 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
 	 * @expectedExceptionMessage SQLSTATE[HY000]: General error: 1 table name has no column named field2
 	 */
-	public function testCreateDataException()
+	public function testCreateColumnsException()
 	{
-		$abstractActiveRecord = new AbstractActiveRecordDataExceptionTestMock($this->pdo);
+		$abstractActiveRecord = new AbstractActiveRecordColumnsExceptionTestMock($this->pdo);
 		$abstractActiveRecord->create();
 	}
 
@@ -91,9 +91,9 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
 	 * @expectedExceptionMessage SQLSTATE[HY000]: General error: 1 no such table: name2
 	 */
-	public function testReadNameException()
+	public function testReadTableException()
 	{
-		$abstractActiveRecord = new AbstractActiveRecordNameExceptionTestMock($this->pdo);
+		$abstractActiveRecord = new AbstractActiveRecordTableExceptionTestMock($this->pdo);
 		$abstractActiveRecord->read(1);
 	}
 
@@ -104,7 +104,7 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 		$abstractActiveRecord->setField('test2');
 		$abstractActiveRecord->update();
 
-		$pdoStatement = $this->pdo->query('SELECT * FROM name WHERE `id` = 1');
+		$pdoStatement = $this->pdo->query('SELECT * FROM `name` WHERE `id` = 1');
 		$this->assertEquals(['id' => '1', 'field' => 'test2'], $pdoStatement->fetch());
 	}
 
@@ -113,9 +113,9 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
 	 * @expectedExceptionMessage SQLSTATE[HY000]: General error: 1 no such table: name2
 	 */
-	public function testUpdateNameException()
+	public function testUpdateTableException()
 	{
-		$abstractActiveRecord = new AbstractActiveRecordNameExceptionTestMock($this->pdo);
+		$abstractActiveRecord = new AbstractActiveRecordTableExceptionTestMock($this->pdo);
 		$abstractActiveRecord->update();
 	}
 
@@ -124,9 +124,9 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
 	 * @expectedExceptionMessage SQLSTATE[HY000]: General error: 1 no such column: field2
 	 */
-	public function testUpdateDataException()
+	public function testUpdateColumnsException()
 	{
-		$abstractActiveRecord = new AbstractActiveRecordDataExceptionTestMock($this->pdo);
+		$abstractActiveRecord = new AbstractActiveRecordColumnsExceptionTestMock($this->pdo);
 		$abstractActiveRecord->update();
 	}
 
@@ -136,7 +136,7 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 		$abstractActiveRecord->read(1);
 		$abstractActiveRecord->delete();
 
-		$pdoStatement = $this->pdo->query('SELECT * FROM name WHERE `id` = 1');
+		$pdoStatement = $this->pdo->query('SELECT * FROM `name` WHERE `id` = 1');
 		$this->assertFalse($pdoStatement->fetch());
 	}
 
@@ -145,9 +145,9 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
 	 * @expectedExceptionMessage SQLSTATE[HY000]: General error: 1 no such table: name2
 	 */
-	public function testDeleteNameException()
+	public function testDeleteTableException()
 	{
-		$abstractActiveRecord = new AbstractActiveRecordNameExceptionTestMock($this->pdo);
+		$abstractActiveRecord = new AbstractActiveRecordTableExceptionTestMock($this->pdo);
 		$abstractActiveRecord->delete();
 	}
 
@@ -207,7 +207,7 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testSearchOneException()
 	{
-		$abstractActiveRecord = new AbstractActiveRecordNameExceptionTestMock($this->pdo);
+		$abstractActiveRecord = new AbstractActiveRecordTableExceptionTestMock($this->pdo);
 		$abstractActiveRecord->searchOne();
 	}
 
@@ -226,14 +226,36 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 	 */
 	public function testSearchException()
 	{
-		$abstractActiveRecord = new AbstractActiveRecordNameExceptionTestMock($this->pdo);
+		$abstractActiveRecord = new AbstractActiveRecordTableExceptionTestMock($this->pdo);
 		$abstractActiveRecord->search();
 	}
 
 	/**
 	 * @depends testSearch
 	 */
-	public function testSearchOptionNumeric()
+	public function testSearchWhereKeyFunction()
+	{
+		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
+		$result = $abstractActiveRecord->search([['UPPER(field)', 'LIKE', 'TEST']]);
+
+		$this->assertCount(1, $result);
+	}
+
+	/**
+	 * @depends testSearch
+	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
+	 * @expectedExceptionMessage SQLSTATE[HY000]: General error: 1 no such column: field2
+	 */
+	public function testSearchWhereKeyException()
+	{
+		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
+		$abstractActiveRecord->search([['field2', 'LIKE', 'test']]);
+	}
+
+	/**
+	 * @depends testSearch
+	 */
+	public function testSearchWhereValueNumeric()
 	{
 		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
 		$result = $abstractActiveRecord->search([['id', '=', 1]]);
@@ -244,7 +266,7 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 	/**
 	 * @depends testSearch
 	 */
-	public function testSearchOptionString()
+	public function testSearchWhereValueString()
 	{
 		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
 		$result = $abstractActiveRecord->search([['field', 'LIKE', 'test']]);
@@ -255,7 +277,7 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 	/**
 	 * @depends testSearch
 	 */
-	public function testSearchOptionArray()
+	public function testSearchWhereValueArray()
 	{
 		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
 		$result = $abstractActiveRecord->search([['field', 'IN', ['test', 'test2']]]);
@@ -266,23 +288,12 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 	/**
 	 * @depends testSearch
 	 */
-	public function testSearchOptionNull()
+	public function testSearchWhereValueNull()
 	{
 		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
 		$result = $abstractActiveRecord->search([['field', 'IS', null]]);
 
 		$this->assertCount(1, $result);
-	}
-
-	/**
-	 * @depends testSearch
-	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage SQLSTATE[HY000]: General error: 1 no such column: field2
-	 */
-	public function testSearchOptionKeyException()
-	{
-		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
-		$abstractActiveRecord->search([['field2', 'LIKE', 'test']]);
 	}
 
 	/**
@@ -368,9 +379,9 @@ class AbstractActiveRecordTestMock extends AbstractActiveRecord
 }
 
 /**
- * The abstract active record name exception test mock class.
+ * The abstract active record table exception test mock class.
  */
-class AbstractActiveRecordNameExceptionTestMock extends AbstractActiveRecordTestMock
+class AbstractActiveRecordTableExceptionTestMock extends AbstractActiveRecordTestMock
 {
 	/**
 	 * {@inheritdoc}
@@ -390,9 +401,9 @@ class AbstractActiveRecordNameExceptionTestMock extends AbstractActiveRecordTest
 }
 
 /**
- * The abstract active record data exception test mock class.
+ * The abstract active record columns exception test mock class.
  */
-class AbstractActiveRecordDataExceptionTestMock extends AbstractActiveRecordTestMock
+class AbstractActiveRecordColumnsExceptionTestMock extends AbstractActiveRecordTestMock
 {
 	/**
 	 * {@inheritdoc}
