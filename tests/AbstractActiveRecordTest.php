@@ -277,7 +277,18 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 	/**
 	 * @depends testSearch
 	 */
-	public function testSearchWhereValueArray()
+	public function testSearchWhereValueInSingle()
+	{
+		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
+		$result = $abstractActiveRecord->search([['field', 'IN', 'test']]);
+
+		$this->assertCount(1, $result);
+	}
+
+	/**
+	 * @depends testSearch
+	 */
+	public function testSearchWhereValueInArray()
 	{
 		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
 		$result = $abstractActiveRecord->search([['field', 'IN', ['test', 'test2']]]);
