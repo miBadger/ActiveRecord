@@ -10,12 +10,14 @@
 
 namespace miBadger\ActiveRecord;
 
+use PHPUnit\Framework\TestCase;
+
 /**
  * The abstract active record test class.
  *
  * @since 1.0.0
  */
-class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
+class AbstractActiveRecordTest extends TestCase
 {
 	/** @var \PDO The PDO. */
 	private $pdo;
@@ -157,13 +159,20 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 		$abstractActiveRecord->read(1);
 		$abstractActiveRecord->delete();
 		$abstractActiveRecord->sync();
+
+		$pdoStatement = $this->pdo->query('SELECT * FROM `name` ORDER BY `id` DESC');
+		$this->assertEquals(['id' => '4', 'field' => 'test'], $pdoStatement->fetch());
 	}
 
 	public function testSyncUpdate()
 	{
 		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
 		$abstractActiveRecord->read(1);
+		$abstractActiveRecord->setField('test2');
 		$abstractActiveRecord->sync();
+
+		$pdoStatement = $this->pdo->query('SELECT * FROM `name` WHERE `id` = 1');
+		$this->assertEquals(['id' => '1', 'field' => 'test2'], $pdoStatement->fetch());
 	}
 
 	public function testExists()
@@ -179,6 +188,8 @@ class AbstractActiveRecordTest extends \PHPUnit_Framework_TestCase
 	{
 		$attributesActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
 		$attributesActiveRecord->fill(['field' => 'new']);
+
+		$this->assertEquals('new', $attributesActiveRecord->getField());
 	}
 
 	public function testSearchOne()
