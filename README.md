@@ -3,6 +3,7 @@
 [![Build Status](https://scrutinizer-ci.com/g/miBadger/miBadger.ActiveRecord/badges/build.png?b=master)](https://scrutinizer-ci.com/g/miBadger/miBadger.ActiveRecord/build-status/master)
 [![Code Coverage](https://scrutinizer-ci.com/g/miBadger/miBadger.ActiveRecord/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/miBadger/miBadger.ActiveRecord/?branch=master)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/miBadger/miBadger.ActiveRecord/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/miBadger/miBadger.ActiveRecord/?branch=master)
+[![SensioLabsInsight](https://insight.sensiolabs.com/projects/a413f3f7-2937-470b-968b-a1ab3abe2670/mini.png)](https://insight.sensiolabs.com/projects/a413f3f7-2937-470b-968b-a1ab3abe2670)
 
 The Active Record Component.
 
