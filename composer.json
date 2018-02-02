@@ -18,11 +18,11 @@
 		}
 	],
 	"require": {
-		"php": ">=5.6.0",
-		"mibadger/query": "0.*"
+		"php": "^7.0",
+		"mibadger/query": "^0.5.0"
 	},
 	"require-dev": {
-		"phpunit/phpunit": "5.*"
+		"phpunit/phpunit": "^6.5"
 	},
 	"autoload": {
 		"psr-4": {
