@@ -18,11 +18,32 @@ use miBadger\Query\Query;
  */
 abstract class AbstractActiveRecord implements ActiveRecordInterface
 {
+	const COLUMN_NAME_ID = 'id';
+	const COLUMN_TYPE_ID = 'INT UNSIGNED';
+
 	/** @var \PDO The PDO object. */
-	private $pdo;
+	protected $pdo;
 
 	/** @var null|int The ID. */
 	private $id;
+
+	/** @var array A map of column name to functions that hook the insert function */
+	private $registeredCreateHooks;
+
+	/** @var array A map of column name to functions that hook the read function */
+	private $registeredReadHooks;
+
+	/** @var array A map of column name to functions that hook the update function */
+	private $registeredUpdateHooks;
+
+	/** @var array A map of column name to functions that hook the update function */
+	private $registeredDeleteHooks;	
+
+	/** @var array A map of column name to functions that hook the search function */
+	private $registeredSearchHooks;
+
+	/** @var array A list of table column definitions */
+	private $tableDefinition;
 
 	/**
 	 * Construct an abstract active record with the given PDO.
@@ -35,6 +56,352 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		$pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
 
 		$this->setPdo($pdo);
+		$this->tableDefinition = $this->getActiveRecordTableDefinition();
+		$this->registeredCreateHooks = [];
+		$this->registeredReadHooks = [];
+		$this->registeredUpdateHooks = [];
+		$this->registeredDeleteHooks = [];
+		$this->registeredSearchHooks = [];
+
+		// Extend table definition with default ID field, throw exception if field already exists
+		if (array_key_exists('id', $this->tableDefinition)) {
+			$message = "Table definition in record contains a field with name \"id\"";
+			$message .= ", which is a reserved name by ActiveRecord";
+			throw new ActiveRecordException($message, 0);
+		}
+
+		$this->tableDefinition[self::COLUMN_NAME_ID] =
+		[
+			'value' => &$this->id,
+			'validate' => null,
+			'type' => self::COLUMN_TYPE_ID,
+			'properties' => ColumnProperty::NOT_NULL | ColumnProperty::IMMUTABLE | ColumnProperty::AUTO_INCREMENT | ColumnProperty::PRIMARY_KEY
+		];
+	}
+
+	/**
+	 * Register a new hook for a specific column that gets called before execution of the create() method
+	 * Only one hook per column can be registered at a time
+	 * @param string $columnName The name of the column that is registered.
+	 * @param string|callable $fn Either a callable, or the name of a method on the inheriting object.
+	 */
+	public function registerCreateHook($columnName, $fn) 
+	{
+		// Check whether column exists
+		if (!array_key_exists($columnName, $this->tableDefinition)) 
+		{
+			throw new ActiveRecordException("Hook is trying to register on non-existing column \"$columnName\"", 0);
+		}
+
+		// Enforcing 1 hook per table column
+		if (array_key_exists($columnName, $this->registeredCreateHooks)) {
+			$message = "Hook is trying to register on an already registered column \"$columnName\", ";
+			$message .= "do you have conflicting traits?";
+			throw new ActiveRecordException($message, 0);
+		}
+
+		if (is_string($fn) && is_callable([$this, $fn])) {
+			$this->registeredCreateHooks[$columnName] = [$this, $fn];
+		} else if (is_callable($fn)) {
+			$this->registeredCreateHooks[$columnName] = $fn;
+		} else {
+			throw new ActiveRecordException("Provided hook on column \"$columnName\" is not callable", 0);
+		}
+	}
+
+	/**
+	 * Register a new hook for a specific column that gets called before execution of the read() method
+	 * Only one hook per column can be registered at a time
+	 * @param string $columnName The name of the column that is registered.
+	 * @param string|callable $fn Either a callable, or the name of a method on the inheriting object.
+	 */
+	public function registerReadHook($columnName, $fn)
+	{
+		// Check whether column exists
+		if (!array_key_exists($columnName, $this->tableDefinition)) 
+		{
+			throw new ActiveRecordException("Hook is trying to register on non-existing column \"$columnName\"", 0);
+		}
+
+		// Enforcing 1 hook per table column
+		if (array_key_exists($columnName, $this->registeredReadHooks)) {
+			$message = "Hook is trying to register on an already registered column \"$columnName\", ";
+			$message .= "do you have conflicting traits?";
+			throw new ActiveRecordException($message, 0);
+		}
+
+		if (is_string($fn) && is_callable([$this, $fn])) {
+			$this->registeredReadHooks[$columnName] = [$this, $fn];
+		} else if (is_callable($fn)) {
+			$this->registeredReadHooks[$columnName] = $fn;
+		} else {
+			throw new ActiveRecordException("Provided hook on column \"$columnName\" is not callable", 0);
+		}
+	}
+
+	/**
+	 * Register a new hook for a specific column that gets called before execution of the update() method
+	 * Only one hook per column can be registered at a time
+	 * @param string $columnName The name of the column that is registered.
+	 * @param string|callable $fn Either a callable, or the name of a method on the inheriting object.
+	 */
+	public function registerUpdateHook($columnName, $fn)
+	{
+		// Check whether column exists
+		if (!array_key_exists($columnName, $this->tableDefinition)) 
+		{
+			throw new ActiveRecordException("Hook is trying to register on non-existing column \"$columnName\"", 0);
+		}
+
+		// Enforcing 1 hook per table column
+		if (array_key_exists($columnName, $this->registeredUpdateHooks)) {
+			$message = "Hook is trying to register on an already registered column \"$columnName\", ";
+			$message .= "do you have conflicting traits?";
+			throw new ActiveRecordException($message, 0);
+		}
+
+		if (is_string($fn) && is_callable([$this, $fn])) {
+			$this->registeredUpdateHooks[$columnName] = [$this, $fn];
+		} else if (is_callable($fn)) {
+			$this->registeredUpdateHooks[$columnName] = $fn;
+		} else {
+			throw new ActiveRecordException("Provided hook on column \"$columnName\" is not callable", 0);
+		}
+	}
+
+	/**
+	 * Register a new hook for a specific column that gets called before execution of the delete() method
+	 * Only one hook per column can be registered at a time
+	 * @param string $columnName The name of the column that is registered.
+	 * @param string|callable $fn Either a callable, or the name of a method on the inheriting object.
+	 */
+	public function registerDeleteHook($columnName, $fn)
+	{
+		// Check whether column exists
+		if (!array_key_exists($columnName, $this->tableDefinition)) 
+		{
+			throw new ActiveRecordException("Hook is trying to register on non-existing column \"$columnName\"", 0);
+		}
+
+		// Enforcing 1 hook per table column
+		if (array_key_exists($columnName, $this->registeredDeleteHooks)) {
+			$message = "Hook is trying to register on an already registered column \"$columnName\", ";
+			$message .= "do you have conflicting traits?";
+			throw new ActiveRecordException($message, 0);
+		}
+
+		if (is_string($fn) && is_callable([$this, $fn])) {
+			$this->registeredDeleteHooks[$columnName] = [$this, $fn];
+		} else if (is_callable($fn)) {
+			$this->registeredDeleteHooks[$columnName] = $fn;
+		} else {
+			throw new ActiveRecordException("Provided hook on column \"$columnName\" is not callable", 0);
+		}
+	}
+
+	/**
+	 * Register a new hook for a specific column that gets called before execution of the search() method
+	 * Only one hook per column can be registered at a time
+	 * @param string $columnName The name of the column that is registered.
+	 * @param string|callable $fn Either a callable, or the name of a method on the inheriting object. The callable is required to take one argument: an instance of miBadger\Query\Query; 
+	 */
+	public function registerSearchHook($columnName, $fn)
+	{
+		// Check whether column exists
+		if (!array_key_exists($columnName, $this->tableDefinition)) 
+		{
+			throw new ActiveRecordException("Hook is trying to register on non-existing column \"$columnName\"", 0);
+		}
+
+		// Enforcing 1 hook per table column
+		if (array_key_exists($columnName, $this->registeredSearchHooks)) {
+			$message = "Hook is trying to register on an already registered column \"$columnName\", ";
+			$message .= "do you have conflicting traits?";
+			throw new ActiveRecordException($message, 0);
+		}
+
+		if (is_string($fn) && is_callable([$this, $fn])) {
+			$this->registeredSearchHooks[$columnName] = [$this, $fn];
+		} else if (is_callable($fn)) {
+			$this->registeredSearchHooks[$columnName] = $fn;
+		} else {
+			throw new ActiveRecordException("Provided hook on column \"$columnName\" is not callable", 0);
+		}
+	}
+
+	/**
+	 * Adds a new column definition to the table.
+	 * @param string $columnName The name of the column that is registered.
+	 * @param Array $definition The definition of that column.
+	 */
+	public function extendTableDefinition($columnName, $definition)
+	{
+		// Enforcing table can only be extended with new columns
+		if (array_key_exists($columnName, $this->tableDefinition)) {
+			$message = "Table is being extended with a column that already exists, ";
+			$message .= "\"$columnName\" conflicts with your table definition";
+			throw new ActiveRecordException($message, 0);
+		}
+
+		$this->tableDefinition[$columnName] = $definition;
+	}
+
+	private function getDatabaseTypeString($colName, $type, $length)
+	{
+		if ($type === null) 
+		{
+			throw new ActiveRecordException(sprintf("Column %s has invalid type \"NULL\"", $colName));
+		}
+
+		switch (strtoupper($type)) {
+			case 'DATETIME':
+			case 'DATE':
+			case 'TIME':
+			case 'TEXT':
+			case 'INT UNSIGNED':
+				return $type;
+
+			case 'VARCHAR':
+				return sprintf('%s(%d)', $type, $length);
+
+			case 'INT':
+			case 'TINYINT':
+			case 'BIGINT':
+			default: 	
+			// @TODO(Default): throw exception, or implicitly assume that type is correct? (For when using SQL databases with different types)
+				if ($length === null) {
+					return $type;
+				} else {
+					return sprintf('%s(%d)', $type, $length);	
+				}
+		}
+	}
+
+	private function buildCreateTableColumnEntry($colName, $type, $length, $properties, $default)
+	{
+
+		$stmnt = sprintf('`%s` %s ', $colName, $this->getDatabaseTypeString($colName, $type, $length));
+		if ($properties & ColumnProperty::NOT_NULL) {
+			$stmnt .= 'NOT NULL ';
+		} else {
+			$stmnt .= 'NULL ';
+		}
+
+		if ($default !== NULL) {
+			$stmnt .= ' DEFAULT ' . $default . ' ';
+		}
+
+		if ($properties & ColumnProperty::AUTO_INCREMENT) {
+			$stmnt .= 'AUTO_INCREMENT ';
+		}
+
+		if ($properties & ColumnProperty::UNIQUE) {
+			$stmnt .= 'UNIQUE ';
+		}
+
+		if ($properties & ColumnProperty::PRIMARY_KEY) {
+			$stmnt .= 'PRIMARY KEY ';
+		}
+
+		return $stmnt;
+	}
+
+
+	private function sortColumnStatements($colStatements)
+	{
+		// Find ID statement and put it first
+		$sortedStatements = [];
+
+		$sortedStatements[] = $colStatements[self::COLUMN_NAME_ID];
+		unset($colStatements[self::COLUMN_NAME_ID]);
+
+		// Sort remaining columns in alphabetical order
+		$columns = array_keys($colStatements);
+		sort($columns);
+		foreach ($columns as $colName) {
+			$sortedStatements[] = $colStatements[$colName];
+		}
+
+		return $sortedStatements;
+	}
+
+
+	public function buildCreateTableSQL()
+	{
+		$columnStatements = [];
+		foreach ($this->tableDefinition as $colName => $definition) {
+			// Destructure column definition
+			$type    = $definition['type'] ?? null;
+			$default = $definition['default'] ?? null;
+			$length  = $definition['length'] ?? null;
+			$properties = $definition['properties'] ?? null;
+
+			if (isset($definition['relation']) && $type !== null) {
+				$msg = "Column \"$colName\": ";
+				$msg .= "Relationship columns have an automatically inferred type, so type should be omitted";
+				throw new ActiveRecordException($msg);
+			} else if (isset($definition['relation'])) {
+				$type = self::COLUMN_TYPE_ID;
+			}
+
+			$columnStatements[$colName] = $this->buildCreateTableColumnEntry($colName, $type, $length, $properties, $default);
+		}
+
+		// Sort table (first column is id, the remaining are alphabetically sorted)
+		$columnStatements = $this->sortColumnStatements($columnStatements);
+
+		$sql = 'CREATE TABLE ' . $this->getActiveRecordTable() . ' ';
+		$sql .= "(\n";
+		$sql .= join($columnStatements, ",\n");
+		$sql .= "\n);";
+
+		return $sql;
+	}
+
+	public function createTable()
+	{
+		$this->pdo->query($this->buildCreateTableSQL());
+	}
+
+	protected function buildConstraint($parentTable, $parentColumn, $childTable, $childColumn)
+	{
+		$template = <<<SQL
+ALTER TABLE `%s`
+ADD CONSTRAINT
+FOREIGN KEY (`%s`)
+REFERENCES `%s`(`%s`)
+ON DELETE CASCADE;
+SQL;
+		return sprintf($template, $childTable, $childColumn, $parentTable, $parentColumn);
+	}
+
+	public function createTableConstraints()
+	{
+		// Iterate over columns, check whether "relation" field exists, if so create constraint
+		foreach ($this->tableDefinition as $colName => $definition) {
+			if ($definition['relation'] ?? null instanceof AbstractActiveRecord) {
+				// Forge new relation
+				$target = $definition['relation'];
+				$constraintSql = $this->buildConstraint($target->getActiveRecordTable(), 'id', $this->getActiveRecordTable(), $colName);
+
+				$this->pdo->query($constraintSql);
+			}
+		}
+	}
+
+	private function getActiveRecordColumns()
+	{
+		$bindings = [];
+		foreach ($this->tableDefinition as $colName => $definition) {
+
+			// Ignore the id column (key) when inserting or updating
+			if ($colName == self::COLUMN_NAME_ID) {
+				continue;
+			}
+
+			$bindings[$colName] = &$definition['value'];
+		}
+		return $bindings;
 	}
 
 	/**
@@ -42,8 +409,13 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 */
 	public function create()
 	{
+		foreach ($this->registeredCreateHooks as $colName => $fn) {
+			// @TODO: Would it be better to pass the Query to the function?
+			$fn();
+		}
+
 		try {
-			(new Query($this->getPdo(), $this->getActiveRecordTable()))
+			$q = (new Query($this->getPdo(), $this->getActiveRecordTable()))
 				->insert($this->getActiveRecordColumns())
 				->execute();
 
@@ -60,6 +432,11 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 */
 	public function read($id)
 	{
+		foreach ($this->registeredReadHooks as $colName => $fn) {
+			// @TODO: Would it be better to pass the Query to the function?
+			$fn();
+		}
+
 		try {
 			$row = (new Query($this->getPdo(), $this->getActiveRecordTable()))
 				->select()
@@ -84,6 +461,11 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 */
 	public function update()
 	{
+		foreach ($this->registeredUpdateHooks as $colName => $fn) {
+			// @TODO: Would it be better to pass the Query to the function?
+			$fn();
+		}
+
 		try {
 			(new Query($this->getPdo(), $this->getActiveRecordTable()))
 				->update($this->getActiveRecordColumns())
@@ -101,6 +483,11 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 */
 	public function delete()
 	{
+		foreach ($this->registeredDeleteHooks as $colName => $fn) {
+			// @TODO: Would it be better to pass the Query to the function?
+			$fn();
+		}
+
 		try {
 			(new Query($this->getPdo(), $this->getActiveRecordTable()))
 				->delete()
@@ -208,6 +595,18 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		$this->getSearchQueryWhere($query, $where);
 		$this->getSearchQueryOrderBy($query, $orderBy);
 		$this->getSearchQueryLimit($query, $limit, $offset);
+
+		// Ignore all trait modifiers for which a where clause was specified
+		$registeredSearchHooks = $this->registeredSearchHooks;
+		foreach ($where as $index => $clause) {
+			[$colName, , ] = $clause;
+			unset($registeredSearchHooks[$colName]);
+		}
+
+		// Allow traits to modify the query
+		foreach ($registeredSearchHooks as $column => $searchFunction) {
+			$searchFunction($query);
+		}
 
 		return $query->execute();
 	}
@@ -320,5 +719,5 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 *
 	 * @return array the active record columns.
 	 */
-	abstract protected function getActiveRecordColumns();
+	abstract protected function getActiveRecordTableDefinition();
 }

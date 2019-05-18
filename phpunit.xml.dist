@@ -17,5 +17,8 @@
 		<ini name="display_errors" value="On" />
 		<ini name="display_startup_errors" value="On" />
 		<ini name="error_reporting" value="-1" />
+		<const name="DB_NAME" value="phpunit_test_mibadger_activerecord" />
+		<const name="DB_USER" value="phpunit" />
+		<const name="DB_PASS" value="phpunit" />
 	</php>
 </phpunit>
