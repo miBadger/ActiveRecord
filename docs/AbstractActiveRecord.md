@@ -252,3 +252,8 @@ To make sure that your database is correctly installed, you should always instal
 NOT IMPLEMENTED
 At the expense of performance, miBadger can verify whether the data model as described in php is consistent with the mysql database, and help enforce this by throwing exceptions whenever an inconsistency is detected.
 
+# Testing
+```sh
+composer install
+./vendor/bin/phpunit --bootstrap test-bootstrap.php tests
+```

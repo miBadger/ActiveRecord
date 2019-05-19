@@ -18,4 +18,5 @@ $user_alter = "ALTER USER 'phpunit'@'localhost' IDENTIFIED with mysql_native_pas
 $user_grant = "GRANT ALL PRIVILEGES ON *.* TO '$dbuser'@'localhost';";
 
 $sql_setup = $sql_cleanup . $db_create . $user_create . $user_alter . $user_grant;
+echo "Please enter mysql root password to set up a database environment for testing\n";
 exec("echo \"$sql_setup\" | mysql -u root -p");
