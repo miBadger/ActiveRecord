@@ -28,22 +28,22 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	private $id;
 
 	/** @var array A map of column name to functions that hook the insert function */
-	private $registeredCreateHooks;
+	protected $registeredCreateHooks;
 
 	/** @var array A map of column name to functions that hook the read function */
-	private $registeredReadHooks;
+	protected $registeredReadHooks;
 
 	/** @var array A map of column name to functions that hook the update function */
-	private $registeredUpdateHooks;
+	protected $registeredUpdateHooks;
 
 	/** @var array A map of column name to functions that hook the update function */
-	private $registeredDeleteHooks;	
+	protected $registeredDeleteHooks;	
 
 	/** @var array A map of column name to functions that hook the search function */
-	private $registeredSearchHooks;
+	protected $registeredSearchHooks;
 
 	/** @var array A list of table column definitions */
-	private $tableDefinition;
+	protected $tableDefinition;
 
 	/**
 	 * Construct an abstract active record with the given PDO.
@@ -383,7 +383,7 @@ SQL;
 	{
 		// Iterate over columns, check whether "relation" field exists, if so create constraint
 		foreach ($this->tableDefinition as $colName => $definition) {
-			if ($definition['relation'] ?? null instanceof AbstractActiveRecord) {
+			if (isset($definition['relation']) && $definition['relation'] instanceof AbstractActiveRecord) {
 				// Forge new relation
 				$target = $definition['relation'];
 				$constraintSql = $this->buildConstraint($target->getActiveRecordTable(), 'id', $this->getActiveRecordTable(), $colName);
@@ -393,7 +393,7 @@ SQL;
 		}
 	}
 
-	private function getActiveRecordColumns()
+	protected function getActiveRecordColumns()
 	{
 		$bindings = [];
 		foreach ($this->tableDefinition as $colName => $definition) {

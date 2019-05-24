@@ -130,6 +130,6 @@ trait Password
 	 */
 	public function clearPasswordResetToken()
 	{
-	$this->passwordResetToken = null;
+		$this->passwordResetToken = null;
 	}
 }
