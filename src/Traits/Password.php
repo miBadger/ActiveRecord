@@ -3,6 +3,7 @@
 namespace miBadger\ActiveRecord\Traits;
 
 use miBadger\ActiveRecord\ColumnProperty;
+use miBadger\ActiveRecord\ActiveRecordTraitException;
 
 const TRAIT_PASSWORD_FIELD_PASSWORD = "password";
 const TRAIT_PASSWORD_ENCRYPTION = \PASSWORD_BCRYPT;
@@ -18,6 +19,10 @@ trait Password
 	/** @var string|null The password reset token. */
 	protected $passwordResetToken;
 
+	/**
+	 * this method is required to be called in the constructor for each class that uses this trait. 
+	 * It adds the fields necessary for the passwords struct to the table definition
+	 */
 	protected function initPassword()
 	{
 		$this->extendTableDefinition(TRAIT_PASSWORD_FIELD_PASSWORD, [
@@ -25,7 +30,7 @@ trait Password
 			'validate' => null,
 			'type' => 'VARCHAR',
 			'length' => 1024,
-			'properties' => ColumnProperty::NOT_NULL
+			'properties' => null
 		]);
 
 		$this->extendTableDefinition(TRAIT_PASSWORD_FIELD_PASSWORD_RESET_TOKEN, [
@@ -37,6 +42,16 @@ trait Password
 		]);
 	}
 
+
+	/**
+	 * Returns whether the users password has been set
+	 * @return boolean true if the user has a password
+	 */
+	public function hasPasswordBeenSet()
+	{
+		return $this->password !== null;
+	}
+
 	/**
 	 * Returns true if the credentials are correct.
 	 *
@@ -44,7 +59,12 @@ trait Password
 	 * @return boolean true if the credentials are correct
 	 */
 	public function isPassword($password)
-	{
+	{ 
+		if (!$this->hasPasswordBeenSet())
+		{
+			throw new ActiveRecordTraitException("Password field has not been set");
+		}
+
 		if (!password_verify($password, $this->password)) {
 			return false;
 		}
@@ -66,13 +86,13 @@ trait Password
 	public function setPassword($password)
 	{
 		if (strlen($password) < TRAIT_PASSWORD_MIN_LENGTH) {
-			throw new \Exception(sprintf('\'Password\' must be atleast %s characters long. %s characters provied.', self::PASSWORD_MIN_LENGTH, strlen($password)));
+			throw new ActiveRecordTraitException(sprintf('\'Password\' must be atleast %s characters long. %s characters provied.', self::PASSWORD_MIN_LENGTH, strlen($password)));
 		}
 
 		$passwordHash = \password_hash($password, TRAIT_PASSWORD_ENCRYPTION, ['cost' => TRAIT_PASSWORD_STRENTH]);
 
 		if ($passwordHash === false) {
-			throw new \Exception('\'Password\' hash failed.');
+			throw new ActiveRecordTraitException('\'Password\' hash failed.');
 		}
 
 		$this->password = $passwordHash;
@@ -110,6 +130,6 @@ trait Password
 	 */
 	public function clearPasswordResetToken()
 	{
-		$this->passwordResetToken = null;
+	$this->passwordResetToken = null;
 	}
 }

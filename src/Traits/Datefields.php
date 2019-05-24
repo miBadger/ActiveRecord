@@ -16,6 +16,10 @@ trait Datefields
 	/** @var string The timestamp representing the moment this record was last updated */
 	protected $lastModified;
 
+	/**
+	 * this method is required to be called in the constructor for each class that uses this trait. 
+	 * It adds the datefields to the table definition and registers the callback hooks
+	 */
 	protected function initDatefields()
 	{
 		$this->extendTableDefinition(TRAIT_DATEFIELDS_CREATED, [
@@ -31,7 +35,6 @@ trait Datefields
 			'validate' => null,
 			'type' => 'DATETIME',
 			'default' => 'CURRENT_TIMESTAMP',
-			// 'on_update' => 'CURRENT_TIMESTAMP',		// @TODO(Discuss): Should we support this? (would not sync with object)
 			'properties' => ColumnProperty::NOT_NULL | ColumnProperty::IMMUTABLE
 		]);
 		
@@ -42,23 +45,37 @@ trait Datefields
 		$this->lastModified = null;
 	}
 
+	/**
+	 * The hook that gets called to set the timestamp whenever a new record is created
+	 */
 	protected function DatefieldsCreateHook()
 	{
-		// Should this be split up to seperate hooks for "last_modified" and "created" for consistency?
+		// @TODO: Should this be split up to seperate hooks for "last_modified" and "created" for consistency?
 		$this->created = (new \DateTime('now'))->format('Y-m-d H:i:s');
 		$this->lastModified = (new \DateTime('now'))->format('Y-m-d H:i:s');
 	}
 
+	/**
+	 * The hook that gets called to set the timestamp whenever a record gets updated
+	 */
 	protected function DatefieldsUpdateHook()
 	{
 		$this->lastModified = (new \DateTime('now'))->format('Y-m-d H:i:s');
 	}
 
+	/**
+	 * Returns the timestamp of last update for this record
+	 * @return DateTime
+	 */
 	public function getLastModifiedDate()
 	{
 		return new \DateTime($this->lastModified);
 	}
 
+	/**
+	 * Returns the timestamp of when this record was created
+	 * @return DateTime
+	 */
 	public function getCreationDate()
 	{
 		return new \DateTime($this->created);

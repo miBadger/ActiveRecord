@@ -236,6 +236,10 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 */
 	public function extendTableDefinition($columnName, $definition)
 	{
+		if ($this->tableDefinition === null) {
+			throw new ActiveRecordException("tableDefinition is null, most likely due to parent class not having been initialized in constructor");
+		}
+
 		// Enforcing table can only be extended with new columns
 		if (array_key_exists($columnName, $this->tableDefinition)) {
 			$message = "Table is being extended with a column that already exists, ";

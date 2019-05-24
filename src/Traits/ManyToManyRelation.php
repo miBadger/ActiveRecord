@@ -9,12 +9,16 @@ use miBadger\ActiveRecord\AbstractActiveRecord;
 Trait ManyToManyRelation
 {
 	// These variables are relevant for internal bookkeeping (constraint generation etc)
+	/** @var string The name of the left column of the relation. */
 	private $_leftColumnName;
 
+	/** @var string The name of the right column of the relation. */
 	private $_rightColumnName;
 
+	/** @var string The name of the left table of the relation. */
 	private $_leftEntityTable;
 
+	/** @var string The name of the right table of the relation. */
 	private $_rightEntityTable;
 
 	/**
