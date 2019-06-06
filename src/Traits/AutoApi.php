@@ -11,10 +11,6 @@ trait AutoApi
 	/* =======================================================================
 	 * ===================== Automatic API Support ===========================
 	 * ======================================================================= */
-	// @TODO: Or can it perhaps even be a wrapper object that exposes this functionality?
-	//			Usage Code something like (new AutoApi($object))->apiRead($_POST);
-	//		Advantage: AbstractActiveRecord stays smaller and is less godlike
-	// 		Question: How to update values (Is only the (complete) TableDefinition enough?)
 
 	public function apiSearch($inputs, $fieldWhitelist)
 	{
@@ -45,7 +41,6 @@ trait AutoApi
 	/* =============================================================
 	 * ===================== Constraint validation =================
 	 * ============================================================= */
-	// @TODO: Check whether length is ok
 
 	/**
 	 * Copy all table variables between two instances
@@ -158,6 +153,7 @@ trait AutoApi
 
 	/**
 	 * Copies the values for entries in the input with matching variable names in the record definition
+	 * @param Array $input The input data to be loaded into $this record
 	 */
 	private function loadData($input)
 	{
@@ -168,6 +164,12 @@ trait AutoApi
 		}
 	}
 
+	/**
+	 * @param Array $input Associative array of input values
+	 * @param Array $fieldWhitelist array of column names that are allowed to be filled by the input array 
+	 * @return Array Array containing the set of optional errors (associative array) and an optional array representation (associative)
+	 * 					of the modified data.
+	 */
 	public function apiCreate($input, $fieldWhitelist)
 	{
 		// Clone $this to new instance (for restoring if validation goes wrong)
@@ -215,6 +217,12 @@ trait AutoApi
 		}
 	}
 
+	/**
+	 * @param Array $input Associative array of input values
+	 * @param Array $fieldWhitelist array of column names that are allowed to be filled by the input array 
+	 * @return Array Array containing the set of optional errors (associative array) and an optional array representation (associative)
+	 * 					of the modified data.
+	 */
 	public function apiUpdate($input, $fieldWhitelist)
 	{
 		$transaction = clone $this;

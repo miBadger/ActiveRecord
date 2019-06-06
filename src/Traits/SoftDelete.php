@@ -9,6 +9,7 @@ const TRAIT_SOFT_DELETE_FIELD_KEY = "soft_delete";
 
 trait SoftDelete
 {
+	/** @var boolean the soft delete status for the entity this trait is embedded into. */
 	protected $softDelete;
 
 	/**
@@ -41,6 +42,7 @@ trait SoftDelete
 
 	/**
 	 * returns the name for the soft delete field in the database
+	 * @return string
 	 */
 	public function getSoftDeleteFieldName()
 	{
@@ -49,6 +51,7 @@ trait SoftDelete
 	
 	/**
 	 * Mark the current record as soft deleted
+	 * @return $this
 	 */
 	public function softDelete()
 	{
@@ -58,6 +61,7 @@ trait SoftDelete
 
 	/**
 	 * Undo the current soft deletion status (mark it as non-soft deleted)
+	 * @return $this
 	 */
 	public function softRestore()
 	{
@@ -67,6 +71,7 @@ trait SoftDelete
 
 	/**
 	 * returns the current soft deletion status
+	 * @return $this
 	 */
 	public function getDeletionStatus() 
 	{

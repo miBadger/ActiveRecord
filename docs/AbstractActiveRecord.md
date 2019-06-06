@@ -114,7 +114,7 @@ class Example extends AbstractActiveRecord
 
 
 ## Writing custom Traits
-Custom traits can extend the behaviour of AbstractActiveRecord using hooks. There are 4 hooks available 
+Custom traits can extend the behaviour of AbstractActiveRecord using hooks. The following hooks are available
 - extendTableDefinition: Add new columns to the entity
 - registerCreateHook: Add behaviour before inserting a new entry into the database
 - registerUpdateHook: Add behaviour before updating a record in the database

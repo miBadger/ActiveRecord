@@ -250,6 +250,10 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		$this->tableDefinition[$columnName] = $definition;
 	}
 
+	/**
+	 * Returns the type string as it should appear in the mysql create table statement for the given column
+	 * @return string The type string
+	 */
 	private function getDatabaseTypeString($colName, $type, $length)
 	{
 		if ($type === null) 
@@ -285,6 +289,13 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		}
 	}
 
+	/**
+	 * Builds the part of a MySQL create table statement that corresponds to the supplied column
+	 * @param string $colName 	Name of the database column
+	 * @param string $type 		The type of the string
+	 * @param int $properties 	The set of Column properties that apply to this column (See ColumnProperty for options)
+	 * @return string
+	 */
 	private function buildCreateTableColumnEntry($colName, $type, $length, $properties, $default)
 	{
 
@@ -314,7 +325,12 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		return $stmnt;
 	}
 
-
+	/**
+	 * Sorts the column statement components in the order such that the id appears first, 
+	 * 		followed by all other columns in alphabetical ascending order
+	 * @param   Array $colStatements Array of column statements
+	 * @return  Array
+	 */
 	private function sortColumnStatements($colStatements)
 	{
 		// Find ID statement and put it first
@@ -333,7 +349,10 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		return $sortedStatements;
 	}
 
-
+	/**
+	 * Builds the MySQL Create Table statement for the internal table definition
+	 * @return string
+	 */
 	public function buildCreateTableSQL()
 	{
 		$columnStatements = [];
@@ -366,11 +385,22 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		return $sql;
 	}
 
+	/**
+	 * Creates the entity as a table in the database
+	 */
 	public function createTable()
 	{
 		$this->pdo->query($this->buildCreateTableSQL());
 	}
 
+	/**
+	 * builds a MySQL constraint statement for the given parameters
+	 * @param string $parentTable
+	 * @param string $parentColumn
+	 * @param string $childTable
+	 * @param string $childColumn
+	 * @return string The MySQL table constraint string
+	 */
 	protected function buildConstraint($parentTable, $parentColumn, $childTable, $childColumn)
 	{
 		$template = <<<SQL
@@ -383,6 +413,10 @@ SQL;
 		return sprintf($template, $childTable, $childColumn, $parentTable, $parentColumn);
 	}
 
+	/**
+	 * Iterates over the specified constraints in the table definition, 
+	 * 		and applies these to the database.
+	 */
 	public function createTableConstraints()
 	{
 		// Iterate over columns, check whether "relation" field exists, if so create constraint
@@ -397,6 +431,10 @@ SQL;
 		}
 	}
 
+	/**
+	 * Returns the name -> variable mapping for the table definition.
+	 * @return Array The mapping
+	 */
 	protected function getActiveRecordColumns()
 	{
 		$bindings = [];
