@@ -6,6 +6,7 @@
 [![SensioLabsInsight](https://insight.sensiolabs.com/projects/a413f3f7-2937-470b-968b-a1ab3abe2670/mini.png)](https://insight.sensiolabs.com/projects/a413f3f7-2937-470b-968b-a1ab3abe2670)
 
 The Active Record Component.
+For more in depth information, check out the docs directory.
 
 ## Example
 
@@ -33,10 +34,17 @@ class User extends AbstractActiveRecord
 	/**
 	 * {@inheritdoc}
 	 */
-	public function getActiveRecordColumns()
+	public function getActiveRecordTableDefinition() 
 	{
 		return [
-			'name' => &$name
+			'name' =>
+			[
+				'value' => &$this->name,
+				'validate' => null,
+				'type' => 'VARCHAR',
+				'length' => 256,
+				'properties' => ColumnProperty::NOT_NULL | ColumnProperty::UNIQUE
+			]
 		];
 	}
 

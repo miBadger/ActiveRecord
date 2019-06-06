@@ -266,7 +266,11 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 				return $type;
 
 			case 'VARCHAR':
-				return sprintf('%s(%d)', $type, $length);
+				if ($length === null) {
+					throw new ActiveRecordException(sprintf("field type %s requires specified column field \"LENGTH\"", $colName));
+				} else {
+					return sprintf('%s(%d)', $type, $length);	
+				}
 
 			case 'INT':
 			case 'TINYINT':

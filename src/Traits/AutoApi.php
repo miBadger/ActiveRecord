@@ -1,0 +1,264 @@
+<?php
+
+namespace miBadger\ActiveRecord\Traits;
+
+use miBadger\ActiveRecord\ColumnProperty;
+use miBadger\ActiveRecord\ActiveRecordException;
+use miBadger\Query\Query;
+
+trait AutoApi
+{
+	/* =======================================================================
+	 * ===================== Automatic API Support ===========================
+	 * ======================================================================= */
+	// @TODO: Or can it perhaps even be a wrapper object that exposes this functionality?
+	//			Usage Code something like (new AutoApi($object))->apiRead($_POST);
+	//		Advantage: AbstractActiveRecord stays smaller and is less godlike
+	// 		Question: How to update values (Is only the (complete) TableDefinition enough?)
+
+	public function apiSearch($inputs, $fieldWhitelist)
+	{
+		// @TODO: How to handle this case?
+		// => Default parameter names for searching? (limit, pagination, sort order etc)
+		//		Find default names for this and store in class
+		// => Limited search parameters? (We don't want to be able to search on a password field for example)
+	}
+
+	public function toArray($fieldWhitelist)
+	{
+		$output = [];
+		foreach ($this->tableDefinition as $colName => $definition) {
+			if (in_array($colName, $fieldWhitelist)) {
+				$output[$colName] = $definition['value'];
+			}
+		}
+
+		return $output;
+	}
+
+	public function apiRead($id, $fieldWhitelist)
+	{
+		$this->read($id);
+		return $this->toArray($fieldWhitelist);
+	}
+
+	/* =============================================================
+	 * ===================== Constraint validation =================
+	 * ============================================================= */
+	// @TODO: Check whether length is ok
+
+	/**
+	 * Copy all table variables between two instances
+	 */
+	private function syncInstances($to, $from)
+	{
+		foreach ($to->tableDefinition as $colName => $definition) {
+			$definition['value'] = $from->tableDefinition[$colName]['value'];
+		}
+	}
+
+	private function filterInputColumns($input, $whitelist)
+	{
+		$filteredInput = $input;
+		foreach ($input as $colName => $value) {
+			if (!in_array($colName, $whitelist)) {
+				unset($filteredInput[$colName]);
+			}
+		}
+		return $filteredInput;
+	}
+
+	private function validateExcessKeys($input)
+	{
+		$errors = [];
+		foreach ($input as $colName => $value) {
+			if (!array_key_exists($colName, $this->tableDefinition)) {
+				$errors[$colName] = "Unknown input field";
+				continue;
+			}
+		}
+		return $errors;
+	}
+
+	private function validateImmutableColumns($input)
+	{
+		$errors = [];
+		foreach ($this->tableDefinition as $colName => $definition) {
+			$property = $definition['properties'] ?? null;
+			if (array_key_exists($colName, $input)
+				&& $property & ColumnProperty::IMMUTABLE) {
+				$errors[$colName] = "Field cannot be changed";
+			}
+		}
+		return $errors;
+	}
+
+	private function validateInputValues($input)
+	{
+		$errors = [];
+		foreach ($this->tableDefinition as $colName => $definition) {
+			// Validation check 1: If validate function is present
+			if (array_key_exists($colName, $input) 
+				&& is_callable($definition['validate'] ?? null)) {
+				$inputValue = $input[$colName];
+
+				// If validation function fails
+				[$status, $message] = $definition['validate']($inputValue);
+				if (!$status) {
+					$errors[$colName] = $message;
+				}	
+			}
+
+			// Validation check 2: If relation column, check whether entity exists
+			$properties = $definition['properties'] ?? null;
+			if (isset($definition['relation'])
+				&& ($properties & ColumnProperty::NOT_NULL)) {
+				$instance = clone $definition['relation'];
+				try {
+					$instance->read($input[$colName] ?? null);
+				} catch (ActiveRecordException $e) {
+					$errors[$colName] = "Entity for this value doesn't exist";
+				}
+			}
+		}
+		return $errors;
+	}
+
+	/**
+	 * This function is only used for API Update calls (direct getter/setter functions are unconstrained)
+	 */
+	private function validateMissingKeys()
+	{
+		$errors = [];
+
+		foreach ($this->tableDefinition as $colName => $colDefinition) {
+			$default = $colDefinition['default'] ?? null;
+			$properties = $colDefinition['properties'] ?? null;
+			$value = $colDefinition['value'];
+
+			// If nullable and default not set => null
+			// If nullable and default null => default (null)
+			// If nullable and default set => default (value)
+
+			// if not nullable and default not set => error
+			// if not nullable and default null => error
+			// if not nullable and default st => default (value)
+			// => if not nullable and default null and value not set => error message in this method
+			if ($properties & ColumnProperty::NOT_NULL
+				&& $default === null
+				&& !($properties & ColumnProperty::AUTO_INCREMENT)
+				// && !array_key_exists($colName, $input)
+				&& $value === null) {
+				$errors[$colName] = sprintf("The required field \"%s\" is missing", $colName);
+			}
+		}
+
+		return $errors;
+	}
+
+	/**
+	 * Copies the values for entries in the input with matching variable names in the record definition
+	 */
+	private function loadData($input)
+	{
+		foreach ($this->tableDefinition as $colName => $definition) {
+			if (array_key_exists($colName, $input)) {
+				$definition['value'] = $input[$colName];
+			}
+		}
+	}
+
+	public function apiCreate($input, $fieldWhitelist)
+	{
+		// Clone $this to new instance (for restoring if validation goes wrong)
+		$transaction = clone $this;
+		$errors = [];
+
+		// Filter out all non-whitelisted input values
+		$input = $this->filterInputColumns($input, $fieldWhitelist);
+
+		// Validate excess keys
+		$errors += $transaction->validateExcessKeys($input);
+
+		// Validate input values (using validation function)
+		$errors += $transaction->validateInputValues($input);
+
+		// "Copy" data into transaction
+		$transaction->loadData($input);
+
+		// Run create hooks
+		foreach ($this->registeredCreateHooks as $colName => $fn) {
+			$fn();
+		}
+
+		// Validate missing keys
+		$errors += $transaction->validateMissingKeys();
+
+		// If no errors, commit the pending data
+		if (empty($errors)) {
+			$this->syncInstances($this, $transaction);
+
+			try {
+				$q = (new Query($this->getPdo(), $this->getActiveRecordTable()))
+					->insert($this->getActiveRecordColumns())
+					->execute();
+
+				$this->setId(intval($this->getPdo()->lastInsertId()));
+			} catch (\PDOException $e) {
+				// @TODO: Potentially filter and store mysql messages (where possible) in error messages
+				throw new ActiveRecordException($e->getMessage(), 0, $e);
+			}
+
+			return [null, $this->toArray($fieldWhitelist)];
+		} else {
+			return [$errors, null];
+		}
+	}
+
+	public function apiUpdate($input, $fieldWhitelist)
+	{
+		$transaction = clone $this;
+		$errors = [];
+
+		// Filter out all non-whitelisted input values
+		$input = $this->filterInputColumns($input, $fieldWhitelist);
+
+		// Check for excess keys
+		$errors += $transaction->validateExcessKeys($input);
+
+		// Check for immutable keys
+		$errors += $transaction->validateImmutableColumns($input);
+
+		// Validate input values (using validation function)
+		$errors += $transaction->validateInputValues($input);
+
+		// "Copy" data into transaction
+		$transaction->loadData($input);
+
+		// Run create hooks
+		foreach ($this->registeredUpdateHooks as $colName => $fn) {
+			$fn();
+		}
+
+		// Validate missing keys
+		$errors += $transaction->validateMissingKeys();
+
+		// Update database
+		if (empty($errors)) {
+			$this->syncInstances($this, $transaction);
+
+			try {
+				(new Query($this->getPdo(), $this->getActiveRecordTable()))
+					->update($this->getActiveRecordColumns())
+					->where('id', '=', $this->getId())
+					->execute();
+			} catch (\PDOException $e) {
+				throw new ActiveRecordException($e->getMessage(), 0, $e);
+			}
+
+			return [null, $this->toArray($fieldWhitelist)];
+		} else {
+			return [$errors, null];
+		}
+	}
+}

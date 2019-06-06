@@ -86,7 +86,7 @@ $activeRecord->getPdo();
 $activeRecord->getId();
 ```
 ## Entity extension using traits
-Since a lot of projects will have similar concepts reused across data models, miBadger supports entity extension and code reuse by using Traits.
+Since a lot of projects have similar concepts reused across data models, miBadger supports entity extension and code reuse by using Traits.
 Every trait implements a set of functionality that can be incorporated into an ActiveRecord entity.
 To use traits in an entity:
 1. Include the trait into the class like you would do with every other trait
@@ -116,9 +116,11 @@ class Example extends AbstractActiveRecord
 ## Writing custom Traits
 Custom traits can extend the behaviour of AbstractActiveRecord using hooks. There are 4 hooks available 
 - extendTableDefinition: Add new columns to the entity
-- registerTraitInsertHook: Add behaviour before inserting a new entry into the database
-- registerTraitUpdateHook: Add behaviour before updating a record in the database
-- registerTraitSearchHook: Modify the default search parameters
+- registerCreateHook: Add behaviour before inserting a new entry into the database
+- registerUpdateHook: Add behaviour before updating a record in the database
+- registerReadHook: Add behaviour before attempting to read a record from the database
+- registerDeleteHook: Add behaviour before attempting to remove a record from the database
+- registerSearchHook: Modify the default search parameters
 
 ```php
 <?php
@@ -229,16 +231,15 @@ class FollowerRelation extends AbstractActiveRecord
 		$this->initManyToManyRelation(new User($pdo), $this->follower, new User($pdo), $this->target);
 	}
 }
-
 ```
 
 ## Database setup
 To make database setup easy, and help with consistency between data and database specification, the table spec for an entity allows you to install a table and optional constraints directly onto the database.
 
 To make sure that your database is correctly installed, you should always install in the following order:
-1. Install the tables for all the entities first using ```php (new Example($pdo))->createTable(); ```
+1. Install the tables for all the entities first using ```(new Example($pdo))->createTable(); ```
 2. Only after installing all tables:
-	Install the table constraints using ```php (new Example($pdo))->createTableConstraints(); ```
+	Install the table constraints using ```(new Example($pdo))->createTableConstraints(); ```
 
 ```php
 (new User($pdo))->createTable();
