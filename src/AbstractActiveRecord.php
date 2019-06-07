@@ -645,7 +645,7 @@ SQL;
 		// Ignore all trait modifiers for which a where clause was specified
 		$registeredSearchHooks = $this->registeredSearchHooks;
 		foreach ($where as $index => $clause) {
-			[$colName, , ] = $clause;
+			$colName = $clause[0];
 			unset($registeredSearchHooks[$colName]);
 		}
 

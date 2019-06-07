@@ -6,7 +6,7 @@ php:
     - 7.2
     - hhvm
 
-services:   
+services:
     - mysql
 
 matrix:
