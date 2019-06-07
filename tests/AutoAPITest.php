@@ -60,7 +60,7 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 	public function testApiRead()
 	{
 		// Create sample data
-		[$id,] = $this->createMockData();
+		$id = $this->createMockData()[0];
 
 		// Test read
 		$entity = new TestEntity($this->pdo);
@@ -137,7 +137,7 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 
 	public function testApiUpdate()
 	{
-		[$id,] = $this->createMockData();
+		$id = $this->createMockData()[0];
 
 		$entity = new TestEntity($this->pdo);
 		$entity->read($id);
@@ -153,7 +153,7 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 
 	public function testApiUpdateImmutables()
 	{
-		[$id,] = $this->createMockData();
+		$id = $this->createMockData()[0];
 
 		$entity = new TestEntity($this->pdo);
 		$entity->read($id);
