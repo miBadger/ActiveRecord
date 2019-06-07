@@ -12,7 +12,8 @@ services:
 matrix:
     allow_failures:
         - php: hhvm
-
+        - php: 7.0
+        
 before_install:
     - if [[ $TRAVIS_PHP_VERSION = hhv* ]]; then echo hhvm.php7.all=1 >> /etc/hhvm/php.ini; fi
     - mysql -e 'CREATE DATABASE mibadger_activerecord_phpunit_tests;'
