@@ -53,7 +53,7 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 	/**
 	 * @depends testCreate
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage SQLSTATE[42S02]: Base table or view not found: 1146 Table 'phpunit_test_mibadger_activerecord.name2' doesn't exist
+	 * @expectedExceptionMessage SQLSTATE[42S02]: Base table or view not found: 1146 Table 'mibadger_activerecord_phpunit_tests.name2' doesn't exist
 	 */
 	public function testCreateTableException()
 	{
@@ -95,7 +95,7 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 	/**
 	 * @depends testRead
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage SQLSTATE[42S02]: Base table or view not found: 1146 Table 'phpunit_test_mibadger_activerecord.name2' doesn't exist
+	 * @expectedExceptionMessage SQLSTATE[42S02]: Base table or view not found: 1146 Table 'mibadger_activerecord_phpunit_tests.name2' doesn't exist
 	 */
 	public function testReadTableException()
 	{
@@ -117,7 +117,7 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 	/**
 	 * @depends testUpdate
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage SQLSTATE[42S02]: Base table or view not found: 1146 Table 'phpunit_test_mibadger_activerecord.name2' doesn't exist
+	 * @expectedExceptionMessage SQLSTATE[42S02]: Base table or view not found: 1146 Table 'mibadger_activerecord_phpunit_tests.name2' doesn't exist
 	 */
 	public function testUpdateTableException()
 	{
@@ -149,7 +149,7 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 	/**
 	 * @depends testDelete
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage SQLSTATE[42S02]: Base table or view not found: 1146 Table 'phpunit_test_mibadger_activerecord.name2' doesn't exist
+	 * @expectedExceptionMessage SQLSTATE[42S02]: Base table or view not found: 1146 Table 'mibadger_activerecord_phpunit_tests.name2' doesn't exist
 	 */
 	public function testDeleteTableException()
 	{
@@ -218,7 +218,7 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 	/**
 	 * @depends testSearchOne
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage SQLSTATE[42S02]: Base table or view not found: 1146 Table 'phpunit_test_mibadger_activerecord.name2' doesn't exist
+	 * @expectedExceptionMessage SQLSTATE[42S02]: Base table or view not found: 1146 Table 'mibadger_activerecord_phpunit_tests.name2' doesn't exist
 	 */
 	public function testSearchOneException()
 	{
@@ -237,7 +237,7 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 	/**
 	 * @depends testSearch
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage SQLSTATE[42S02]: Base table or view not found: 1146 Table 'phpunit_test_mibadger_activerecord.name2' doesn't exist
+	 * @expectedExceptionMessage SQLSTATE[42S02]: Base table or view not found: 1146 Table 'mibadger_activerecord_phpunit_tests.name2' doesn't exist
 	 */
 	public function testSearchException()
 	{
