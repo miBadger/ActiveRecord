@@ -132,4 +132,17 @@ trait Password
 	{
 		$this->passwordResetToken = null;
 	}
+	
+	abstract function extendTableDefinition($columnName, $definition);
+
+	abstract function registerSearchHook($columnName, $fn);
+
+	abstract function registerDeleteHook($columnName, $fn);
+
+	abstract function registerUpdateHook($columnName, $fn);
+
+	abstract function registerReadHook($columnName, $fn);
+
+	abstract function registerCreateHook($columnName, $fn);
+
 }

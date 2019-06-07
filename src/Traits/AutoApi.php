@@ -269,4 +269,14 @@ trait AutoApi
 			return [$errors, null];
 		}
 	}
+
+	abstract public function read($id);
+
+	abstract public function getPdo();
+
+	abstract function setId($id);
+
+	abstract function getActiveRecordTable();
+
+	abstract function getActiveRecordColumns();
 }

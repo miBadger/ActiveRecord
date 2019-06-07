@@ -85,7 +85,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 * @param string $columnName The name of the column that is registered.
 	 * @param string|callable $fn Either a callable, or the name of a method on the inheriting object.
 	 */
-	public function registerCreateHook($columnName, $fn) 
+	public function registerCreateHook($columnName, $fn)
 	{
 		// Check whether column exists
 		if (!array_key_exists($columnName, $this->tableDefinition)) 

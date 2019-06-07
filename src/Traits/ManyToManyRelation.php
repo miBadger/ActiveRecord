@@ -73,4 +73,17 @@ Trait ManyToManyRelation
 		$this->pdo->query($leftConstraint);
 		$this->pdo->query($rightConstraint);
 	}
+	
+	abstract function extendTableDefinition($columnName, $definition);
+
+	abstract function registerSearchHook($columnName, $fn);
+
+	abstract function registerDeleteHook($columnName, $fn);
+
+	abstract function registerUpdateHook($columnName, $fn);
+
+	abstract function registerReadHook($columnName, $fn);
+
+	abstract function registerCreateHook($columnName, $fn);
+
 }
