@@ -1,8 +1,16 @@
 build:
+    nodes:
+        my-tests:
+            environment:
+                php:
+                    version: 7.1
+            services:
+                mysql: 5.7
+
     tests:
         override:
             -
-                command: vendor/bin/phpunit --colors --coverage-clover=my-coverage-file --verbose
+                command: mysql -e 'CREATE DATABASE mibadger_activerecord_phpunit_tests;' && vendor/bin/phpunit --configuration phpunit-scrutinizer.xml.dist --colors --coverage-clover=my-coverage-file --verbose
                 coverage:
                     file: my-coverage-file
                     format: php-clover
