@@ -12,6 +12,24 @@ trait AutoApi
 	 * ===================== Automatic API Support ===========================
 	 * ======================================================================= */
 
+	/** @var array A map of column name to functions that hook the insert function */
+	protected $registeredCreateHooks;
+
+	/** @var array A map of column name to functions that hook the read function */
+	protected $registeredReadHooks;
+
+	/** @var array A map of column name to functions that hook the update function */
+	protected $registeredUpdateHooks;
+
+	/** @var array A map of column name to functions that hook the update function */
+	protected $registeredDeleteHooks;	
+
+	/** @var array A map of column name to functions that hook the search function */
+	protected $registeredSearchHooks;
+
+	/** @var array A list of table column definitions */
+	protected $tableDefinition;
+
 	public function apiSearch($inputs, $fieldWhitelist)
 	{
 		// @TODO: How to handle this case?

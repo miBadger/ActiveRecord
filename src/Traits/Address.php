@@ -11,12 +11,16 @@ const TRAIT_ADDRESS_FIELD_COUNTRY = "address_country";
 
 trait Address
 {
+	/** @var string the address line */
 	protected $address;
 
+	/** @var string the zipcode */
 	protected $zipcode;
 
+	/** @var string the city */
 	protected $city;
 
+	/** @var string the country */
 	protected $country;
 
 	protected function initAddress() 
@@ -99,16 +103,34 @@ trait Address
 		$this->country = $country;
 	}
 
+	/**
+	 * @return void
+	 */
 	abstract function extendTableDefinition($columnName, $definition);
-
+	
+	/**
+	 * @return void
+	 */
 	abstract function registerSearchHook($columnName, $fn);
 
+	/**
+	 * @return void
+	 */
 	abstract function registerDeleteHook($columnName, $fn);
 
+	/**
+	 * @return void
+	 */
 	abstract function registerUpdateHook($columnName, $fn);
 
+	/**
+	 * @return void
+	 */
 	abstract function registerReadHook($columnName, $fn);
 
+	/**
+	 * @return void
+	 */
 	abstract function registerCreateHook($columnName, $fn);
 	
 }

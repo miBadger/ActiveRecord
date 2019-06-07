@@ -9,6 +9,7 @@ use miBadger\ActiveRecord\AbstractActiveRecord;
 Trait ManyToManyRelation
 {
 	// These variables are relevant for internal bookkeeping (constraint generation etc)
+
 	/** @var string The name of the left column of the relation. */
 	private $_leftColumnName;
 
@@ -28,6 +29,7 @@ Trait ManyToManyRelation
 	 * @param &variable $leftVariable The variable where the id for the left entity will be stored
 	 * @param AbstractActiveRecord $rightEntity The left entity of the relation
 	 * @param &variable $leftVariable The variable where the id for the right entity will be stored
+	 * @return void
 	 */
 	protected function initManyToManyRelation(AbstractActiveRecord $leftEntity, &$leftVariable, AbstractActiveRecord $rightEntity, &$rightVariable)
 	{
@@ -59,6 +61,7 @@ Trait ManyToManyRelation
 
 	/**
 	 * Build the constraints for the many-to-many relation table
+	 * @return void
 	 */
 	public function createTableConstraints()
 	{
@@ -74,16 +77,34 @@ Trait ManyToManyRelation
 		$this->pdo->query($rightConstraint);
 	}
 	
+	/**
+	 * @return void
+	 */
 	abstract function extendTableDefinition($columnName, $definition);
-
+	
+	/**
+	 * @return void
+	 */
 	abstract function registerSearchHook($columnName, $fn);
 
+	/**
+	 * @return void
+	 */
 	abstract function registerDeleteHook($columnName, $fn);
 
+	/**
+	 * @return void
+	 */
 	abstract function registerUpdateHook($columnName, $fn);
 
+	/**
+	 * @return void
+	 */
 	abstract function registerReadHook($columnName, $fn);
 
+	/**
+	 * @return void
+	 */
 	abstract function registerCreateHook($columnName, $fn);
 
 }
