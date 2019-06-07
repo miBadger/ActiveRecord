@@ -52,6 +52,16 @@ class AbstractActiveRecord_DatabaseManagementTest extends TestCase
 		$pdoStatement = $this->pdo->query('show tables;');
 		$this->assertEquals([$key => 'test_mock_blogpost'], $pdoStatement->fetch());
 	}
+
+	/**
+	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
+	 * @expectedExceptionMessage Column field has invalid type "NULL"
+	 */
+	public function testCreateNullField()
+	{
+		$entity = new NullTypeFieldRecordMock($this->pdo);
+		$entity->createTable();
+	}
 	
 	/**
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
@@ -163,4 +173,40 @@ class BlogPostRecordTestMock extends AbstractActiveRecord
 	}
 }
 
+/**
+ * The abstract active record columns exception test mock class.
+ */
+class NullTypeFieldRecordMock extends AbstractActiveRecord
+{
+	private $field;
 
+	/**
+	 * {@inheritdoc}
+	 */
+	public function getId()
+	{
+		return 1;
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	protected function getActiveRecordTableDefinition()
+	{
+		return [
+			'field' => 
+			[
+				'value' => &$this->field,
+				'validate' => null,
+				'type' => null,
+				'length' => 256,
+				'properties' => null
+			]
+		];
+	}
+
+	protected function getActiveRecordTable()
+	{
+		return 'nulltype_field_record_mock_test';
+	}
+}

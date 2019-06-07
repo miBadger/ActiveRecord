@@ -133,9 +133,6 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		}
 	}
 
-
-
-
 	/**
 	 * Register a new hook for a specific column that gets called before execution of the update() method
 	 * Only one hook per column can be registered at a time
@@ -220,12 +217,10 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 */
 	private function getDatabaseTypeString($colName, $type, $length)
 	{
-		if ($type === null) 
-		{
-			throw new ActiveRecordException(sprintf("Column %s has invalid type \"NULL\"", $colName));
-		}
-
 		switch (strtoupper($type)) {
+			case '':
+				throw new ActiveRecordException(sprintf("Column %s has invalid type \"NULL\"", $colName));
+				
 			case 'DATETIME':
 			case 'DATE':
 			case 'TIME':
@@ -262,7 +257,6 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 */
 	private function buildCreateTableColumnEntry($colName, $type, $length, $properties, $default)
 	{
-
 		$stmnt = sprintf('`%s` %s ', $colName, $this->getDatabaseTypeString($colName, $type, $length));
 		if ($properties & ColumnProperty::NOT_NULL) {
 			$stmnt .= 'NOT NULL ';
