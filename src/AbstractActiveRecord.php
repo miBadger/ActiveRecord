@@ -79,13 +79,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		];
 	}
 
-	/**
-	 * Register a new hook for a specific column that gets called before execution of the create() method
-	 * Only one hook per column can be registered at a time
-	 * @param string $columnName The name of the column that is registered.
-	 * @param string|callable $fn Either a callable, or the name of a method on the inheriting object.
-	 */
-	public function registerCreateHook($columnName, $fn)
+	private function checkHookConstraints($columnName, $hookMap)
 	{
 		// Check whether column exists
 		if (!array_key_exists($columnName, $this->tableDefinition)) 
@@ -94,11 +88,22 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		}
 
 		// Enforcing 1 hook per table column
-		if (array_key_exists($columnName, $this->registeredCreateHooks)) {
+		if (array_key_exists($columnName, $hookMap)) {
 			$message = "Hook is trying to register on an already registered column \"$columnName\", ";
 			$message .= "do you have conflicting traits?";
 			throw new ActiveRecordException($message, 0);
 		}
+	}
+
+	/**
+	 * Register a new hook for a specific column that gets called before execution of the create() method
+	 * Only one hook per column can be registered at a time
+	 * @param string $columnName The name of the column that is registered.
+	 * @param string|callable $fn Either a callable, or the name of a method on the inheriting object.
+	 */
+	public function registerCreateHook($columnName, $fn)
+	{
+		$this->checkHookConstraints($columnName, $this->registeredCreateHooks);
 
 		if (is_string($fn) && is_callable([$this, $fn])) {
 			$this->registeredCreateHooks[$columnName] = [$this, $fn];
@@ -117,18 +122,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 */
 	public function registerReadHook($columnName, $fn)
 	{
-		// Check whether column exists
-		if (!array_key_exists($columnName, $this->tableDefinition)) 
-		{
-			throw new ActiveRecordException("Hook is trying to register on non-existing column \"$columnName\"", 0);
-		}
-
-		// Enforcing 1 hook per table column
-		if (array_key_exists($columnName, $this->registeredReadHooks)) {
-			$message = "Hook is trying to register on an already registered column \"$columnName\", ";
-			$message .= "do you have conflicting traits?";
-			throw new ActiveRecordException($message, 0);
-		}
+		$this->checkHookConstraints($columnName, $this->registeredReadHooks);
 
 		if (is_string($fn) && is_callable([$this, $fn])) {
 			$this->registeredReadHooks[$columnName] = [$this, $fn];
@@ -139,6 +133,9 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		}
 	}
 
+
+
+
 	/**
 	 * Register a new hook for a specific column that gets called before execution of the update() method
 	 * Only one hook per column can be registered at a time
@@ -147,18 +144,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 */
 	public function registerUpdateHook($columnName, $fn)
 	{
-		// Check whether column exists
-		if (!array_key_exists($columnName, $this->tableDefinition)) 
-		{
-			throw new ActiveRecordException("Hook is trying to register on non-existing column \"$columnName\"", 0);
-		}
-
-		// Enforcing 1 hook per table column
-		if (array_key_exists($columnName, $this->registeredUpdateHooks)) {
-			$message = "Hook is trying to register on an already registered column \"$columnName\", ";
-			$message .= "do you have conflicting traits?";
-			throw new ActiveRecordException($message, 0);
-		}
+		$this->checkHookConstraints($columnName, $this->registeredUpdateHooks);
 
 		if (is_string($fn) && is_callable([$this, $fn])) {
 			$this->registeredUpdateHooks[$columnName] = [$this, $fn];
@@ -177,18 +163,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 */
 	public function registerDeleteHook($columnName, $fn)
 	{
-		// Check whether column exists
-		if (!array_key_exists($columnName, $this->tableDefinition)) 
-		{
-			throw new ActiveRecordException("Hook is trying to register on non-existing column \"$columnName\"", 0);
-		}
-
-		// Enforcing 1 hook per table column
-		if (array_key_exists($columnName, $this->registeredDeleteHooks)) {
-			$message = "Hook is trying to register on an already registered column \"$columnName\", ";
-			$message .= "do you have conflicting traits?";
-			throw new ActiveRecordException($message, 0);
-		}
+		$this->checkHookConstraints($columnName, $this->registeredDeleteHooks);
 
 		if (is_string($fn) && is_callable([$this, $fn])) {
 			$this->registeredDeleteHooks[$columnName] = [$this, $fn];
@@ -207,18 +182,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 */
 	public function registerSearchHook($columnName, $fn)
 	{
-		// Check whether column exists
-		if (!array_key_exists($columnName, $this->tableDefinition)) 
-		{
-			throw new ActiveRecordException("Hook is trying to register on non-existing column \"$columnName\"", 0);
-		}
-
-		// Enforcing 1 hook per table column
-		if (array_key_exists($columnName, $this->registeredSearchHooks)) {
-			$message = "Hook is trying to register on an already registered column \"$columnName\", ";
-			$message .= "do you have conflicting traits?";
-			throw new ActiveRecordException($message, 0);
-		}
+		$this->checkHookConstraints($columnName, $this->registeredSearchHooks);
 
 		if (is_string($fn) && is_callable([$this, $fn])) {
 			$this->registeredSearchHooks[$columnName] = [$this, $fn];
@@ -461,7 +425,7 @@ SQL;
 		}
 
 		try {
-			$q = (new Query($this->getPdo(), $this->getActiveRecordTable()))
+			(new Query($this->getPdo(), $this->getActiveRecordTable()))
 				->insert($this->getActiveRecordColumns())
 				->execute();
 

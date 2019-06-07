@@ -22,6 +22,8 @@ Trait ManyToManyRelation
 	/** @var string The name of the right table of the relation. */
 	private $_rightEntityTable;
 
+	/** @var \PDO The PDO object. */
+	protected $pdo;
 	/**
 	 * Initializes the the ManyToManyRelation trait on the included object
 	 * 
@@ -76,7 +78,17 @@ Trait ManyToManyRelation
 		$this->pdo->query($leftConstraint);
 		$this->pdo->query($rightConstraint);
 	}
-	
+
+	/**
+	 * @return void
+	 */	
+	abstract function getActiveRecordTable();
+
+	/**
+	 * @return void
+	 */
+	abstract function buildConstraint($parentTable, $parentColumn, $childTable, $childColumn);
+
 	/**
 	 * @return void
 	 */

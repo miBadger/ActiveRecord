@@ -294,6 +294,8 @@ trait AutoApi
 
 	abstract function setId($id);
 
+	abstract function getId();
+
 	abstract function getActiveRecordTable();
 
 	abstract function getActiveRecordColumns();
