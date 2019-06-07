@@ -26,7 +26,7 @@ class AbstractActiveRecord_ExtensionTest extends TestCase
 
 	public function setUp()
 	{
-		$this->pdo = new \PDO(sprintf('mysql:host=%s;dbname=%s;charset=utf8mb4', 'localhost', DB_NAME), DB_USER, DB_PASS);
+		$this->pdo = new \PDO(sprintf('mysql:host=%s;dbname=%s;charset=utf8mb4', DB_HOST, DB_NAME), DB_USER, DB_PASS);
 		$this->pdo->query('CREATE TABLE IF NOT EXISTS `test` (`id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, `username` VARCHAR(255), `extra_field` VARCHAR(255))');
 		$this->pdo->query('INSERT INTO `test` (`id`, `username`, `extra_field`) VALUES (1, "badger", "something")');
 	}

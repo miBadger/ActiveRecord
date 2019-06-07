@@ -28,7 +28,7 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 		// $this->pdo = new \PDO('sqlite::memory:');
 		// $this->pdo->query('CREATE TABLE IF NOT EXISTS `name` (`id` INTEGER PRIMARY KEY, `field` VARCHAR(255))');
 
-		$this->pdo = new \PDO(sprintf('mysql:host=%s;dbname=%s;charset=utf8mb4', 'localhost', DB_NAME), DB_USER, DB_PASS);
+		$this->pdo = new \PDO(sprintf('mysql:host=%s;dbname=%s;charset=utf8mb4', DB_HOST, DB_NAME), DB_USER, DB_PASS);
 		$this->pdo->query('CREATE TABLE IF NOT EXISTS `name` (`id` INTEGER AUTO_INCREMENT PRIMARY KEY, `field` VARCHAR(255))');
 		$this->pdo->query('INSERT INTO `name` (`id`, `field`) VALUES (1, "test")');
 		$this->pdo->query('INSERT INTO `name` (`id`, `field`) VALUES (2, "test2")');

@@ -23,7 +23,7 @@ class ManyToManyRelationTest extends TestCase
 
 	public function setUp()
 	{
-		$this->pdo = new \PDO(sprintf('mysql:host=%s;dbname=%s;charset=utf8mb4', 'localhost', DB_NAME), DB_USER, DB_PASS);
+		$this->pdo = new \PDO(sprintf('mysql:host=%s;dbname=%s;charset=utf8mb4', DB_HOST, DB_NAME), DB_USER, DB_PASS);
 
 		$person = new PersonMock($this->pdo);
 		$person->createTable();

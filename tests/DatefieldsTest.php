@@ -23,7 +23,7 @@ class DatefieldsTraitTest extends TestCase
 
 	public function setUp()
 	{
-		$this->pdo = new \PDO(sprintf('mysql:host=%s;dbname=%s;charset=utf8mb4', 'localhost', DB_NAME), DB_USER, DB_PASS);
+		$this->pdo = new \PDO(sprintf('mysql:host=%s;dbname=%s;charset=utf8mb4', DB_HOST, DB_NAME), DB_USER, DB_PASS);
 		$this->pdo->query('CREATE TABLE IF NOT EXISTS `datefields_test_mock` (`id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, `last_modified` DATETIME, `created` DATETIME, `value` VARCHAR(256) )');
 	}
 
