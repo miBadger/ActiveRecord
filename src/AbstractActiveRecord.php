@@ -337,7 +337,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 
 		$sql = 'CREATE TABLE ' . $this->getActiveRecordTable() . ' ';
 		$sql .= "(\n";
-		$sql .= join($columnStatements, ",\n");
+		$sql .= implode(",\n", $columnStatements);
 		$sql .= "\n);";
 
 		return $sql;

@@ -219,7 +219,7 @@ trait AutoApi
 			$this->syncInstances($this, $transaction);
 
 			try {
-				$q = (new Query($this->getPdo(), $this->getActiveRecordTable()))
+				(new Query($this->getPdo(), $this->getActiveRecordTable()))
 					->insert($this->getActiveRecordColumns())
 					->execute();
 
