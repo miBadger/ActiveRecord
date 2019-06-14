@@ -50,7 +50,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 *
 	 * @param \PDO $pdo
 	 */
-	public function __construct(\PDO $pdo)
+	public function __construct(\PDO $pdo )
 	{
 		$pdo->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
 		$pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);

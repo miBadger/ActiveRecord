@@ -18,7 +18,7 @@ use miBadger\Query\QueryExpression;
  *
  * @since 2.0.0
  */
-class ActiveRecordQuery
+class ActiveRecordQuery implements \IteratorAggregate
 {
 
 	private $clauses = [];
@@ -66,6 +66,11 @@ class ActiveRecordQuery
 		$this->results = $this->query->execute();
 
 		return $this;
+	}
+
+	public function getIterator()
+	{
+		return new \ArrayIterator($this->fetchAll());
 	}
 
 	public function fetchAll()

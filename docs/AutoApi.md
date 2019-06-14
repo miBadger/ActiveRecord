@@ -19,6 +19,8 @@ In these cases, the ```$fieldWhitelist``` specifies an array of fieldnames which
 ## Example route
 This following example illustrates the little amount of code that's required to create a REST API from a data model. This example uses functions from the ```miwebb/JSend``` and ```mibadger/router``` packages for clarity, but these are not required components.
 
+Note that there are two different ways to provide the validation function. One can either provide the method directly as an anonymous function, or can provide a the name to a class function that provides the validation functionality together with the instance (in the form of ```[$this, 'validationFunctionName']```.
+
 ```php
 class Employee extends AbstractActiveRecord
 {
@@ -41,7 +43,7 @@ class Employee extends AbstractActiveRecord
 			'name' => 
 			[
 				'value' => &$this->name,
-				'validate' => null,
+				'validate' => [$this, 'validateName'],
 				'type' => 'VARCHAR',
 				'length' => 256,
 				'properties' => ColumnProperty::NOT_NULL | ColumnProperty::UNIQUE
@@ -66,6 +68,11 @@ class Employee extends AbstractActiveRecord
 	public function getActiveRecordTable() 
 	{
 		return 'employee';
+	}
+
+	private function validateName($value)
+	{
+		return is_string($value);
 	}
 }
 
