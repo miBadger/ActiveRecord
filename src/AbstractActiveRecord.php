@@ -444,7 +444,7 @@ SQL;
 		try {
 			$row = (new Query($this->getPdo(), $this->getActiveRecordTable()))
 				->select()
-				->where('id', '=', $id)
+				->where(Query::Equal('id', $id))
 				->execute()
 				->fetch();
 
@@ -473,7 +473,7 @@ SQL;
 		try {
 			(new Query($this->getPdo(), $this->getActiveRecordTable()))
 				->update($this->getActiveRecordColumns())
-				->where('id', '=', $this->getId())
+				->where(Query::Equal('id', $this->getId()))
 				->execute();
 		} catch (\PDOException $e) {
 			throw new ActiveRecordException($e->getMessage(), 0, $e);
@@ -495,7 +495,7 @@ SQL;
 		try {
 			(new Query($this->getPdo(), $this->getActiveRecordTable()))
 				->delete()
-				->where('id', '=', $this->getId())
+				->where(Query::Equal('id', $this->getId()))
 				->execute();
 
 			$this->setId(null);
@@ -546,123 +546,16 @@ SQL;
 	/**
 	 * {@inheritdoc}
 	 */
-	public function searchOne(array $where = [], array $orderBy = [])
+	public function search(array $ignoredTraits = [])
 	{
-		try {
-			$row = $this->getSearchQueryResult($where, $orderBy, 1)->fetch();
-
-			if ($row === false) {
-				throw new ActiveRecordException(sprintf('Can not search one non-existent entry from the `%s` table.', $this->getActiveRecordTable()));
+		$clauses = [];
+		foreach ($this->registeredSearchHooks as $column => $fn) {
+			if (!in_array($column, $ignoredTraits)) {
+				$clauses[] = $fn();
 			}
-
-			return $this->fill($row)->setId($row['id']);
-		} catch (\PDOException $e) {
-			throw new ActiveRecordException($e->getMessage(), 0, $e);
-		}
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
-	public function search(array $where = [], array $orderBy = [], $limit = -1, $offset = 0)
-	{
-		try {
-			$queryResult = $this->getSearchQueryResult($where, $orderBy, $limit, $offset);
-			$result = [];
-
-			foreach ($queryResult as $row) {
-				$new = clone $this;
-
-				$result[] = $new->fill($row)->setId($row['id']);
-			}
-
-			return $result;
-		} catch (\PDOException $e) {
-			throw new ActiveRecordException($e->getMessage(), 0, $e);
-		}
-	}
-
-	/**
-	 * Returns the search query result with the given where, order by, limit and offset clauses.
-	 *
-	 * @param array $where = []
-	 * @param array $orderBy = []
-	 * @param int $limit = -1
-	 * @param int $offset = 0
-	 * @return \miBadger\Query\QueryResult the search query result with the given where, order by, limit and offset clauses.
-	 */
-	private function getSearchQueryResult(array $where = [], array $orderBy = [], $limit = -1, $offset = 0)
-	{
-		$query = (new Query($this->getPdo(), $this->getActiveRecordTable()))
-			->select();
-
-		$this->getSearchQueryWhere($query, $where);
-		$this->getSearchQueryOrderBy($query, $orderBy);
-		$this->getSearchQueryLimit($query, $limit, $offset);
-
-		// Ignore all trait modifiers for which a where clause was specified
-		$registeredSearchHooks = $this->registeredSearchHooks;
-		foreach ($where as $index => $clause) {
-			$colName = $clause[0];
-			unset($registeredSearchHooks[$colName]);
 		}
 
-		// Allow traits to modify the query
-		foreach ($registeredSearchHooks as $column => $searchFunction) {
-			$searchFunction($query);
-		}
-
-		return $query->execute();
-	}
-
-	/**
-	 * Returns the given query after adding the given where conditions.
-	 *
-	 * @param \miBadger\Query\Query $query
-	 * @param array $where
-	 * @return \miBadger\Query\Query the given query after adding the given where conditions.
-	 */
-	private function getSearchQueryWhere($query, $where)
-	{
-		foreach ($where as $key => $value) {
-			$query->where($value[0], $value[1], $value[2]);
-		}
-
-		return $query;
-	}
-
-	/**
-	 * Returns the given query after adding the given order by conditions.
-	 *
-	 * @param \miBadger\Query\Query $query
-	 * @param array $orderBy
-	 * @return \miBadger\Query\Query the given query after adding the given order by conditions.
-	 */
-	private function getSearchQueryOrderBy($query, $orderBy)
-	{
-		foreach ($orderBy as $key => $value) {
-			$query->orderBy($key, $value);
-		}
-
-		return $query;
-	}
-
-	/**
-	 * Returns the given query after adding the given limit and offset conditions.
-	 *
-	 * @param \miBadger\Query\Query $query
-	 * @param int $limit
-	 * @param int $offset
-	 * @return \miBadger\Query\Query the given query after adding the given limit and offset conditions.
-	 */
-	private function getSearchQueryLimit($query, $limit, $offset)
-	{
-		if ($limit > -1) {
-			$query->limit($limit);
-			$query->offset($offset);
-		}
-
-		return $query;
+		return new ActiveRecordQuery($this, $this->getActiveRecordTable(), $clauses);
 	}
 
 	/**

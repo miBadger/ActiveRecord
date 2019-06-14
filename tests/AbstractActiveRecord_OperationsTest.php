@@ -9,6 +9,7 @@
 
 namespace miBadger\ActiveRecord\OperationsTest;
 
+use miBadger\Query\Query;
 use PHPUnit\Framework\TestCase;
 use miBadger\ActiveRecord\AbstractActiveRecord;
 
@@ -203,7 +204,7 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 	public function testSearchOne()
 	{
 		$attributesActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
-		$attributesActiveRecord->searchOne([['field', 'LIKE', 'Test']]);
+		$attributesActiveRecord->search()->where(Query::Like('field', 'Test'))->fetch();
 
 		$this->assertEquals(1, $attributesActiveRecord->getId());
 	}
@@ -216,7 +217,7 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 	public function testSearchOneNonExistentId()
 	{
 		$attributesActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
-		$attributesActiveRecord->searchOne([['id', '=', 4]]);
+		$attributesActiveRecord->search()->where(Query::Equal('id', 4))->fetch();
 	}
 
 	/**
@@ -227,13 +228,13 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 	public function testSearchOneException()
 	{
 		$abstractActiveRecord = new AbstractActiveRecordTableExceptionTestMock($this->pdo);
-		$abstractActiveRecord->searchOne();
+		$abstractActiveRecord->search()->fetch();
 	}
 
 	public function testSearch()
 	{
 		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
-		$result = $abstractActiveRecord->search();
+		$result = $abstractActiveRecord->search()->fetchAll();
 
 		$this->assertCount(3, $result);
 	}
@@ -246,7 +247,7 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 	public function testSearchException()
 	{
 		$abstractActiveRecord = new AbstractActiveRecordTableExceptionTestMock($this->pdo);
-		$abstractActiveRecord->search();
+		$abstractActiveRecord->search()->fetchAll();
 	}
 
 	/**
@@ -255,7 +256,7 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 	public function testSearchWhereKeyFunction()
 	{
 		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
-		$result = $abstractActiveRecord->search([['UPPER(field)', 'LIKE', 'TEST']]);
+		$result = $abstractActiveRecord->search()->where(Query::Like('UPPER(field)', 'TEST'))->fetchAll();
 
 		$this->assertCount(1, $result);
 	}
@@ -268,7 +269,7 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 	public function testSearchWhereKeyException()
 	{
 		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
-		$abstractActiveRecord->search([['field2', 'LIKE', 'test']]);
+		$abstractActiveRecord->search()->where(Query::Like('field2', 'test'))->fetchAll();
 	}
 
 	/**
@@ -277,7 +278,7 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 	public function testSearchWhereValueNumeric()
 	{
 		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
-		$result = $abstractActiveRecord->search([['id', '=', 1]]);
+		$result = $abstractActiveRecord->search()->where(Query::Equal('id', 1))->fetchAll();
 
 		$this->assertCount(1, $result);
 	}
@@ -288,7 +289,7 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 	public function testSearchWhereValueString()
 	{
 		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
-		$result = $abstractActiveRecord->search([['field', 'LIKE', 'test']]);
+		$result = $abstractActiveRecord->search()->where(Query::Like('field', 'test'))->fetchAll();
 
 		$this->assertCount(1, $result);
 	}
@@ -299,7 +300,7 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 	public function testSearchWhereValueInSingle()
 	{
 		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
-		$result = $abstractActiveRecord->search([['field', 'IN', 'test']]);
+		$result = $abstractActiveRecord->search()->where(Query::In('field', 'test'))->fetchAll();
 
 		$this->assertCount(1, $result);
 	}
@@ -310,7 +311,7 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 	public function testSearchWhereValueInArray()
 	{
 		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
-		$result = $abstractActiveRecord->search([['field', 'IN', ['test', 'test2']]]);
+		$result = $abstractActiveRecord->search()->where(Query::In('field', ['test', 'test2']))->fetchAll();
 
 		$this->assertCount(2, $result);
 	}
@@ -321,7 +322,7 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 	public function testSearchWhereValueNull()
 	{
 		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
-		$result = $abstractActiveRecord->search([['field', 'IS', null]]);
+		$result = $abstractActiveRecord->search()->where(Query::Is('field', NULL))->fetchAll();
 
 		$this->assertCount(1, $result);
 	}
@@ -332,7 +333,7 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 	public function testSearchOrderBy()
 	{
 		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
-		$result = $abstractActiveRecord->search([], ['id' => 'DESC']);
+		$result = $abstractActiveRecord->search()->orderBy('id', 'DESC')->fetchAll();
 
 		$this->assertCount(3, $result);
 	}
@@ -343,7 +344,7 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 	public function testSearchLimit()
 	{
 		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
-		$result = $abstractActiveRecord->search([], [], 1);
+		$result = $abstractActiveRecord->search()->limit(1)->fetchAll();
 
 		$this->assertCount(1, $result);
 	}
@@ -354,7 +355,7 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 	public function testSearchOffset()
 	{
 		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
-		$result = $abstractActiveRecord->search([], [], 10, 1);
+		$result = $abstractActiveRecord->search()->limit(10)->offset(1)->fetchAll();
 
 		$this->assertCount(2, $result);
 	}

@@ -67,9 +67,9 @@ class SoftDeleteTest extends TestCase
 		$entity2->setValue("NotDeleted");
 		$entity2->create();
 
-		$results = $entity->search();
+		$results = $entity->search()->fetchAll();
 
-		$this->assertEquals(count($results), 1);
+		$this->assertEquals(1, count($results));
 	}
 
 	public function testSoftDelete()

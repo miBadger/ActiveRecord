@@ -267,7 +267,7 @@ class AbstractActiveRecord_ExtensionTest extends TestCase
 		$mock = new AbstractActiveRecordTestMock($this->pdo);
 		$var = false;
 
-		$mock->registerSearchHook("username", function(Query $search) use (&$var) {
+		$mock->registerSearchHook("username", function() use (&$var) {
 			$var = true;
 		});
 		$mock->search();

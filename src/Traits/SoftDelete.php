@@ -35,9 +35,9 @@ trait SoftDelete
 	/**
 	 * The hook that gets called whenever a query is made
 	 */
-	protected function softDeleteSearchHook(Query $query)
+	protected function softDeleteSearchHook()
 	{
-		$query->where(TRAIT_SOFT_DELETE_FIELD_KEY, '=', 0);
+		return Query::Equal(TRAIT_SOFT_DELETE_FIELD_KEY, 0);
 	}
 
 	/**

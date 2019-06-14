@@ -276,7 +276,7 @@ trait AutoApi
 			try {
 				(new Query($this->getPdo(), $this->getActiveRecordTable()))
 					->update($this->getActiveRecordColumns())
-					->where('id', '=', $this->getId())
+					->where(Query::Equal('id', $this->getId()))
 					->execute();
 			} catch (\PDOException $e) {
 				throw new ActiveRecordException($e->getMessage(), 0, $e);
