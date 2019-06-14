@@ -48,6 +48,30 @@ class SoftDeleteTest extends TestCase
 		$this->assertEquals($results[2]['Field'], 'value');
 	}
 
+	public function testSearch()
+	{
+		$entity = new SoftDeleteRecordTestMock($this->pdo);
+		
+		$reflection = new \ReflectionClass($entity);
+		$reflection_property = $reflection->getProperty('registeredSearchHooks');
+		$reflection_property->setAccessible(true);
+
+		$this->assertArrayHasKey($entity->getSoftDeleteFieldName(), $reflection_property->getValue($entity));
+
+		$entity = new SoftDeleteRecordTestMock($this->pdo);
+		$entity->setValue("Deleted");
+		$entity->softDelete();
+		$entity->create();
+		
+		$entity2 = new SoftDeleteRecordTestMock($this->pdo);
+		$entity2->setValue("NotDeleted");
+		$entity2->create();
+
+		$results = $entity->search();
+
+		$this->assertEquals(count($results), 1);
+	}
+
 	public function testSoftDelete()
 	{
 		$entity = new SoftDeleteRecordTestMock($this->pdo);

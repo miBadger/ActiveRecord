@@ -70,6 +70,26 @@ class AbstractActiveRecord_ExtensionTest extends TestCase
 
 	/**
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
+	 * @expectedExceptionMessage tableDefinition is null, most likely due to parent class not having been initialized in constructor
+	 */
+	public function testInvalidInitException()
+	{
+		new invalidInitOrderTestMock($this->pdo);
+	}
+
+	/**
+	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
+	 * @expectedExceptionMessage Provided hook on column "username" is not callable
+	 */
+	public function testInvalidCreateHookException()
+	{
+		$mock = new AbstractActiveRecordTestMock($this->pdo);
+		$mock->registerCreateHook("username", "someNonExistingFunction");
+	}
+
+
+	/**
+	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
 	 * @expectedExceptionMessage Hook is trying to register on non-existing column "fake_column"
 	 */
 	public function testCreateHookInvalidColumnException()
@@ -106,6 +126,16 @@ class AbstractActiveRecord_ExtensionTest extends TestCase
 		$mock->read(1);
 
 		$this->assertTrue($var);
+	}
+
+	/**
+	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
+	 * @expectedExceptionMessage Provided hook on column "username" is not callable
+	 */
+	public function testInvalidReadHookException()
+	{
+		$mock = new AbstractActiveRecordTestMock($this->pdo);
+		$mock->registerReadHook("username", "someNonExistingFunction");
 	}
 
 	/**
@@ -150,6 +180,16 @@ class AbstractActiveRecord_ExtensionTest extends TestCase
 
 	/**
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
+	 * @expectedExceptionMessage Provided hook on column "username" is not callable
+	 */
+	public function testInvalidUpdateHookException()
+	{
+		$mock = new AbstractActiveRecordTestMock($this->pdo);
+		$mock->registerUpdateHook("username", "someNonExistingFunction");
+	}
+
+	/**
+	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
 	 * @expectedExceptionMessage Hook is trying to register on non-existing column "fake_column"
 	 */
 	public function testUpdateHookInvalidColumnException()
@@ -189,6 +229,16 @@ class AbstractActiveRecord_ExtensionTest extends TestCase
 
 	/**
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
+	 * @expectedExceptionMessage Provided hook on column "username" is not callable
+	 */
+	public function testInvalidDeleteHookException()
+	{
+		$mock = new AbstractActiveRecordTestMock($this->pdo);
+		$mock->registerDeleteHook("username", "someNonExistingFunction");
+	}
+
+	/**
+	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
 	 * @expectedExceptionMessage Hook is trying to register on non-existing column "fake_column"
 	 */
 	public function testDeleteHookInvalidColumnException()
@@ -223,6 +273,16 @@ class AbstractActiveRecord_ExtensionTest extends TestCase
 		$mock->search();
 
 		$this->assertTrue($var);
+	}
+
+	/**
+	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
+	 * @expectedExceptionMessage Provided hook on column "username" is not callable
+	 */
+	public function testInvalidSearchHookException()
+	{
+		$mock = new AbstractActiveRecordTestMock($this->pdo);
+		$mock->registerSearchHook("username", "someNonExistingFunction");
 	}
 
 	/**
@@ -306,6 +366,32 @@ trait ExtraField
 		return $this->extraField;
 	}
 }
+
+class invalidInitOrderTestMock extends AbstractActiveRecord
+{
+	use ExtraField;
+
+	public function __construct($pdo)
+	{
+		$this->initExtraField();
+		parent::__construct($pdo);
+	}	
+
+	protected function getActiveRecordTable()
+	{
+		return 'invalid_record';
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	protected function getActiveRecordTableDefinition()
+	{
+		return [
+		];
+	}
+}
+
 
 class AbstractActiveRecordTestMock extends AbstractActiveRecord
 {
