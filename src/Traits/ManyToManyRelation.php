@@ -28,9 +28,9 @@ Trait ManyToManyRelation
 	 * Initializes the the ManyToManyRelation trait on the included object
 	 * 
 	 * @param AbstractActiveRecord $leftEntity The left entity of the relation
-	 * @param &variable $leftVariable The variable where the id for the left entity will be stored
+	 * @param int $leftVariable The reference to the variable where the id for the left entity will be stored
 	 * @param AbstractActiveRecord $rightEntity The left entity of the relation
-	 * @param &variable $leftVariable The variable where the id for the right entity will be stored
+	 * @param int $leftVariable The reference to the variable where the id for the right entity will be stored
 	 * @return void
 	 */
 	protected function initManyToManyRelation(AbstractActiveRecord $leftEntity, &$leftVariable, AbstractActiveRecord $rightEntity, &$rightVariable)

@@ -6,7 +6,10 @@ build:
                     version: 7.1
             services:
                 mysql: 5.7
-
+        analysis:
+            tests:
+                override:
+                    - php-scrutinizer-run
     tests:
         override:
             -

@@ -239,7 +239,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 			case 'TINYINT':
 			case 'BIGINT':
 			default: 	
-			// @TODO(Default): throw exception, or implicitly assume that type is correct? (For when using SQL databases with different types)
+				// @TODO(Default): throw exception, or implicitly assume that type is correct? (For when using SQL databases with different types)
 				if ($length === null) {
 					return $type;
 				} else {
@@ -714,7 +714,7 @@ SQL;
 	/**
 	 * Returns the active record table.
 	 *
-	 * @return string the active record table.
+	 * @return string the active record table name.
 	 */
 	abstract protected function getActiveRecordTable();
 

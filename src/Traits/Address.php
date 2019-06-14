@@ -23,6 +23,10 @@ trait Address
 	/** @var string the country */
 	protected $country;
 
+	/**
+	 * Registers the Address trait on the including class
+	 * @return void
+	 */
 	protected function initAddress() 
 	{
 		$this->extendTableDefinition(TRAIT_ADDRESS_FIELD_ADDRESS, [
@@ -63,41 +67,65 @@ trait Address
 		$this->country = null;
 	}
 
+	/**
+	 * @return string
+	 */
 	public function getAddress()
 	{
 		return $this->address;
 	}
 	
+	/**
+	 * @param string $address
+	 */
 	public function setAddress($address)
 	{
 		$this->address = $address;
 	}
 
+	/**
+	 * @return string
+	 */
 	public function getZipcode()
 	{
 		return $this->zipcode;
 	}
 	
+	/**
+	 * @param string $zipcode
+	 */
 	public function setZipcode($zipcode)
 	{
 		$this->zipcode = $zipcode;
 	}
 
+	/**
+	 * @return string
+	 */
 	public function getCity()
 	{
 		return $this->city;
 	}
 	
+	/**
+	 * @param string $city
+	 */
 	public function setCity($city)
 	{
 		$this->city = $city;
 	}
 
+	/**
+	 * @return string
+	 */
 	public function getCountry()
 	{
 		return $this->country;
 	}
 	
+	/**
+	 * @param string $country
+	 */
 	public function setCountry($country)
 	{
 		$this->country = $country;
@@ -106,31 +134,31 @@ trait Address
 	/**
 	 * @return void
 	 */
-	abstract function extendTableDefinition($columnName, $definition);
+	abstract protected function extendTableDefinition($columnName, $definition);
 	
 	/**
 	 * @return void
 	 */
-	abstract function registerSearchHook($columnName, $fn);
+	abstract protected function registerSearchHook($columnName, $fn);
 
 	/**
 	 * @return void
 	 */
-	abstract function registerDeleteHook($columnName, $fn);
+	abstract protected function registerDeleteHook($columnName, $fn);
 
 	/**
 	 * @return void
 	 */
-	abstract function registerUpdateHook($columnName, $fn);
+	abstract protected function registerUpdateHook($columnName, $fn);
 
 	/**
 	 * @return void
 	 */
-	abstract function registerReadHook($columnName, $fn);
+	abstract protected function registerReadHook($columnName, $fn);
 
 	/**
 	 * @return void
 	 */
-	abstract function registerCreateHook($columnName, $fn);
+	abstract protected function registerCreateHook($columnName, $fn);
 	
 }

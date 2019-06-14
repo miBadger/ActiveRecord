@@ -81,30 +81,30 @@ trait SoftDelete
 	/**
 	 * @return void
 	 */
-	abstract function extendTableDefinition($columnName, $definition);
+	abstract protected function extendTableDefinition($columnName, $definition);
 	
 	/**
 	 * @return void
 	 */
-	abstract function registerSearchHook($columnName, $fn);
+	abstract protected function registerSearchHook($columnName, $fn);
 
 	/**
 	 * @return void
 	 */
-	abstract function registerDeleteHook($columnName, $fn);
+	abstract protected function registerDeleteHook($columnName, $fn);
 
 	/**
 	 * @return void
 	 */
-	abstract function registerUpdateHook($columnName, $fn);
+	abstract protected function registerUpdateHook($columnName, $fn);
 
 	/**
 	 * @return void
 	 */
-	abstract function registerReadHook($columnName, $fn);
+	abstract protected function registerReadHook($columnName, $fn);
 
 	/**
 	 * @return void
 	 */
-	abstract function registerCreateHook($columnName, $fn);
+	abstract protected function registerCreateHook($columnName, $fn);
 }

@@ -288,15 +288,47 @@ trait AutoApi
 		}
 	}
 
+	/**
+	 * Returns this active record after reading the attributes from the entry with the given identifier.
+	 *
+	 * @param mixed $id
+	 * @return $this
+	 * @throws ActiveRecordException on failure.
+	 */
 	abstract public function read($id);
 
+	/**
+	 * Returns the PDO.
+	 *
+	 * @return \PDO the PDO.
+	 */
 	abstract public function getPdo();
 
-	abstract function setId($id);
+	/**
+	 * Set the ID.
+	 *
+	 * @param int $id
+	 * @return $this
+	 */
+	abstract protected function setId($id);
 
-	abstract function getId();
+	/**
+	 * Returns the ID.
+	 *
+	 * @return null|int The ID.
+	 */
+	abstract protected function getId();
 
-	abstract function getActiveRecordTable();
+	/**
+	 * Returns the active record table.
+	 *
+	 * @return string the active record table name.
+	 */
+	abstract protected function getActiveRecordTable();
 
-	abstract function getActiveRecordColumns();
+	/**
+	 * Returns the name -> variable mapping for the table definition.
+	 * @return Array The mapping
+	 */
+	abstract protected function getActiveRecordColumns();
 }
