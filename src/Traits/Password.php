@@ -27,7 +27,7 @@ trait Password
 	{
 		$this->extendTableDefinition(TRAIT_PASSWORD_FIELD_PASSWORD, [
 			'value' => &$this->password,
-			'validate' => null,
+			'validate' => [$this, 'validatePassword'],
 			'type' => 'VARCHAR',
 			'length' => 1024,
 			'properties' => null
@@ -76,6 +76,14 @@ trait Password
 		return true;
 	}
 
+	public function validatePassword($password) {
+		if (strlen($password) < TRAIT_PASSWORD_MIN_LENGTH) {
+			$message = sprintf('\'Password\' must be atleast %s characters long. %s characters provied.', TRAIT_PASSWORD_MIN_LENGTH, strlen($password));
+			return [false, $message];
+		}
+		return [true, ''];
+	}
+
 	/**
 	 * Set the password.
 	 *
@@ -85,8 +93,9 @@ trait Password
 	 */
 	public function setPassword($password)
 	{
-		if (strlen($password) < TRAIT_PASSWORD_MIN_LENGTH) {
-			throw new ActiveRecordTraitException(sprintf('\'Password\' must be atleast %s characters long. %s characters provied.', self::PASSWORD_MIN_LENGTH, strlen($password)));
+		[$status, $error] = $this->validatePassword($password);
+		if (!$status) {
+			throw new ActiveRecordTraitException($error);
 		}
 
 		$passwordHash = \password_hash($password, TRAIT_PASSWORD_ENCRYPTION, ['cost' => TRAIT_PASSWORD_STRENTH]);

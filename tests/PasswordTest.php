@@ -68,6 +68,26 @@ class PasswordTraitTest extends TestCase
 		$passwordMock->isPassword("mibadger");
 	}
 
+	/**
+	 * @expectedException miBadger\ActiveRecord\ActiveRecordTraitException
+	 * @expectedExceptionMessage 'Password' must be atleast 8 characters long. 0 characters provied.
+	 */
+	public function testValidatePasswordLengthException()
+	{
+		$passwordMock = new PasswordsRecordTestMock($this->pdo);
+		$passwordMock->setPassword("");
+		$passwordMock->create();
+	}
+
+	public function testValidatePassword()
+	{
+		$passwordMock = new PasswordsRecordTestMock($this->pdo);
+		[$status, $message] = $passwordMock->validatePassword("");
+		$this->assertFalse($status);
+		[$status, $message] = $passwordMock->validatePassword("SomeC0mplexPassword");
+		$this->assertTrue($status);
+	}
+
 	public function testCreatePasswordResetToken()
 	{
 		$passwordMock = new PasswordsRecordTestMock($this->pdo);

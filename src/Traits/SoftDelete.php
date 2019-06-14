@@ -107,4 +107,5 @@ trait SoftDelete
 	 * @return void
 	 */
 	abstract protected function registerCreateHook($columnName, $fn);
+	
 }
