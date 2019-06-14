@@ -20,17 +20,18 @@ use miBadger\Query\QueryExpression;
  */
 class ActiveRecordQuery
 {
-	private $table;
 
-	private $hooks;
-
-	private $results;
+	private $clauses = [];
 
 	private $query;
 
-	private $whereExpression = null;
+	private $results;
 
-	private $clauses = [];
+	private $table;
+
+	private $type;
+	
+	private $whereExpression = null;
 
 	public function __construct(AbstractActiveRecord $instance, $table, Array $additionalWhereClauses)
 	{
