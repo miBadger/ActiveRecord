@@ -76,7 +76,7 @@ class DatefieldsRecordTestMock extends AbstractActiveRecord
 
 	private $value;
 
-	public function __construct($pdo)
+	public function __construct(\PDO $pdo)
 	{
 		parent::__construct($pdo);
 		$this->initDatefields();

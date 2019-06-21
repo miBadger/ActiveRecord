@@ -159,7 +159,7 @@ class FriendMock extends AbstractActiveRecord
 
 	protected $rightFriend;
 
-	public function __construct($pdo)
+	public function __construct(\PDO $pdo)
 	{
 		parent::__construct($pdo);
 		$this->initManyToManyRelation(new PersonMock($pdo), $this->leftFriend, new PersonMock($pdo), $this->rightFriend);

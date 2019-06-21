@@ -238,7 +238,7 @@ class TestEntity extends AbstractActiveRecord
 
 	private $name;
 
-	public function __construct($pdo)
+	public function __construct(\PDO $pdo)
 	{
 		parent::__construct($pdo);
 		$this->initSoftDelete();

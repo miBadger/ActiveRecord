@@ -371,7 +371,7 @@ class invalidInitOrderTestMock extends AbstractActiveRecord
 {
 	use ExtraField;
 
-	public function __construct($pdo)
+	public function __construct(\PDO $pdo)
 	{
 		$this->initExtraField();
 		parent::__construct($pdo);
@@ -400,7 +400,7 @@ class AbstractActiveRecordTestMock extends AbstractActiveRecord
 	/** @var string|null The field. */
 	protected $username;
 
-	public function __construct($pdo)
+	public function __construct(\PDO $pdo)
 	{
 		parent::__construct($pdo);
 		$this->initExtraField();
