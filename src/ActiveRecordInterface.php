@@ -18,6 +18,9 @@ namespace miBadger\ActiveRecord;
  */
 interface ActiveRecordInterface
 {
+
+	public function __construct(\PDO $pdo);
+	
 	/**
 	 * Returns this active record after creating an entry with the records attributes.
 	 *

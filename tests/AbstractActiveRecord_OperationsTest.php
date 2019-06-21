@@ -204,9 +204,9 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 	public function testSearchOne()
 	{
 		$attributesActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
-		$attributesActiveRecord->search()->where(Query::Like('field', 'Test'))->fetch();
+		$searchResult = $attributesActiveRecord->search()->where(Query::Like('field', 'Test'))->fetch();
 
-		$this->assertEquals(1, $attributesActiveRecord->getId());
+		$this->assertEquals(1, $searchResult->getId());
 	}
 
 	/**
@@ -372,7 +372,7 @@ class AbstractActiveRecordTestMock extends AbstractActiveRecord
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function getActiveRecordTable()
+	protected function getTableName()
 	{
 		return 'name';
 	}
@@ -380,7 +380,7 @@ class AbstractActiveRecordTestMock extends AbstractActiveRecord
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function getActiveRecordTableDefinition()
+	protected function getTableDefinition()
 	{
 		return [
 			'field' => 
@@ -432,7 +432,7 @@ class AbstractActiveRecordTableExceptionTestMock extends AbstractActiveRecordTes
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function getActiveRecordTable()
+	protected function getTableName()
 	{
 		return 'name2';
 	}
@@ -454,7 +454,7 @@ class AbstractActiveRecordColumnsExceptionTestMock extends AbstractActiveRecordT
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function getActiveRecordTableDefinition()
+	protected function getTableDefinition()
 	{
 		return [
 			'field' => 

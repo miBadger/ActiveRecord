@@ -167,6 +167,62 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 		$this->assertNotNull($errors);
 	}
 
+	public function testApiUpdateValidationFunction()
+	{
+		'provided value is not a valid date';
+
+		$id = $this->createMockData()[0];
+
+		$entity = new TestEntity($this->pdo);
+		$entity->read($id);
+
+		$inputData = [
+			'favorite_day' => 'not_a_valid_day'
+		];
+
+		[$errors, $data] = $entity->apiUpdate($inputData, ['name', 'favorite_day']);
+		$this->assertNull($data);
+		$this->assertNotNull($errors);
+	}
+
+
+	public function testApiUpdateDatabasePermissions()
+	{
+		'provided value is not a valid date';
+
+		$id = $this->createMockData()[0];
+
+		$entity = new TestEntity($this->pdo);
+		$entity->read($id);
+
+		$inputData = [
+			'name' => null
+		];
+
+		[$errors, $data] = $entity->apiUpdate($inputData, ['name', 'favorite_day']);
+		$this->assertNull($data);
+		$this->assertNotNull($errors);
+	}
+
+	public function testApiSearch()
+	{
+		[$id, $id2] = $this->createMockData();
+
+		$entity = new TestEntity($this->pdo);
+
+		// Basic Search
+		$results = $entity->apiSearch(['order_by' => 'name', 'order_direction' => 'ASC'], ['name', 'birthday']);
+		$this->assertCount(2, $results);
+		$this->assertEquals($results[0]['name'], 'badger');
+		$this->assertEquals($results[1]['name'], 'turtle');
+
+		// Test sorting
+		$results = $entity->apiSearch(['order_by' => 'name', 'order_direction' => 'DESC'], ['name', 'birthday']);
+		$this->assertCount(2, $results);
+		$this->assertEquals($results[0]['name'], 'turtle');
+		$this->assertEquals($results[1]['name'], 'badger');
+	}	
+
 	// testApiUpdate() -> Check keys allowed to be updated, Check validation function, check database permissions, check 
 	// testApiSearch() -> Check keys returned, check search modifiers, check 
 }
@@ -178,6 +234,8 @@ class TestEntity extends AbstractActiveRecord
 
 	private $birthday;
 
+	private $favoriteDay;
+
 	private $name;
 
 	public function __construct($pdo)
@@ -186,7 +244,7 @@ class TestEntity extends AbstractActiveRecord
 		$this->initSoftDelete();
 	}
 
-	public function getActiveRecordTableDefinition()
+	public function getTableDefinition()
 	{
 		return [
 			'name' => 
@@ -210,11 +268,24 @@ class TestEntity extends AbstractActiveRecord
 				},
 				'type' => 'DATETIME',
 				'properties' => ColumnProperty::IMMUTABLE
+			],
+			'favorite_day' => 
+			[
+				'value' => &$this->favoriteDay,
+				'validate' => function ($value) {
+					try {
+						$date = new \DateTime($value);
+						return [true, ''];
+					} catch (\Exception $e) {
+						return [false, 'provided value is not a valid date'];
+					}
+				},
+				'type' => 'DATETIME'
 			]
 		];
 	}
 
-	public function getActiveRecordTable() 
+	public function getTableName() 
 	{
 		return 'test_entity_mock';
 	}

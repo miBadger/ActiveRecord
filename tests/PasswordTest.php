@@ -125,7 +125,7 @@ class PasswordsRecordTestMock extends AbstractActiveRecord
 		$this->initPassword();
 	}
 
-	public function getActiveRecordTableDefinition()
+	public function getTableDefinition()
 	{
 		return [
 			'username' => 
@@ -139,7 +139,7 @@ class PasswordsRecordTestMock extends AbstractActiveRecord
 		];
 	}
 
-	public function getActiveRecordTable() 
+	public function getTableName() 
 	{
 		return 'password_test_mock';
 	}

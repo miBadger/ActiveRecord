@@ -56,12 +56,13 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		$pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
 
 		$this->setPdo($pdo);
-		$this->tableDefinition = $this->getActiveRecordTableDefinition();
+
 		$this->registeredCreateHooks = [];
 		$this->registeredReadHooks = [];
 		$this->registeredUpdateHooks = [];
 		$this->registeredDeleteHooks = [];
 		$this->registeredSearchHooks = [];
+		$this->tableDefinition = $this->getTableDefinition();
 
 		// Extend table definition with default ID field, throw exception if field already exists
 		if (array_key_exists('id', $this->tableDefinition)) {
@@ -239,7 +240,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 			case 'TINYINT':
 			case 'BIGINT':
 			default: 	
-				// @TODO(Default): throw exception, or implicitly assume that type is correct? (For when using SQL databases with different types)
+				// Implicitly assuming that non-specified cases are correct without a length parameter
 				if ($length === null) {
 					return $type;
 				} else {
@@ -335,7 +336,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		// Sort table (first column is id, the remaining are alphabetically sorted)
 		$columnStatements = $this->sortColumnStatements($columnStatements);
 
-		$sql = 'CREATE TABLE ' . $this->getActiveRecordTable() . ' ';
+		$sql = 'CREATE TABLE ' . $this->getTableName() . ' ';
 		$sql .= "(\n";
 		$sql .= implode(",\n", $columnStatements);
 		$sql .= "\n);";
@@ -382,7 +383,7 @@ SQL;
 			if (isset($definition['relation']) && $definition['relation'] instanceof AbstractActiveRecord) {
 				// Forge new relation
 				$target = $definition['relation'];
-				$constraintSql = $this->buildConstraint($target->getActiveRecordTable(), 'id', $this->getActiveRecordTable(), $colName);
+				$constraintSql = $this->buildConstraint($target->getTableName(), 'id', $this->getTableName(), $colName);
 
 				$this->pdo->query($constraintSql);
 			}
@@ -419,7 +420,7 @@ SQL;
 		}
 
 		try {
-			(new Query($this->getPdo(), $this->getActiveRecordTable()))
+			(new Query($this->getPdo(), $this->getTableName()))
 				->insert($this->getActiveRecordColumns())
 				->execute();
 
@@ -442,14 +443,14 @@ SQL;
 		}
 
 		try {
-			$row = (new Query($this->getPdo(), $this->getActiveRecordTable()))
+			$row = (new Query($this->getPdo(), $this->getTableName()))
 				->select()
 				->where(Query::Equal('id', $id))
 				->execute()
 				->fetch();
 
 			if ($row === false) {
-				throw new ActiveRecordException(sprintf('Can not read the non-existent active record entry %d from the `%s` table.', $id, $this->getActiveRecordTable()));
+				throw new ActiveRecordException(sprintf('Can not read the non-existent active record entry %d from the `%s` table.', $id, $this->getTableName()));
 			}
 
 			$this->fill($row)->setId($id);
@@ -471,7 +472,7 @@ SQL;
 		}
 
 		try {
-			(new Query($this->getPdo(), $this->getActiveRecordTable()))
+			(new Query($this->getPdo(), $this->getTableName()))
 				->update($this->getActiveRecordColumns())
 				->where(Query::Equal('id', $this->getId()))
 				->execute();
@@ -493,7 +494,7 @@ SQL;
 		}
 
 		try {
-			(new Query($this->getPdo(), $this->getActiveRecordTable()))
+			(new Query($this->getPdo(), $this->getTableName()))
 				->delete()
 				->where(Query::Equal('id', $this->getId()))
 				->execute();
@@ -555,7 +556,7 @@ SQL;
 			}
 		}
 
-		return new ActiveRecordQuery($this, $this->getActiveRecordTable(), $clauses);
+		return new ActiveRecordQuery($this, $this->getTableName(), $clauses);
 	}
 
 	/**
@@ -604,17 +605,23 @@ SQL;
 		return $this;
 	}
 
+
+	public function newInstance()
+	{
+		return new static($this->pdo);
+	}
+
 	/**
 	 * Returns the active record table.
 	 *
 	 * @return string the active record table name.
 	 */
-	abstract protected function getActiveRecordTable();
+	abstract protected function getTableName();
 
 	/**
 	 * Returns the active record columns.
 	 *
 	 * @return array the active record columns.
 	 */
-	abstract protected function getActiveRecordTableDefinition();
+	abstract protected function getTableDefinition();
 }

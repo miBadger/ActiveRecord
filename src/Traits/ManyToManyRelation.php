@@ -35,15 +35,15 @@ Trait ManyToManyRelation
 	 */
 	protected function initManyToManyRelation(AbstractActiveRecord $leftEntity, &$leftVariable, AbstractActiveRecord $rightEntity, &$rightVariable)
 	{
-		$this->_leftEntityTable = $leftEntity->getActiveRecordTable();
-		$this->_rightEntityTable = $rightEntity->getActiveRecordTable();
+		$this->_leftEntityTable = $leftEntity->getTableName();
+		$this->_rightEntityTable = $rightEntity->getTableName();
 
 		if (get_class($leftEntity) === get_class($rightEntity)) {
-			$this->_leftColumnName = sprintf("id_%s_left", $leftEntity->getActiveRecordTable());
-			$this->_rightColumnName = sprintf("id_%s_right", $rightEntity->getActiveRecordTable());
+			$this->_leftColumnName = sprintf("id_%s_left", $leftEntity->getTableName());
+			$this->_rightColumnName = sprintf("id_%s_right", $rightEntity->getTableName());
 		} else {
-			$this->_leftColumnName = sprintf("id_%s", $leftEntity->getActiveRecordTable());
-			$this->_rightColumnName = sprintf("id_%s", $rightEntity->getActiveRecordTable());
+			$this->_leftColumnName = sprintf("id_%s", $leftEntity->getTableName());
+			$this->_rightColumnName = sprintf("id_%s", $rightEntity->getTableName());
 		}
 
 		$this->extendTableDefinition($this->_leftColumnName, [
@@ -67,7 +67,7 @@ Trait ManyToManyRelation
 	 */
 	public function createTableConstraints()
 	{
-		$childTable = $this->getActiveRecordTable();
+		$childTable = $this->getTableName();
 
 		$leftParentTable = $this->_leftEntityTable;
 		$rightParentTable = $this->_rightEntityTable;
@@ -82,7 +82,7 @@ Trait ManyToManyRelation
 	/**
 	 * @return void
 	 */	
-	abstract protected function getActiveRecordTable();
+	abstract protected function getTableName();
 
 	/**
 	 * @return void

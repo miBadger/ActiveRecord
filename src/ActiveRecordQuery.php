@@ -76,18 +76,17 @@ class ActiveRecordQuery implements \IteratorAggregate
 	public function fetchAll()
 	{
 		try {
-			// TODO: Should execute call be explicit?
 			$this->execute();
-
-			$typedResults = [];
 
 			$entries = $this->results->fetchAll();
 			if ($entries === false) {
 				throw new ActiveRecordException(sprintf('Can not search one non-existent entry from the `%s` table.', $this->table));
 			}
 
+			$typedResults = [];
+
 			foreach ($entries as $entry) {
-				$typedEntry = clone $this->type;
+				$typedEntry = $this->type->newInstance();
 				$typedEntry->fill($entry);
 				$typedResults[] = $typedEntry;
 			}
@@ -103,7 +102,7 @@ class ActiveRecordQuery implements \IteratorAggregate
 		try {
 			$this->execute();
 
-			$typedResult = clone $this->type;
+			$typedResult = $this->type->newInstance();
 
 			$entry = $this->results->fetch();
 			if ($entry === false) {

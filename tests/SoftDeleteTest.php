@@ -104,7 +104,7 @@ class SoftDeleteRecordTestMock extends AbstractActiveRecord
 		$this->initSoftDelete();
 	}
 
-	public function getActiveRecordTableDefinition()
+	public function getTableDefinition()
 	{
 		return [
 			'value' => 
@@ -118,7 +118,7 @@ class SoftDeleteRecordTestMock extends AbstractActiveRecord
 		];
 	}
 
-	public function getActiveRecordTable() 
+	public function getTableName() 
 	{
 		return 'soft_delete_test_mock';
 	}

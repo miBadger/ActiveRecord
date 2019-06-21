@@ -30,12 +30,36 @@ trait AutoApi
 	/** @var array A list of table column definitions */
 	protected $tableDefinition;
 
-	public function apiSearch($inputs, $fieldWhitelist)
+	public function apiSearch(Array $queryparams, Array $fieldWhitelist)
 	{
-		// @TODO: How to handle this case?
-		// => Default parameter names for searching? (limit, pagination, sort order etc)
-		//		Find default names for this and store in class
-		// => Limited search parameters? (We don't want to be able to search on a password field for example)
+		// @TODO: Would it be better to not include the ignored_traits?
+		$ignoredTraits = $queryparams['ignored_traits'] ?? [];
+		$query = $this->search($ignoredTraits);
+
+		$orderColumn = $queryparams['order_by'] ?? null;
+		$orderDirection = $queryparams['order_direction'] ?? null;
+		if ($orderColumn !== null) {
+			$query->orderBy($orderColumn, $orderDirection);
+		}
+		
+		$limit = $queryparams['limit'] ?? null;
+		if ($limit !== null) {
+			$query->limit($limit);
+		}
+
+		$offset = $queryparams['offset'] ?? null;
+		if ($offset !== null) {
+			$query->offset($offset);
+		}
+
+		$results = $query->fetchAll();
+
+		$resultsArray = [];
+		foreach ($results as $result) {
+			$resultsArray[] = $result->toArray($fieldWhitelist);
+		}
+
+		return $resultsArray;
 	}
 
 	public function toArray($fieldWhitelist)
@@ -50,7 +74,7 @@ trait AutoApi
 		return $output;
 	}
 
-	public function apiRead($id, $fieldWhitelist)
+	public function apiRead($id, Array $fieldWhitelist)
 	{
 		$this->read($id);
 		return $this->toArray($fieldWhitelist);
@@ -188,10 +212,10 @@ trait AutoApi
 	 * @return Array Array containing the set of optional errors (associative array) and an optional array representation (associative)
 	 * 					of the modified data.
 	 */
-	public function apiCreate($input, $fieldWhitelist)
+	public function apiCreate($input, Array $fieldWhitelist)
 	{
 		// Clone $this to new instance (for restoring if validation goes wrong)
-		$transaction = clone $this;
+		$transaction = $this->newInstance();
 		$errors = [];
 
 		// Filter out all non-whitelisted input values
@@ -219,7 +243,7 @@ trait AutoApi
 			$this->syncInstances($this, $transaction);
 
 			try {
-				(new Query($this->getPdo(), $this->getActiveRecordTable()))
+				(new Query($this->getPdo(), $this->getTableName()))
 					->insert($this->getActiveRecordColumns())
 					->execute();
 
@@ -241,9 +265,9 @@ trait AutoApi
 	 * @return Array Array containing the set of optional errors (associative array) and an optional array representation (associative)
 	 * 					of the modified data.
 	 */
-	public function apiUpdate($input, $fieldWhitelist)
+	public function apiUpdate($input, Array $fieldWhitelist)
 	{
-		$transaction = clone $this;
+		$transaction = $this->newInstance();
 		$errors = [];
 
 		// Filter out all non-whitelisted input values
@@ -274,7 +298,7 @@ trait AutoApi
 			$this->syncInstances($this, $transaction);
 
 			try {
-				(new Query($this->getPdo(), $this->getActiveRecordTable()))
+				(new Query($this->getPdo(), $this->getTableName()))
 					->update($this->getActiveRecordColumns())
 					->where(Query::Equal('id', $this->getId()))
 					->execute();
@@ -324,7 +348,7 @@ trait AutoApi
 	 *
 	 * @return string the active record table name.
 	 */
-	abstract protected function getActiveRecordTable();
+	abstract protected function getTableName();
 
 	/**
 	 * Returns the name -> variable mapping for the table definition.

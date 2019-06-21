@@ -64,7 +64,7 @@ class AddressMock extends AbstractActiveRecord
 		$this->initAddress();
 	}
 
-	public function getActiveRecordTableDefinition()
+	public function getTableDefinition()
 	{
 		return [
 			'username' => 
@@ -78,7 +78,7 @@ class AddressMock extends AbstractActiveRecord
 		];
 	}
 
-	public function getActiveRecordTable() 
+	public function getTableName() 
 	{
 		return 'address_test_mock';
 	}

@@ -20,7 +20,7 @@ class Example extends AbstractActiveRecord
 	/**
 	 * {@inheritdoc}
 	 */
-	public function getActiveRecordTable()
+	public function getTableName()
 	{
 		return 'example';
 	}
@@ -28,7 +28,7 @@ class Example extends AbstractActiveRecord
 	/**
 	 * {@inheritdoc}
 	 */
-	public function getActiveRecordTableDefinition() 
+	public function getTableDefinition() 
 	{
 		return [
 			'name' =>
@@ -143,7 +143,7 @@ class User extends AbstractActiveRecord
 {
 	private $username;
 
-	public function getActiveRecordTableDefinition() 
+	public function getTableDefinition() 
 	{
 		return [
 			'username' =>
@@ -157,7 +157,7 @@ class User extends AbstractActiveRecord
 		];
 	}
 
-	public function getActiveRecordTable() 
+	public function getTableName() 
 	{
 		return 'user';
 	}
@@ -166,7 +166,7 @@ class User extends AbstractActiveRecord
 class Example extends AbstractActiveRecord 
 {
 
-	public function getActiveRecordTableDefinition() 
+	public function getTableDefinition() 
 	{
 		return [
 			'id_user' =>
@@ -177,7 +177,7 @@ class Example extends AbstractActiveRecord
 		];
 	}
 
-	public function getActiveRecordTable() 
+	public function getTableName() 
 	{
 		return 'example';
 	}	
@@ -197,7 +197,7 @@ class User extends AbstractActiveRecord
 {
 	private $username;
 
-	public function getActiveRecordTableDefinition() 
+	public function getTableDefinition() 
 	{
 		return [
 			'username' =>
@@ -211,7 +211,7 @@ class User extends AbstractActiveRecord
 		];
 	}
 
-	public function getActiveRecordTable() 
+	public function getTableName() 
 	{
 		return 'user';
 	}

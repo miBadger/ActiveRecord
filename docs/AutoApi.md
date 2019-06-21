@@ -37,7 +37,7 @@ class Employee extends AbstractActiveRecord
 		$this->initSoftDelete();
 	}
 
-	public function getActiveRecordTableDefinition()
+	public function getTableDefinition()
 	{
 		return [
 			'name' => 
@@ -65,7 +65,7 @@ class Employee extends AbstractActiveRecord
 		];
 	}
 
-	public function getActiveRecordTable() 
+	public function getTableName() 
 	{
 		return 'employee';
 	}

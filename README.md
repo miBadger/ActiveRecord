@@ -26,7 +26,7 @@ class User extends AbstractActiveRecord
 	/**
 	 * {@inheritdoc}
 	 */
-	public function getActiveRecordTable()
+	public function getTableName()
 	{
 		return 'example';
 	}
@@ -34,7 +34,7 @@ class User extends AbstractActiveRecord
 	/**
 	 * {@inheritdoc}
 	 */
-	public function getActiveRecordTableDefinition() 
+	public function getTableDefinition() 
 	{
 		return [
 			'name' =>
