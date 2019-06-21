@@ -221,7 +221,9 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		switch (strtoupper($type)) {
 			case '':
 				throw new ActiveRecordException(sprintf("Column %s has invalid type \"NULL\"", $colName));
-				
+			
+			case 'BOOL';
+			case 'BOOLEAN':
 			case 'DATETIME':
 			case 'DATE':
 			case 'TIME':
@@ -323,7 +325,8 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 			$properties = $definition['properties'] ?? null;
 
 			if (isset($definition['relation']) && $type !== null) {
-				$msg = "Column \"$colName\": ";
+				$tableName = $this->getTableName();
+				$msg = "Column \"$colName\" on table \"$tableName\": ";
 				$msg .= "Relationship columns have an automatically inferred type, so type should be omitted";
 				throw new ActiveRecordException($msg);
 			} else if (isset($definition['relation'])) {
