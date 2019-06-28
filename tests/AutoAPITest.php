@@ -14,6 +14,7 @@ use miBadger\ActiveRecord\AbstractActiveRecord;
 use miBadger\ActiveRecord\Traits\AutoApi;
 use miBadger\ActiveRecord\Traits\SoftDelete;
 use miBadger\ActiveRecord\ColumnProperty;
+use miBadger\Query\Query;
 
 /**
  * The abstract active record test class.
@@ -40,7 +41,6 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 	{
 		$this->pdo->query('DROP TABLE `test_entity_mock`');
 	}
-
 
 	private function createMockData()
 	{
@@ -77,7 +77,7 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 		];
 
 		$entity = new TestEntity($this->pdo);
-		[$errors, $data] = $entity->apiCreate($input, ['name', 'birthday']);
+		[$errors, $data] = $entity->apiCreate($input, ['name', 'birthday'], ['name', 'birthday']);
 
 		$this->assertNull($errors);
 		$this->assertNotNull($data);
@@ -91,7 +91,7 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 		];
 
 		$entity = new TestEntity($this->pdo);
-		[$errors, $data] = $entity->apiCreate($input, ['name', 'birthday']);
+		[$errors, $data] = $entity->apiCreate($input, ['name', 'birthday'], ['name', 'birthday']);
 
 		$this->assertNull($errors);
 		$this->assertNotNull($data);
@@ -105,7 +105,7 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 		];
 
 		$entity = new TestEntity($this->pdo);
-		[$errors, $data] = $entity->apiCreate($input, ['name', 'birthday']);
+		[$errors, $data] = $entity->apiCreate($input, ['name', 'birthday'], ['name', 'birthday']);
 		$this->assertNotNull($errors);
 		$this->assertNull($data);
 	}
@@ -119,7 +119,7 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 		];
 
 		$entity = new TestEntity($this->pdo);
-		[$errors, $data] = $entity->apiCreate($input, ['name', 'birthday', 'blablabla']);
+		[$errors, $data] = $entity->apiCreate($input, ['name', 'birthday', 'blablabla'], ['name', 'birthday', 'blablabla']);
 		$this->assertNotNull($errors);
 	}
 
@@ -131,7 +131,7 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 		];
 
 		$entity = new TestEntity($this->pdo);
-		[$errors, $data] = $entity->apiCreate($input, ['name', 'birthday']);
+		[$errors, $data] = $entity->apiCreate($input, ['name', 'birthday'], ['name', 'birthday']);
 		$this->assertNotNull($errors);
 	}
 
@@ -146,9 +146,11 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 			'name' => 'bear'
 		];
 
-		[$errors, $data] = $entity->apiUpdate($inputData, ['name', 'birthday']);
+		[$errors, $data] = $entity->apiUpdate($inputData, ['name', 'birthday'], ['id', 'name', 'birthday']);
 		$this->assertNotNull($data);
 		$this->assertNull($errors);
+
+		$this->assertTrue(empty(array_diff(['id', 'name', 'birthday'], array_keys($data))));
 	}
 
 	public function testApiUpdateImmutables()
@@ -162,7 +164,7 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 			'birthday' => '2018-01-01'
 		];
 
-		[$errors, $data] = $entity->apiUpdate($inputData, ['name', 'birthday']);
+		[$errors, $data] = $entity->apiUpdate($inputData, ['name', 'birthday'], ['name', 'birthday']);
 		$this->assertNull($data);
 		$this->assertNotNull($errors);
 	}
@@ -180,7 +182,7 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 			'favorite_day' => 'not_a_valid_day'
 		];
 
-		[$errors, $data] = $entity->apiUpdate($inputData, ['name', 'favorite_day']);
+		[$errors, $data] = $entity->apiUpdate($inputData, ['name', 'favorite_day'], ['name', 'birthday']);
 		$this->assertNull($data);
 		$this->assertNotNull($errors);
 	}
@@ -197,7 +199,7 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 			'name' => null
 		];
 
-		[$errors, $data] = $entity->apiUpdate($inputData, ['name', 'favorite_day']);
+		[$errors, $data] = $entity->apiUpdate($inputData, ['name', 'favorite_day'], ['name', 'birthday']);
 		$this->assertNull($data);
 		$this->assertNotNull($errors);
 	}
@@ -209,20 +211,27 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 		$entity = new TestEntity($this->pdo);
 
 		// Basic Search
-		$results = $entity->apiSearch(['order_by' => 'name', 'order_direction' => 'ASC'], ['name', 'birthday']);
+		$results = $entity->apiSearch(['search_order_by' => 'name', 'search_order_direction' => 'ASC'], ['name', 'birthday']);
 		$this->assertCount(2, $results);
 		$this->assertEquals($results[0]['name'], 'badger');
 		$this->assertEquals($results[1]['name'], 'turtle');
+		$this->assertEquals(['name', 'birthday'], array_keys($results[0]));
 
 		// Test sorting
-		$results = $entity->apiSearch(['order_by' => 'name', 'order_direction' => 'DESC'], ['name', 'birthday']);
+		$results = $entity->apiSearch(['search_order_by' => 'name', 'search_order_direction' => 'DESC'], ['name', 'birthday']);
 		$this->assertCount(2, $results);
 		$this->assertEquals($results[0]['name'], 'turtle');
 		$this->assertEquals($results[1]['name'], 'badger');
-	}	
 
-	// testApiUpdate() -> Check keys allowed to be updated, Check validation function, check database permissions, check 
-	// testApiSearch() -> Check keys returned, check search modifiers, check 
+		// Test where condition
+		$results = $entity->apiSearch(
+			['search_order_by' => 'name', 'search_order_direction' => 'DESC'], 
+			['name', 'birthday'],
+			Query::Like('name', '%bad%'));
+
+		$this->assertCount(1, $results);
+		$this->assertEquals($results[0]['name'], 'badger');
+	}	
 }
 
 class TestEntity extends AbstractActiveRecord

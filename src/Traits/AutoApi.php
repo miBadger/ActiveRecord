@@ -5,6 +5,7 @@ namespace miBadger\ActiveRecord\Traits;
 use miBadger\ActiveRecord\ColumnProperty;
 use miBadger\ActiveRecord\ActiveRecordException;
 use miBadger\Query\Query;
+use miBadger\Query\QueryExpression;
 
 trait AutoApi
 {
@@ -30,28 +31,39 @@ trait AutoApi
 	/** @var array A list of table column definitions */
 	protected $tableDefinition;
 
-	public function apiSearch(Array $queryparams, Array $fieldWhitelist)
-	{
-		// @TODO: Would it be better to not include the ignored_traits?
-		$ignoredTraits = $queryparams['ignored_traits'] ?? [];
-		$query = $this->search($ignoredTraits);
 
-		$orderColumn = $queryparams['order_by'] ?? null;
-		$orderDirection = $queryparams['order_direction'] ?? null;
+	/**
+	 * @param Array $queryparams associative array of query params. Reserved options are
+	 *                             "search_order_by", "search_order_direction", "search_limit", "search_offset"
+	 *                             or column names corresponding to an instance of miBadger\Query\QueryExpression
+	 * @param Array $fieldWhitelist names of the columns that will appear in the output results
+	 */
+	public function apiSearch(Array $queryParams, Array $fieldWhitelist, ?QueryExpression $whereClause = null)
+	{
+		$query = $this->search();
+
+		// Build query
+		$orderColumn = $queryParams['search_order_by'] ?? null;
+		$orderDirection = $queryParams['search_order_direction'] ?? null;
 		if ($orderColumn !== null) {
 			$query->orderBy($orderColumn, $orderDirection);
 		}
 		
-		$limit = $queryparams['limit'] ?? null;
+		$limit = $queryParams['search_limit'] ?? null;
 		if ($limit !== null) {
 			$query->limit($limit);
 		}
 
-		$offset = $queryparams['offset'] ?? null;
+		$offset = $queryParams['search_offset'] ?? null;
 		if ($offset !== null) {
 			$query->offset($offset);
 		}
 
+		if ($whereClause !== null) {
+			$query->where($whereClause);
+		}
+
+		// Fetch results
 		$results = $query->fetchAll();
 
 		$resultsArray = [];
@@ -218,14 +230,14 @@ trait AutoApi
 	 * @return Array Array containing the set of optional errors (associative array) and an optional array representation (associative)
 	 * 					of the modified data.
 	 */
-	public function apiCreate($input, Array $fieldWhitelist)
+	public function apiCreate($input, Array $createWhitelist, Array $readWhitelist)
 	{
 		// Clone $this to new instance (for restoring if validation goes wrong)
 		$transaction = $this->newInstance();
 		$errors = [];
 
 		// Filter out all non-whitelisted input values
-		$input = $this->filterInputColumns($input, $fieldWhitelist);
+		$input = $this->filterInputColumns($input, $createWhitelist);
 
 		// Validate excess keys
 		$errors += $transaction->validateExcessKeys($input);
@@ -259,7 +271,7 @@ trait AutoApi
 				throw new ActiveRecordException($e->getMessage(), 0, $e);
 			}
 
-			return [null, $this->toArray($fieldWhitelist)];
+			return [null, $this->toArray($readWhitelist)];
 		} else {
 			return [$errors, null];
 		}
@@ -271,14 +283,14 @@ trait AutoApi
 	 * @return Array Array containing the set of optional errors (associative array) and an optional array representation (associative)
 	 * 					of the modified data.
 	 */
-	public function apiUpdate($input, Array $fieldWhitelist)
+	public function apiUpdate($input, Array $updateWhitelist, Array $readWhitelist)
 	{
 		$transaction = $this->newInstance();
 		$transaction->syncInstanceFrom($this);
 		$errors = [];
 
 		// Filter out all non-whitelisted input values
-		$input = $this->filterInputColumns($input, $fieldWhitelist);
+		$input = $this->filterInputColumns($input, $updateWhitelist);
 
 		// Check for excess keys
 		$errors += $transaction->validateExcessKeys($input);
@@ -313,7 +325,7 @@ trait AutoApi
 				throw new ActiveRecordException($e->getMessage(), 0, $e);
 			}
 
-			return [null, $this->toArray($fieldWhitelist)];
+			return [null, $this->toArray($readWhitelist)];
 		} else {
 			return [$errors, null];
 		}
