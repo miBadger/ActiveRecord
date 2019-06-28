@@ -33,14 +33,21 @@ class ActiveRecordQuery implements \IteratorAggregate
 	
 	private $whereExpression = null;
 
+	/**
+	 * Constructs a new Active Record Query
+	 */
 	public function __construct(AbstractActiveRecord $instance, $table, Array $additionalWhereClauses)
 	{
 		$this->table = $table;
 		$this->query = new Query($instance->getPdo(), $table);
 		$this->type = $instance;
 		$this->clauses = $additionalWhereClauses;
+		$this->results = null;
 	}
 
+	/**
+	 * Executes the query
+	 */
 	private function execute()
 	{
 		$clauses = $this->clauses;
@@ -68,19 +75,29 @@ class ActiveRecordQuery implements \IteratorAggregate
 		return $this;
 	}
 
+	/**
+	 * Returns an iterator for the result set
+	 * @return ArrayIterator
+	 */
 	public function getIterator()
 	{
 		return new \ArrayIterator($this->fetchAll());
 	}
 
+	/**
+	 * returns the result set of ActiveRecord instances for this query
+	 * @return Array
+	 */
 	public function fetchAll()
 	{
 		try {
-			$this->execute();
+			if ($this->results === null) {
+				$this->execute();	
+			}
 
 			$entries = $this->results->fetchAll();
 			if ($entries === false) {
-				throw new ActiveRecordException(sprintf('Can not search one non-existent entry from the `%s` table.', $this->table));
+				throw new ActiveRecordException(sprintf('Can not search non-existent entries from the `%s` table.', $this->table));
 			}
 
 			$typedResults = [];
@@ -97,10 +114,17 @@ class ActiveRecordQuery implements \IteratorAggregate
 		}
 	}
 
+	/**
+	 * Fetch one record from the database
+	 * @return AbstractActiveRecord 
+	 */
 	public function fetch()
 	{
 		try {
-			$this->execute();
+			if ($this->results === null) 
+			{
+				$this->execute();
+			}
 
 			$typedResult = $this->type->newInstance();
 

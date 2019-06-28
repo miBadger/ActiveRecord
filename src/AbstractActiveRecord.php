@@ -50,7 +50,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 *
 	 * @param \PDO $pdo
 	 */
-	public function __construct(\PDO $pdo )
+	public function __construct(\PDO $pdo)
 	{
 		$pdo->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
 		$pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
@@ -339,10 +339,9 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		// Sort table (first column is id, the remaining are alphabetically sorted)
 		$columnStatements = $this->sortColumnStatements($columnStatements);
 
-		$sql = 'CREATE TABLE ' . $this->getTableName() . ' ';
-		$sql .= "(\n";
-		$sql .= implode(",\n", $columnStatements);
-		$sql .= "\n);";
+		$sql = sprintf("CREATE TABLE %s (\n%s\n);", 
+			$this->getTableName(), 
+			implode(",\n", $columnStatements));
 
 		return $sql;
 	}
@@ -389,6 +388,11 @@ SQL;
 				$constraintSql = $this->buildConstraint($target->getTableName(), 'id', $this->getTableName(), $colName);
 
 				$this->pdo->query($constraintSql);
+			} else if (isset($definition['relation'])) {
+				$msg = sprintf("Relation constraint on column \"%s\" of table \"%s\" does not contain a valid ActiveRecord instance", 
+					$colName,
+					$this->getTableName());
+				throw new ActiveRecordException($msg);
 			}
 		}
 	}
@@ -418,7 +422,6 @@ SQL;
 	public function create()
 	{
 		foreach ($this->registeredCreateHooks as $colName => $fn) {
-			// @TODO: Would it be better to pass the Query to the function?
 			$fn();
 		}
 
@@ -441,7 +444,6 @@ SQL;
 	public function read($id)
 	{
 		foreach ($this->registeredReadHooks as $colName => $fn) {
-			// @TODO: Would it be better to pass the Query to the function?
 			$fn();
 		}
 
@@ -470,7 +472,6 @@ SQL;
 	public function update()
 	{
 		foreach ($this->registeredUpdateHooks as $colName => $fn) {
-			// @TODO: Would it be better to pass the Query to the function?
 			$fn();
 		}
 
@@ -492,7 +493,6 @@ SQL;
 	public function delete()
 	{
 		foreach ($this->registeredDeleteHooks as $colName => $fn) {
-			// @TODO: Would it be better to pass the Query to the function?
 			$fn();
 		}
 

@@ -85,6 +85,7 @@ $activeRecord->getPdo();
  */
 $activeRecord->getId();
 ```
+
 ## Entity extension using traits
 Since a lot of projects have similar concepts reused across data models, miBadger supports entity extension and code reuse by using Traits.
 Every trait implements a set of functionality that can be incorporated into an ActiveRecord entity.
@@ -128,10 +129,10 @@ Custom traits can extend the behaviour of AbstractActiveRecord using hooks. The 
 $activeRecord = new Example($pdo);
 
 $activeRecord->createTable();
-$activeRecord->createTable();
 ```
 
 ## Modelling relations
+miBadger allows for modeling database constraints between table values. In combination with database management, this allows for automatic enforcement of constraints. This is done by specifying the 'relation' attribute on a column as shown in the following example.
 
 ### Parent-child relations
 ```php
@@ -182,8 +183,6 @@ class Example extends AbstractActiveRecord
 		return 'example';
 	}	
 }
-
-
 ```
 
 ### Many-to-many relations

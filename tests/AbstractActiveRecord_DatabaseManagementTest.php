@@ -91,6 +91,16 @@ class AbstractActiveRecord_DatabaseManagementTest extends TestCase
 		(new BlogPostRecordTestMock($this->pdo))->read($savedPostId);
 	}
 
+	/**
+	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
+	 * @expectedExceptionMessage Relation constraint on column "author" of table "test_constraint_exception" does not contain a valid ActiveRecord instance
+	 */
+	public function testInvalidConstraint()
+	{
+		$mock = new ConstraintExceptionTestMock($this->pdo);
+		$mock->createTable();
+		$mock->createTableConstraints();
+	}
 
 }
 
@@ -208,5 +218,34 @@ class NullTypeFieldRecordMock extends AbstractActiveRecord
 	protected function getTableName()
 	{
 		return 'nulltype_field_record_mock_test';
+	}
+}
+
+
+class ConstraintExceptionTestMock extends AbstractActiveRecord
+{
+	/** @var string|null The field. */
+	protected $author;
+
+	/**
+	 * {@inheritdoc}
+	 */
+	protected function getTableName()
+	{
+		return 'test_constraint_exception';
+	}
+
+	/**
+	 * {@inheritdoc}
+	 */
+	protected function getTableDefinition()
+	{
+		return [
+			'author' => 
+			[
+				'value' => &$this->author,
+				'relation' => "bla"
+			]
+		];
 	}
 }
