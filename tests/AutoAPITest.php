@@ -188,8 +188,6 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 
 	public function testApiUpdateDatabasePermissions()
 	{
-		'provided value is not a valid date';
-
 		$id = $this->createMockData()[0];
 
 		$entity = new TestEntity($this->pdo);

@@ -87,10 +87,10 @@ trait AutoApi
 	/**
 	 * Copy all table variables between two instances
 	 */
-	private function syncInstances($to, $from)
+	public function syncInstanceFrom($from)
 	{
-		foreach ($to->tableDefinition as $colName => $definition) {
-			$definition['value'] = $from->tableDefinition[$colName]['value'];
+		foreach ($this->tableDefinition as $colName => $definition) {
+			$this->tableDefinition[$colName]['value'] = $from->tableDefinition[$colName]['value'];
 		}
 	}
 
@@ -130,6 +130,11 @@ trait AutoApi
 		return $errors;
 	}
 
+	/**
+	 * Checks whether input values are correct:
+	 * 1. Checks whether a value passes the validation function for that column
+	 * 2. Checks whether a value supplied to a relationship column is a valid value
+	 */
 	private function validateInputValues($input)
 	{
 		$errors = [];
@@ -163,8 +168,9 @@ trait AutoApi
 
 	/**
 	 * This function is only used for API Update calls (direct getter/setter functions are unconstrained)
+	 * Determines whether there are required columns for which no data is provided
 	 */
-	private function validateMissingKeys()
+	private function validateMissingKeys($input)
 	{
 		$errors = [];
 
@@ -180,11 +186,11 @@ trait AutoApi
 			// if not nullable and default not set => error
 			// if not nullable and default null => error
 			// if not nullable and default st => default (value)
-			// => if not nullable and default null and value not set => error message in this method
+			// => if not nullable and default null and value not set (or null) => error message in this method
 			if ($properties & ColumnProperty::NOT_NULL
 				&& $default === null
 				&& !($properties & ColumnProperty::AUTO_INCREMENT)
-				// && !array_key_exists($colName, $input)
+				&& (!array_key_exists($colName, $input) || $input[$colName] === null)
 				&& $value === null) {
 				$errors[$colName] = sprintf("The required field \"%s\" is missing", $colName);
 			}
@@ -236,11 +242,11 @@ trait AutoApi
 		}
 
 		// Validate missing keys
-		$errors += $transaction->validateMissingKeys();
+		$errors += $transaction->validateMissingKeys($input);
 
 		// If no errors, commit the pending data
 		if (empty($errors)) {
-			$this->syncInstances($this, $transaction);
+			$this->syncInstanceFrom($transaction);
 
 			try {
 				(new Query($this->getPdo(), $this->getTableName()))
@@ -268,6 +274,7 @@ trait AutoApi
 	public function apiUpdate($input, Array $fieldWhitelist)
 	{
 		$transaction = $this->newInstance();
+		$transaction->syncInstanceFrom($this);
 		$errors = [];
 
 		// Filter out all non-whitelisted input values
@@ -291,11 +298,11 @@ trait AutoApi
 		}
 
 		// Validate missing keys
-		$errors += $transaction->validateMissingKeys();
+		$errors += $transaction->validateMissingKeys($input);
 
 		// Update database
 		if (empty($errors)) {
-			$this->syncInstances($this, $transaction);
+			$this->syncInstanceFrom($transaction);
 
 			try {
 				(new Query($this->getPdo(), $this->getTableName()))
