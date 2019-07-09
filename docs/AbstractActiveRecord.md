@@ -229,6 +229,15 @@ class FollowerRelation extends AbstractActiveRecord
 		self::__construct($pdo);
 		$this->initManyToManyRelation(new User($pdo), $this->follower, new User($pdo), $this->target);
 	}
+
+	public function getTableDefinition() {
+		return [];
+	}
+
+	public function getTableName() 
+	{
+		return 'follower_relation';
+	}
 }
 ```
 

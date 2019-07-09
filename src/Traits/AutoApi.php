@@ -249,7 +249,7 @@ trait AutoApi
 		$transaction->loadData($input);
 
 		// Run create hooks
-		foreach ($this->registeredCreateHooks as $colName => $fn) {
+		foreach ($transaction->registeredCreateHooks as $colName => $fn) {
 			$fn();
 		}
 
@@ -305,7 +305,7 @@ trait AutoApi
 		$transaction->loadData($input);
 
 		// Run create hooks
-		foreach ($this->registeredUpdateHooks as $colName => $fn) {
+		foreach ($transaction->registeredUpdateHooks as $colName => $fn) {
 			$fn();
 		}
 

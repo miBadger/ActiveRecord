@@ -268,7 +268,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		}
 
 		if ($default !== NULL) {
-			$stmnt .= ' DEFAULT ' . $default . ' ';
+			$stmnt .= 'DEFAULT ' . $default . ' ';
 		}
 
 		if ($properties & ColumnProperty::AUTO_INCREMENT) {
