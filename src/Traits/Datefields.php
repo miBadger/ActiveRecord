@@ -26,7 +26,6 @@ trait Datefields
 			'value' => &$this->created,
 			'validate' => null,
 			'type' => 'DATETIME',
-			'default' => 'CURRENT_TIMESTAMP',
 			'properties' => ColumnProperty::NOT_NULL | ColumnProperty::IMMUTABLE
 		]);
 
@@ -34,7 +33,6 @@ trait Datefields
 			'value' => &$this->lastModified,
 			'validate' => null,
 			'type' => 'DATETIME',
-			'default' => 'CURRENT_TIMESTAMP',
 			'properties' => ColumnProperty::NOT_NULL | ColumnProperty::IMMUTABLE
 		]);
 		

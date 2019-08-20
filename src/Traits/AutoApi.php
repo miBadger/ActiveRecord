@@ -260,6 +260,16 @@ trait AutoApi
 		if (empty($errors)) {
 			$this->syncInstanceFrom($transaction);
 
+			// Insert default values for not-null fields
+			foreach ($this->tableDefinition as $colName => $colDef) {
+				if ($this->tableDefinition[$colName]['value'] === null
+					&& isset($this->tableDefinition[$colName]['properties'])
+					&& $this->tableDefinition[$colName]['properties'] && ColumnProperty::NOT_NULL > 0
+					&& isset($this->tableDefinition[$colName]['default'])) {
+					$this->tableDefinition[$colName]['value'] = $this->tableDefinition[$colName]['default'];
+				}
+			}
+
 			try {
 				(new Query($this->getPdo(), $this->getTableName()))
 					->insert($this->getActiveRecordColumns())

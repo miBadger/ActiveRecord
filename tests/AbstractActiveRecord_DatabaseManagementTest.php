@@ -31,6 +31,7 @@ class AbstractActiveRecord_DatabaseManagementTest extends TestCase
 	{
 		$this->pdo->query('DROP TABLE IF EXISTS `test_mock_blogpost`');
 		$this->pdo->query('DROP TABLE IF EXISTS `test_mock_user`');
+		$this->pdo->query('DROP TABLE IF EXISTS `test_constraint_exception`');
 	}
 
 	public function testCreateUserTable()

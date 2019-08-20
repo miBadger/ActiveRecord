@@ -56,6 +56,7 @@ trait SoftDelete
 	public function softDelete()
 	{
 		$this->softDelete = true;
+		$this->update();
 		return $this;
 	}
 
@@ -66,6 +67,7 @@ trait SoftDelete
 	public function softRestore()
 	{
 		$this->softDelete = false;
+		$this->update();
 		return $this;
 	}
 

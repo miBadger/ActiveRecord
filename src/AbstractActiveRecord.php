@@ -268,7 +268,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		}
 
 		if ($default !== NULL) {
-			$stmnt .= 'DEFAULT ' . $default . ' ';
+			$stmnt .= 'DEFAULT ' . var_export($default, true) . ' ';
 		}
 
 		if ($properties & ColumnProperty::AUTO_INCREMENT) {
@@ -423,6 +423,16 @@ SQL;
 	{
 		foreach ($this->registeredCreateHooks as $colName => $fn) {
 			$fn();
+		}
+
+		// Insert default values for not-null fields
+		foreach ($this->tableDefinition as $colName => $colDef) {
+			if ($this->tableDefinition[$colName]['value'] === null
+				&& isset($this->tableDefinition[$colName]['properties'])
+				&& $this->tableDefinition[$colName]['properties'] && ColumnProperty::NOT_NULL > 0
+				&& isset($this->tableDefinition[$colName]['default'])) {
+				$this->tableDefinition[$colName]['value'] = $this->tableDefinition[$colName]['default'];
+			}
 		}
 
 		try {
