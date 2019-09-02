@@ -618,6 +618,10 @@ SQL;
 		return $this;
 	}
 
+	public function getFinalTableDefinition()
+	{
+		return $this->tableDefinition;
+	}
 
 	public function newInstance()
 	{
