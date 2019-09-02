@@ -33,13 +33,23 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 		// $this->pdo->query('CREATE TABLE IF NOT EXISTS `name` (`id` INTEGER PRIMARY KEY, `field` VARCHAR(255))');
 		$this->pdo = new \PDO(sprintf('mysql:host=%s;dbname=%s;charset=utf8mb4', DB_HOST, DB_NAME), DB_USER, DB_PASS);
 
-		$e = new TestEntity($this->pdo);
-		$e->createTable();
+		$e1 = new TestEntity($this->pdo);
+		$e1->createTable();
+		
+		$e2 = new TestRelated($this->pdo);
+		$e2->createTable();
+
+		$e3 = new TestRelator($this->pdo);
+		$e3->createTable();
+
+		$e2->createTableConstraints();
 	}
 
 	public function tearDown()
 	{
 		$this->pdo->query('DROP TABLE `test_entity_mock`');
+		$this->pdo->query('DROP TABLE `test_relator_mock`');
+		$this->pdo->query('DROP TABLE `test_related_mock`');
 	}
 
 	private function createMockData()
@@ -231,8 +241,94 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 
 		$this->assertCount(1, $results);
 		$this->assertEquals($results[0]['name'], 'badger');
-	}	
+	}
+
+	public function testRelationSuccess()
+	{
+		$target = new TestRelated($this->pdo);
+		$target->create();
+
+		$source = new TestRelator($this->pdo);
+		[$err, $data] = $source->apiCreate(['id_relation' => null], ['id_relation'], ['id_relation']);
+		$this->assertNotNull($err);
+
+		[$err, $data] = $source->apiCreate(['id_relation' => $target->getId()], ['id_relation'], ['id_relation']);
+		$this->assertNull($err);
+
+		[$err, $data] = $source->apiUpdate(['id_relation' => null], ['id_relation'], ['id_relation']);
+		$this->assertNotNull($err);
+
+		[$err, $data] = $source->apiUpdate([], ['id_relation'], ['id_relation']);
+		$this->assertNull($err);
+	}
+
 }
+
+class TestRelated extends AbstractActiveRecord
+{
+	public function __construct(\PDO $pdo)
+	{
+		parent::__construct($pdo);
+	}
+
+	public function getTableDefinition()
+	{
+		return [];
+	}
+
+	public function getTableName()
+	{
+		return 'test_related_mock';
+	}
+}
+
+class TestRelator extends AbstractActiveRecord
+{
+	use AutoApi;
+
+	private $id_relation;
+
+	public function __construct(\PDO $pdo)
+	{
+		parent::__construct($pdo);
+	}
+
+	public function getTableDefinition()
+	{
+		return [
+			'id_relation' => [
+				'value' => &$this->id_relation,
+				'relation' => new TestRelated($this->pdo),
+				'properties' => ColumnProperty::NOT_NULL
+			]
+		];
+	}
+
+	public function getTableName()
+	{
+		return 'test_relator_mock';
+	}
+
+	public function getRelation()
+	{
+		if ($this->id_relation === null)
+		{
+			throw new ActiveRecordException('id_relation is not set');
+		}
+	
+		return (new TestRelated($this->pdo))->read($this->id_relation);
+	}
+	
+	public function setRelation(TestRelated $relation)
+	{
+		if ($relation->getId() === null)
+		{
+			throw new ActiveRecordException('id_relation has null id (doesn\'t exist)');
+		}
+		$this->id_relation = $relation->getId();
+	}
+}
+
 
 class TestEntity extends AbstractActiveRecord
 {

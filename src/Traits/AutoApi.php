@@ -169,7 +169,7 @@ trait AutoApi
 				&& ($properties & ColumnProperty::NOT_NULL)) {
 				$instance = clone $definition['relation'];
 				try {
-					$instance->read($input[$colName] ?? null);
+					$instance->read($input[$colName] ?? $definition['value'] ?? null);
 				} catch (ActiveRecordException $e) {
 					$errors[$colName] = "Entity for this value doesn't exist";
 				}
@@ -205,7 +205,7 @@ trait AutoApi
 				&& (!array_key_exists($colName, $input) || $input[$colName] === null)
 				&& $value === null) {
 				$errors[$colName] = sprintf("The required field \"%s\" is missing", $colName);
-			}
+			} 
 		}
 
 		return $errors;
