@@ -2,19 +2,23 @@
 
 The autoApi trait aims to make creating HTTP API's for modifying data models created with miBadger.ActiveRecord as simple as possible. It provides a set of functions that help with validating input, and appropriate error messenging, with the aim to reduce the number of lines of code that need to be written while implementing an API.
 
-The methods that are provided by the AutoApi Trait are
-
 ```php
-public function apiRead($id, $fieldWhitelist);
+use miBadger\Query\QueryExpression
 
-public function apiSearch($inputs, $fieldWhitelist);
+public function apiRead($id, $readWhitelist): Array;
 
-public function apiCreate($input, $fieldWhitelist);
+public function apiSearch($queryParams, $readWhitelist, QueryExpression $whereClause = null): Array;
 
-public function apiUpdate($input, $fieldWhitelist);
+public function apiCreate($input, $createWhitelist, $readWhitelist): [Array $errors, Array $result];
+
+public function apiUpdate($input, $updateWhitelist, $readWhitelist): [Array $errors, Array $result];
 ```
 
-In these cases, the ```$fieldWhitelist``` specifies an array of fieldnames which are allowed to be modified (for create & update) or returned (for read & search), and the ```$input``` array specifies an associate array of input values.
+In these cases, the ```$createWhitelist``` and ```$updateWhitelist``` arrays specify fieldnames which are allowed to be modified. The ```$readwhitelist``` specifies the fieldnames that get returned by the method, and the ```$input``` array specifies an associative array of user input values.
+
+For ```apiSearch``` There are two unique input fields:
+- The ```$queryParams``` is an associative array for which the keys ```search_order_by```, ```search_order_direction```, ```search_limit```, ```search_offset``` can be specified to modify the search results.
+- ```$whereClause``` is an optional parameter that allows the user to specify a custom search condition.
 
 ## Example route
 This following example illustrates the little amount of code that's required to create a REST API from a data model. This example uses functions from the ```miwebb/JSend``` and ```mibadger/router``` packages for clarity, but these are not required components.
@@ -22,6 +26,10 @@ This following example illustrates the little amount of code that's required to 
 Note that there are two different ways to provide the validation function. One can either provide the method directly as an anonymous function, or can provide a the name to a class function that provides the validation functionality together with the instance (in the form of ```[$this, 'validationFunctionName']```.
 
 ```php
+
+use miBadger\ActiveRecord\Traits\AutoApi;
+use miBadger\ActiveRecord\Traits\SoftDelete;
+
 class Employee extends AbstractActiveRecord
 {
 	use AutoApi;
@@ -76,15 +84,37 @@ class Employee extends AbstractActiveRecord
 	}
 }
 
-
-
+// Example Create
 $router->addRoute("POST", "/entity/", function () {
+	
 	$employee = new Entity($pdo);
-	[$errors, $data] = $entity->apiCreate($_POST, ['name', 'birthday']);
+	[$errors, $data] = $entity->apiCreate($_POST, ['name', 'birthday'], ['id', 'name', 'birthday']);
 	if ($errors !== null) {
 		return JSend::Fail($errors);
-	} else {
-		return JSend::Success($data);
 	}
+	return JSend::Success($data);
+
+});
+
+// Example Read
+$router->addRoute("GET", "/entity/{id}/", function ($id) {
+
+	$employee = new Entity($pdo);
+	$data = $entity->apiRead($id, ['name', 'birthday']);
+	return JSend::Success($data);
+
+});
+
+// Example Update
+$router->addRoute("PUT", "/entity/{id}/", function ($id) {
+	
+	$employee = new Entity($pdo);
+	// Pay attention to the required read
+	[$errors, $data] = $entity->read($id)->apiUpdate($_POST, ['name', 'birthday'], ['id', 'name', 'birthday']);
+	if ($errors !== null) {
+		return JSend::Fail($errors);
+	}
+	return JSend::Success($data);
+	
 });
 ```
