@@ -207,9 +207,9 @@ class ActiveRecordQuery implements \IteratorAggregate
 
 		$resultCount = $this->countMaxResults();
 		if ($resultCount % $this->limit > 0) {
-			return $resultCount / $this->limit + 1;
+			return (int) floor($resultCount / $this->limit) + 1;
 		}
-		return $resultCount / $this->limit;
+		return (int) floor($resultCount / $this->limit);
 	}
 
 	public function getCurrentPage()
@@ -222,7 +222,7 @@ class ActiveRecordQuery implements \IteratorAggregate
 			return 1;
 		}
 
-		return $this->offset / $this->limit;
+		return (int) floor($this->offset / $this->limit);
 	}
 
 	/**
