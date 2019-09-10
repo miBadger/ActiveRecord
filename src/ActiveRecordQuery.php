@@ -20,52 +20,67 @@ use miBadger\Query\QueryExpression;
  */
 class ActiveRecordQuery implements \IteratorAggregate
 {
-
-	private $clauses = [];
+	private $instance;
 
 	private $query;
 
-	private $results;
-
-	private $table;
-
 	private $type;
+
+	private $clauses = [];
+
+	private $maxresultCount;
+
+	private $results;
 	
 	private $whereExpression = null;
+
+	private $limit;
+
+	private $offset;
+
+	private $orderBy;
+
+	private $orderDirection;
 
 	/**
 	 * Constructs a new Active Record Query
 	 */
-	public function __construct(AbstractActiveRecord $instance, $table, Array $additionalWhereClauses)
+	public function __construct(AbstractActiveRecord $instance, Array $additionalWhereClauses)
 	{
-		$this->table = $table;
-		$this->query = new Query($instance->getPdo(), $table);
+		$this->instance = $instance;
+		$this->query = new Query($instance->getPdo(), $instance->getTableName());
 		$this->type = $instance;
 		$this->clauses = $additionalWhereClauses;
+		$this->maxResultCount = null;
 		$this->results = null;
+		$this->limit = null;
+		$this->offset = null;
+	}
+
+	private function getWhereCondition()
+	{
+		$clauses = $this->clauses;
+
+		// Optionally add user concatenated where expression
+		if ($this->whereExpression !== null) {
+			$clauses[] = $this->whereExpression;
+		}
+
+		// Construct where clause
+		if (count($clauses) > 0) {
+			return Query::AndArray($clauses);
+		}
+		return null;
 	}
 
 	/**
 	 * Executes the query
 	 */
-	private function execute()
+	public function execute()
 	{
-		$clauses = $this->clauses;
-
-		// Optionally add user concatenated where expression
-		if ($this->whereExpression !== null)
-		{
-			$clauses[] = $this->whereExpression;
-		}
-
-		// Construct where clause
-		if (count($clauses) == 1)
-		{
-			$this->query->where($clauses[0]);
-		} else if (count($clauses) >= 2)
-		{
-			$rest = array_slice($clauses, 1);
-			$this->query->where(Query::And($clauses[0], ...$rest));
+		$whereCondition = $this->getWhereCondition();
+		if ($whereCondition !== null) {
+			$this->query->where($whereCondition);
 		}
 
 		$this->query->select();
@@ -97,11 +112,10 @@ class ActiveRecordQuery implements \IteratorAggregate
 
 			$entries = $this->results->fetchAll();
 			if ($entries === false) {
-				throw new ActiveRecordException(sprintf('Can not search non-existent entries from the `%s` table.', $this->table));
+				return [];
 			}
 
 			$typedResults = [];
-
 			foreach ($entries as $entry) {
 				$typedEntry = $this->type->newInstance();
 				$typedEntry->fill($entry);
@@ -114,6 +128,16 @@ class ActiveRecordQuery implements \IteratorAggregate
 		}
 	}
 
+	public function fetchAllAsArray($readWhitelist)
+	{
+		$data = $this->fetchAll();
+		$output = [];
+		foreach ($data as $entry) {
+			$output[] = $entry->toArray($readWhitelist);
+		}
+		return $output;
+	}
+
 	/**
 	 * Fetch one record from the database
 	 * @return AbstractActiveRecord 
@@ -121,8 +145,7 @@ class ActiveRecordQuery implements \IteratorAggregate
 	public function fetch()
 	{
 		try {
-			if ($this->results === null) 
-			{
+			if ($this->results === null) {
 				$this->execute();
 			}
 
@@ -130,7 +153,7 @@ class ActiveRecordQuery implements \IteratorAggregate
 
 			$entry = $this->results->fetch();
 			if ($entry === false) {
-				throw new ActiveRecordException(sprintf('Can not search one non-existent entry from the `%s` table.', $this->table));
+				return null;
 			}
 
 			$typedResult->fill($entry);
@@ -141,6 +164,66 @@ class ActiveRecordQuery implements \IteratorAggregate
 		}
 	}
 
+	/**
+	 * Fetch one record from the database and format it as an associative array, 
+	 * 	 filtered by the entries in $readwhitelist
+	 * @param Array $readWhitelist Array of whitelisted database column keys to be returned in the result
+	 * @return Array|Null
+	 */
+	public function fetchAsArray($readWhitelist)
+	{
+		$res = $this->fetch();
+		if ($res !== null) {
+			return $res->toArray($readWhitelist);
+		}
+		return null;
+	}
+
+	public function countMaxResults()
+	{
+		if ($this->maxResultCount === null) {
+			$query = new Query($this->instance->getPdo(), $this->instance->getTableName());
+			$query->select(['count(*) as count']);
+
+			$whereCondition = $this->getWhereCondition();
+			if ($whereCondition !== null) {
+				$query->where($whereCondition);
+			}
+
+			$this->maxResultCount = $query->execute()->fetch()['count'];
+		}
+		return $this->maxResultCount;
+	}
+
+	public function getNumberOfPages()
+	{
+		if ($this->limit === null) {
+			return 1;
+		}
+
+		if ($this->limit === 0) {
+			return 0;
+		}
+
+		$resultCount = $this->countMaxResults();
+		if ($resultCount % $this->limit > 0) {
+			return $resultCount / $this->limit + 1;
+		}
+		return $resultCount / $this->limit;
+	}
+
+	public function getCurrentPage()
+	{
+		if ($this->offset === null || $this->offset === 0) {
+			return 1;
+		}
+
+		if ($this->limit === null || $this->limit === 0) {
+			return 1;
+		}
+
+		return $this->offset / $this->limit;
+	}
 
 	/**
 	 * Set the where condition
@@ -192,6 +275,7 @@ class ActiveRecordQuery implements \IteratorAggregate
 	 */
 	public function limit($limit)
 	{
+		$this->limit = $limit;
 		$this->query->limit($limit);
 		return $this;
 	}
@@ -204,6 +288,7 @@ class ActiveRecordQuery implements \IteratorAggregate
 	 */
 	public function offset($offset)
 	{
+		$this->offset = $offset;
 		$this->query->offset($offset);
 		return $this;
 	}

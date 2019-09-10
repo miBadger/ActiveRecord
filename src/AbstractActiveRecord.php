@@ -453,19 +453,25 @@ SQL;
 	 */
 	public function read($id)
 	{
+		$whereConditions = [
+			Query::Equal('id', $id)
+		];
 		foreach ($this->registeredReadHooks as $colName => $fn) {
-			$fn();
+			$cond = $fn();
+			if ($cond !== null) {
+				$whereConditions[] = $cond;
+			}
 		}
 
 		try {
 			$row = (new Query($this->getPdo(), $this->getTableName()))
 				->select()
-				->where(Query::Equal('id', $id))
+				->where(Query::AndArray($whereConditions))
 				->execute()
 				->fetch();
-
+			
 			if ($row === false) {
-				throw new ActiveRecordException(sprintf('Can not read the non-existent active record entry %d from the `%s` table.', $id, $this->getTableName()));
+				throw new ActiveRecordException(sprintf('Can not read the non-existent active record entry %d from the `%s` table.', $id, $this->getTableName()));	
 			}
 
 			$this->fill($row)->setId($id);
@@ -569,7 +575,7 @@ SQL;
 			}
 		}
 
-		return new ActiveRecordQuery($this, $this->getTableName(), $clauses);
+		return new ActiveRecordQuery($this, $clauses);
 	}
 
 	/**
@@ -633,7 +639,7 @@ SQL;
 	 *
 	 * @return string the active record table name.
 	 */
-	abstract protected function getTableName();
+	abstract public function getTableName();
 
 	/**
 	 * Returns the active record columns.

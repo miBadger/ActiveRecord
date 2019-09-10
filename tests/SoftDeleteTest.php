@@ -72,6 +72,33 @@ class SoftDeleteTest extends TestCase
 		$this->assertEquals(1, count($results));
 	}
 
+	/**
+	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
+	 * @expectedExceptionMessage Can not read the non-existent active record entry 1 from the `soft_delete_test_mock` table.
+	 */
+	public function testReadSoftDeletedException()
+	{
+		$entity = new SoftDeleteRecordTestMock($this->pdo);
+		$entity->setValue("Deleted");
+		$entity->softDelete();
+		$entity->create();
+
+		$readEntity = new SoftDeleteRecordTestMock($this->pdo);
+		$readEntity->read($entity->getId());
+	}
+
+	public function testReadSoftDelete()
+	{
+		$entity = new SoftDeleteRecordTestMock($this->pdo);
+		$entity->setValue("NotDeleted");
+		$entity->create();
+
+		$readEntity = new SoftDeleteRecordTestMock($this->pdo);
+		$readEntity->read($entity->getId());
+
+		$this->assertEquals($entity->getValue(), $readEntity->getValue());
+	}
+
 	public function testSoftDelete()
 	{
 		$entity = new SoftDeleteRecordTestMock($this->pdo);

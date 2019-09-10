@@ -21,7 +21,7 @@ use miBadger\Query\Query;
  *
  * @since 1.0.0
  */
-class AbstractActiveRecord_OperationsTest extends TestCase
+class AutoAPITest extends TestCase
 {
 	/** @var \PDO The PDO. */
 	private $pdo;
@@ -222,16 +222,16 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 
 		// Basic Search
 		$results = $entity->apiSearch(['search_order_by' => 'name', 'search_order_direction' => 'ASC'], ['name', 'birthday']);
-		$this->assertCount(2, $results);
-		$this->assertEquals($results[0]['name'], 'badger');
-		$this->assertEquals($results[1]['name'], 'turtle');
-		$this->assertEquals(['name', 'birthday'], array_keys($results[0]));
+		$this->assertCount(2, $results['data']);
+		$this->assertEquals($results['data'][0]['name'], 'badger');
+		$this->assertEquals($results['data'][1]['name'], 'turtle');
+		$this->assertEquals(['name', 'birthday'], array_keys($results['data'][0]));
 
 		// Test sorting
 		$results = $entity->apiSearch(['search_order_by' => 'name', 'search_order_direction' => 'DESC'], ['name', 'birthday']);
-		$this->assertCount(2, $results);
-		$this->assertEquals($results[0]['name'], 'turtle');
-		$this->assertEquals($results[1]['name'], 'badger');
+		$this->assertCount(2, $results['data']);
+		$this->assertEquals($results['data'][0]['name'], 'turtle');
+		$this->assertEquals($results['data'][1]['name'], 'badger');
 
 		// Test where condition
 		$results = $entity->apiSearch(
@@ -239,8 +239,18 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 			['name', 'birthday'],
 			Query::Like('name', '%bad%'));
 
-		$this->assertCount(1, $results);
-		$this->assertEquals($results[0]['name'], 'badger');
+		$this->assertCount(1, $results['data']);
+		$this->assertEquals($results['data'][0]['name'], 'badger');
+
+		// Test pagination
+		$results = $entity->apiSearch([
+			'search_order_by' => 'name', 
+			'search_order_direction' => 'DESC',
+			'search_limit' => 1], 
+			['name', 'birthday']);
+		$this->assertCount(1, $results['data']);
+		$this->assertEquals(2, $results['pages']);
+		$this->assertEquals(1, $results['current']);
 	}
 
 	public function testRelationSuccess()

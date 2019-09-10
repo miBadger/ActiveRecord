@@ -19,6 +19,7 @@
 	],
 	"require": {
 		"php": "^7.0",
+		"mibadger/enum": "v2.0.0",
 		"mibadger/query": "v2.x-dev"
 	},
 	"require-dev": {

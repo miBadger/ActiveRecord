@@ -113,7 +113,7 @@ class UserRecordTestMock extends AbstractActiveRecord
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function getTableName()
+	public function getTableName()
 	{
 		return 'test_mock_user';
 	}
@@ -154,7 +154,7 @@ class BlogPostRecordTestMock extends AbstractActiveRecord
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function getTableName()
+	public function getTableName()
 	{
 		return 'test_mock_blogpost';
 	}
@@ -216,7 +216,7 @@ class NullTypeFieldRecordMock extends AbstractActiveRecord
 		];
 	}
 
-	protected function getTableName()
+	public function getTableName()
 	{
 		return 'nulltype_field_record_mock_test';
 	}
@@ -231,7 +231,7 @@ class ConstraintExceptionTestMock extends AbstractActiveRecord
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function getTableName()
+	public function getTableName()
 	{
 		return 'test_constraint_exception';
 	}

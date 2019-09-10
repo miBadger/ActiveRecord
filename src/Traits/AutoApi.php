@@ -38,7 +38,7 @@ trait AutoApi
 	 *                             or column names corresponding to an instance of miBadger\Query\QueryExpression
 	 * @param Array $fieldWhitelist names of the columns that will appear in the output results
 	 */
-	public function apiSearch(Array $queryParams, Array $fieldWhitelist, ?QueryExpression $whereClause = null)
+	public function apiSearch(Array $queryParams, Array $fieldWhitelist, ?QueryExpression $whereClause = null, int $maxResultLimit = 100)
 	{
 		$query = $this->search();
 
@@ -49,29 +49,35 @@ trait AutoApi
 			$query->orderBy($orderColumn, $orderDirection);
 		}
 		
-		$limit = $queryParams['search_limit'] ?? null;
-		if ($limit !== null) {
-			$query->limit($limit);
-		}
+		$limit = $queryParams['search_limit'] ?? $maxResultLimit;
+		$query->limit($limit);
 
-		$offset = $queryParams['search_offset'] ?? null;
-		if ($offset !== null) {
-			$query->offset($offset);
-		}
+		$offset = $queryParams['search_offset'] ?? 0;
+		$query->offset($offset);
 
 		if ($whereClause !== null) {
 			$query->where($whereClause);
 		}
 
+		$numPages = $query->getNumberOfPages();
+		$currentPage = $query->getCurrentPage();
+
 		// Fetch results
 		$results = $query->fetchAll();
-
 		$resultsArray = [];
 		foreach ($results as $result) {
 			$resultsArray[] = $result->toArray($fieldWhitelist);
 		}
 
-		return $resultsArray;
+		return [
+			'offset' => $offset,
+			'limit' => $limit,
+			'order_by' => $orderColumn,
+			'order_direction' => $orderDirection,
+			'pages' => $numPages,
+			'current' => $currentPage,
+			'data' => $resultsArray
+		];
 	}
 
 	public function toArray($fieldWhitelist)
@@ -88,6 +94,7 @@ trait AutoApi
 
 	public function apiRead($id, Array $fieldWhitelist)
 	{
+		// @TODO: Should apiRead throw exception or return null on fail?
 		$this->read($id);
 		return $this->toArray($fieldWhitelist);
 	}
@@ -230,7 +237,7 @@ trait AutoApi
 	 * @return Array Array containing the set of optional errors (associative array) and an optional array representation (associative)
 	 * 					of the modified data.
 	 */
-	public function apiCreate($input, Array $createWhitelist, Array $readWhitelist)
+	public function apiCreate(Array $input, Array $createWhitelist, Array $readWhitelist)
 	{
 		// Clone $this to new instance (for restoring if validation goes wrong)
 		$transaction = $this->newInstance();
@@ -293,7 +300,7 @@ trait AutoApi
 	 * @return Array Array containing the set of optional errors (associative array) and an optional array representation (associative)
 	 * 					of the modified data.
 	 */
-	public function apiUpdate($input, Array $updateWhitelist, Array $readWhitelist)
+	public function apiUpdate(Array $input, Array $updateWhitelist, Array $readWhitelist)
 	{
 		$transaction = $this->newInstance();
 		$transaction->syncInstanceFrom($this);
@@ -377,7 +384,7 @@ trait AutoApi
 	 *
 	 * @return string the active record table name.
 	 */
-	abstract protected function getTableName();
+	abstract public function getTableName();
 
 	/**
 	 * Returns the name -> variable mapping for the table definition.

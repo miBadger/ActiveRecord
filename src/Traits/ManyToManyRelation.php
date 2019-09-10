@@ -82,7 +82,7 @@ Trait ManyToManyRelation
 	/**
 	 * @return void
 	 */	
-	abstract protected function getTableName();
+	abstract public function getTableName();
 
 	/**
 	 * @return void

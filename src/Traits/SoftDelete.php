@@ -30,12 +30,18 @@ trait SoftDelete
 		]);
 
 		$this->registerSearchHook(TRAIT_SOFT_DELETE_FIELD_KEY, 'softDeleteSearchHook');
+		$this->registerReadHook(TRAIT_SOFT_DELETE_FIELD_KEY, 'softDeleteReadHook');
 	}
 
 	/**
 	 * The hook that gets called whenever a query is made
 	 */
 	protected function softDeleteSearchHook()
+	{
+		return Query::Equal(TRAIT_SOFT_DELETE_FIELD_KEY, 0);
+	}
+
+	protected function softDeleteReadHook()
 	{
 		return Query::Equal(TRAIT_SOFT_DELETE_FIELD_KEY, 0);
 	}

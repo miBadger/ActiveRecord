@@ -211,13 +211,12 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 
 	/**
 	 * @depends testRead
-	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Can not search one non-existent entry from the `name` table.
 	 */
 	public function testSearchOneNonExistentId()
 	{
 		$attributesActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
-		$attributesActiveRecord->search()->where(Query::Equal('id', 4))->fetch();
+		$res = $attributesActiveRecord->search()->where(Query::Equal('id', 4))->fetch();
+		$this->assertNull($res);
 	}
 
 	/**
@@ -359,6 +358,14 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 
 		$this->assertCount(2, $result);
 	}
+
+	public function testSearchFetchMaxResults()
+	{
+		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
+		$result = $abstractActiveRecord->search()->limit(1);
+
+		$this->assertEquals(3, $result->countMaxResults());
+	}
 }
 
 /**
@@ -372,7 +379,7 @@ class AbstractActiveRecordTestMock extends AbstractActiveRecord
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function getTableName()
+	public function getTableName()
 	{
 		return 'name';
 	}
@@ -432,7 +439,7 @@ class AbstractActiveRecordTableExceptionTestMock extends AbstractActiveRecordTes
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function getTableName()
+	public function getTableName()
 	{
 		return 'name2';
 	}
