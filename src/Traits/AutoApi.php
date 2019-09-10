@@ -70,12 +70,12 @@ trait AutoApi
 		}
 
 		return [
-			'offset' => $offset,
-			'limit' => $limit,
-			'order_by' => $orderColumn,
-			'order_direction' => $orderDirection,
-			'pages' => $numPages,
-			'current' => $currentPage,
+			'search_offset' => $offset,
+			'search_limit' => $limit,
+			'search_order_by' => $orderColumn,
+			'search_order_direction' => $orderDirection,
+			'search_pages' => $numPages,
+			'search_current' => $currentPage,
 			'data' => $resultsArray
 		];
 	}
