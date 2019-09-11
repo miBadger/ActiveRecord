@@ -53,7 +53,7 @@ trait AutoApi
 			$query->orderBy($orderColumn, $orderDirection);
 		}
 		
-		$limit = (int) $queryParams['search_limit'] ?? $maxResultLimit;
+		$limit = (int) ($queryParams['search_limit'] ?? $maxResultLimit);
 		if ($limit > $maxResultLimit) {
 			$limit = $maxResultLimit;
 		}
