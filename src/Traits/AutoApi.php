@@ -44,12 +44,19 @@ trait AutoApi
 
 		// Build query
 		$orderColumn = $queryParams['search_order_by'] ?? null;
+		if (!in_array($orderColumn, $fieldWhitelist)) {
+			$orderColumn = null;
+		}
+
 		$orderDirection = $queryParams['search_order_direction'] ?? null;
 		if ($orderColumn !== null) {
 			$query->orderBy($orderColumn, $orderDirection);
 		}
 		
-		$limit = $queryParams['search_limit'] ?? $maxResultLimit;
+		$limit = (int) $queryParams['search_limit'] ?? $maxResultLimit;
+		if ($limit > $maxResultLimit) {
+			$limit = $maxResultLimit;
+		}
 		$query->limit($limit);
 
 		$offset = $queryParams['search_offset'] ?? 0;
