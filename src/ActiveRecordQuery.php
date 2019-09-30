@@ -183,7 +183,7 @@ class ActiveRecordQuery implements \IteratorAggregate
 	{
 		if ($this->maxResultCount === null) {
 			$query = new Query($this->instance->getPdo(), $this->instance->getTableName());
-			$query->select(['count(*) as count']);
+			$query->select(['count(*) as count'], false);
 
 			$whereCondition = $this->getWhereCondition();
 			if ($whereCondition !== null) {
