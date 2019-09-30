@@ -5,6 +5,7 @@ namespace miBadger\ActiveRecord\Traits;
 use miBadger\Query\Query;
 use miBadger\ActiveRecord\ColumnProperty;
 use miBadger\ActiveRecord\AbstractActiveRecord;
+use miBadger\ActiveRecord\SchemaBuilder;
 
 Trait ManyToManyRelation
 {
@@ -72,8 +73,8 @@ Trait ManyToManyRelation
 		$leftParentTable = $this->_leftEntityTable;
 		$rightParentTable = $this->_rightEntityTable;
 
-		$leftConstraint = $this->buildConstraint($leftParentTable, 'id', $childTable, $this->_leftColumnName);
-		$rightConstraint = $this->buildConstraint($rightParentTable, 'id', $childTable, $this->_rightColumnName);
+		$leftConstraint = SchemaBuilder::buildConstraint($leftParentTable, 'id', $childTable, $this->_leftColumnName);
+		$rightConstraint = SchemaBuilder::buildConstraint($rightParentTable, 'id', $childTable, $this->_rightColumnName);
 
 		$this->pdo->query($leftConstraint);
 		$this->pdo->query($rightConstraint);
@@ -83,11 +84,6 @@ Trait ManyToManyRelation
 	 * @return void
 	 */	
 	abstract public function getTableName();
-
-	/**
-	 * @return void
-	 */
-	abstract protected function buildConstraint($parentTable, $parentColumn, $childTable, $childColumn);
 
 	/**
 	 * @return void

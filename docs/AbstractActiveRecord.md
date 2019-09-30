@@ -90,11 +90,10 @@ $activeRecord->getId();
 Since a lot of projects have similar concepts reused across data models, miBadger supports entity extension and code reuse by using Traits.
 Every trait implements a set of functionality that can be incorporated into an ActiveRecord entity.
 To use traits in an entity:
-1. Include the trait into the class like you would do with every other trait
-2. Call the trait method that begins with "init" in the constructer of the class. 
+1. Include (use) the trait into the class, like you would do with every other trait
+2. Call the init method for the trait (look at source for the trait) in the constructer of the class. 
 
-An example of extending an entity with default created & last updated fields using the Datefields Trait is given below.
-
+Example of a default ```created``` & ```modified``` field trait
 ```php
 <?php
 
@@ -112,7 +111,6 @@ class Example extends AbstractActiveRecord
 	}
 }
 ```
-
 
 ## Writing custom Traits
 Custom traits can extend the behaviour of AbstractActiveRecord using hooks. The following hooks are available

@@ -70,7 +70,7 @@ class AbstractActiveRecord_ExtensionTest extends TestCase
 
 	/**
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage tableDefinition is null, most likely due to parent class not having been initialized in constructor
+	 * @expectedExceptionMessage tableDefinition is null, has parent been initialized in constructor?
 	 */
 	public function testInvalidInitException()
 	{

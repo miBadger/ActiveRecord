@@ -14,11 +14,15 @@ public function apiCreate($input, $createWhitelist, $readWhitelist): [Array $err
 public function apiUpdate($input, $updateWhitelist, $readWhitelist): [Array $errors, Array $result];
 ```
 
-In these cases, the ```$createWhitelist``` and ```$updateWhitelist``` arrays specify fieldnames which are allowed to be modified. The ```$readwhitelist``` specifies the fieldnames that get returned by the method, and the ```$input``` array specifies an associative array of user input values.
+In these cases, the ```$createWhitelist``` and ```$updateWhitelist``` arrays specify database columns which are allowed to be modified. The ```$readwhitelist``` specifies the columns that get returned by the method, and the ```$input``` array specifies an associative array of user input values.
 
 For ```apiSearch``` There are two unique input fields:
-- The ```$queryParams``` is an associative array for which the keys ```search_order_by```, ```search_order_direction```, ```search_limit```, ```search_offset``` can be specified to modify the search results.
-- ```$whereClause``` is an optional parameter that allows the user to specify a custom search condition.
+- The ```$queryParams``` is an associative array for which the following keys can be specified to modify the search results
+	- ```search_order_by```
+	- ```search_order_direction```
+	- ```search_limit```
+	- ```search_offset``` 
+- ```$whereClause``` is an optional parameter that allows the user to add a custom search condition.
 
 ## Example route
 This following example illustrates the little amount of code that's required to create a REST API from a data model. This example uses functions from the ```miwebb/JSend``` and ```mibadger/router``` packages for clarity, but these are not required components.
@@ -80,7 +84,7 @@ class Employee extends AbstractActiveRecord
 
 	private function validateName($value)
 	{
-		return is_string($value);
+		return [is_string($value), "Given name must be a string"];
 	}
 }
 
@@ -89,7 +93,7 @@ $router->addRoute("POST", "/entity/", function () {
 	
 	$employee = new Entity($pdo);
 	[$errors, $data] = $entity->apiCreate($_POST, ['name', 'birthday'], ['id', 'name', 'birthday']);
-	if ($errors !== null) {
+	if (!empty($errors)) {
 		return JSend::Fail($errors);
 	}
 	return JSend::Success($data);
@@ -111,7 +115,7 @@ $router->addRoute("PUT", "/entity/{id}/", function ($id) {
 	$employee = new Entity($pdo);
 	// Pay attention to the required read
 	[$errors, $data] = $entity->read($id)->apiUpdate($_POST, ['name', 'birthday'], ['id', 'name', 'birthday']);
-	if ($errors !== null) {
+	if (!empty($errors)) {
 		return JSend::Fail($errors);
 	}
 	return JSend::Success($data);

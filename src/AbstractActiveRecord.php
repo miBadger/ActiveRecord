@@ -21,6 +21,12 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	const COLUMN_NAME_ID = 'id';
 	const COLUMN_TYPE_ID = 'INT UNSIGNED';
 
+	const CREATE = "CREATE";
+	const READ = "READ";
+	const UPDATE = "UPDATE";
+	const DELETE = "DELETE";
+	const SEARCH = "SEARCH";
+
 	/** @var \PDO The PDO object. */
 	protected $pdo;
 
@@ -28,19 +34,19 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	private $id;
 
 	/** @var array A map of column name to functions that hook the insert function */
-	protected $registeredCreateHooks;
+	protected $createHooks;
 
 	/** @var array A map of column name to functions that hook the read function */
-	protected $registeredReadHooks;
+	protected $readHooks;
 
 	/** @var array A map of column name to functions that hook the update function */
-	protected $registeredUpdateHooks;
+	protected $updateHooks;
 
 	/** @var array A map of column name to functions that hook the update function */
-	protected $registeredDeleteHooks;	
+	protected $deleteHooks;	
 
 	/** @var array A map of column name to functions that hook the search function */
-	protected $registeredSearchHooks;
+	protected $searchHooks;
 
 	/** @var array A list of table column definitions */
 	protected $tableDefinition;
@@ -57,11 +63,11 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 
 		$this->setPdo($pdo);
 
-		$this->registeredCreateHooks = [];
-		$this->registeredReadHooks = [];
-		$this->registeredUpdateHooks = [];
-		$this->registeredDeleteHooks = [];
-		$this->registeredSearchHooks = [];
+		$this->createHooks = [];
+		$this->readHooks = [];
+		$this->updateHooks = [];
+		$this->deleteHooks = [];
+		$this->searchHooks = [];
 		$this->tableDefinition = $this->getTableDefinition();
 
 		// Extend table definition with default ID field, throw exception if field already exists
@@ -76,7 +82,11 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 			'value' => &$this->id,
 			'validate' => null,
 			'type' => self::COLUMN_TYPE_ID,
-			'properties' => ColumnProperty::NOT_NULL | ColumnProperty::IMMUTABLE | ColumnProperty::AUTO_INCREMENT | ColumnProperty::PRIMARY_KEY
+			'properties' =>
+				ColumnProperty::NOT_NULL
+				| ColumnProperty::IMMUTABLE
+				| ColumnProperty::AUTO_INCREMENT
+				| ColumnProperty::PRIMARY_KEY
 		];
 	}
 
@@ -96,6 +106,42 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		}
 	}
 
+	public function registerHookOnAction($actionName, $columnName, $fn)
+	{
+		if (is_string($fn) && is_callable([$this, $fn])) {
+			$fn = [$this, $fn];
+		}
+
+		if (!is_callable($fn)) { 
+			throw new ActiveRecordException("Provided hook on column \"$columnName\" is not callable", 0);
+		}
+
+		switch ($actionName) {
+			case self::CREATE:
+				$this->checkHookConstraints($columnName, $this->createHooks);
+				$this->createHooks[$columnName] = $fn;
+				break;
+			case self::READ:
+				$this->checkHookConstraints($columnName, $this->readHooks);
+				$this->readHooks[$columnName] = $fn;
+				break;
+			case self::UPDATE:
+				$this->checkHookConstraints($columnName, $this->updateHooks);
+				$this->updateHooks[$columnName] = $fn;
+				break;
+			case self::DELETE:
+				$this->checkHookConstraints($columnName, $this->deleteHooks);
+				$this->deleteHooks[$columnName] = $fn;
+				break;
+			case self::SEARCH:
+				$this->checkHookConstraints($columnName, $this->searchHooks);
+				$this->searchHooks[$columnName] = $fn;
+				break;
+			default:
+				throw new ActiveRecordException("Invalid action: Can not register hook on non-existing action");
+		}
+	}
+
 	/**
 	 * Register a new hook for a specific column that gets called before execution of the create() method
 	 * Only one hook per column can be registered at a time
@@ -104,15 +150,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 */
 	public function registerCreateHook($columnName, $fn)
 	{
-		$this->checkHookConstraints($columnName, $this->registeredCreateHooks);
-
-		if (is_string($fn) && is_callable([$this, $fn])) {
-			$this->registeredCreateHooks[$columnName] = [$this, $fn];
-		} else if (is_callable($fn)) {
-			$this->registeredCreateHooks[$columnName] = $fn;
-		} else {
-			throw new ActiveRecordException("Provided hook on column \"$columnName\" is not callable", 0);
-		}
+		$this->registerHookOnAction(self::CREATE, $columnName, $fn);
 	}
 
 	/**
@@ -123,15 +161,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 */
 	public function registerReadHook($columnName, $fn)
 	{
-		$this->checkHookConstraints($columnName, $this->registeredReadHooks);
-
-		if (is_string($fn) && is_callable([$this, $fn])) {
-			$this->registeredReadHooks[$columnName] = [$this, $fn];
-		} else if (is_callable($fn)) {
-			$this->registeredReadHooks[$columnName] = $fn;
-		} else {
-			throw new ActiveRecordException("Provided hook on column \"$columnName\" is not callable", 0);
-		}
+		$this->registerHookOnAction(self::READ, $columnName, $fn);
 	}
 
 	/**
@@ -142,15 +172,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 */
 	public function registerUpdateHook($columnName, $fn)
 	{
-		$this->checkHookConstraints($columnName, $this->registeredUpdateHooks);
-
-		if (is_string($fn) && is_callable([$this, $fn])) {
-			$this->registeredUpdateHooks[$columnName] = [$this, $fn];
-		} else if (is_callable($fn)) {
-			$this->registeredUpdateHooks[$columnName] = $fn;
-		} else {
-			throw new ActiveRecordException("Provided hook on column \"$columnName\" is not callable", 0);
-		}
+		$this->registerHookOnAction(self::UPDATE, $columnName, $fn);
 	}
 
 	/**
@@ -161,15 +183,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 */
 	public function registerDeleteHook($columnName, $fn)
 	{
-		$this->checkHookConstraints($columnName, $this->registeredDeleteHooks);
-
-		if (is_string($fn) && is_callable([$this, $fn])) {
-			$this->registeredDeleteHooks[$columnName] = [$this, $fn];
-		} else if (is_callable($fn)) {
-			$this->registeredDeleteHooks[$columnName] = $fn;
-		} else {
-			throw new ActiveRecordException("Provided hook on column \"$columnName\" is not callable", 0);
-		}
+		$this->registerHookOnAction(self::DELETE, $columnName, $fn);
 	}
 
 	/**
@@ -180,15 +194,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 */
 	public function registerSearchHook($columnName, $fn)
 	{
-		$this->checkHookConstraints($columnName, $this->registeredSearchHooks);
-
-		if (is_string($fn) && is_callable([$this, $fn])) {
-			$this->registeredSearchHooks[$columnName] = [$this, $fn];
-		} else if (is_callable($fn)) {
-			$this->registeredSearchHooks[$columnName] = $fn;
-		} else {
-			throw new ActiveRecordException("Provided hook on column \"$columnName\" is not callable", 0);
-		}
+		$this->registerHookOnAction(self::SEARCH, $columnName, $fn);
 	}
 
 	/**
@@ -199,7 +205,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	public function extendTableDefinition($columnName, $definition)
 	{
 		if ($this->tableDefinition === null) {
-			throw new ActiveRecordException("tableDefinition is null, most likely due to parent class not having been initialized in constructor");
+			throw new ActiveRecordException("tableDefinition is null, has parent been initialized in constructor?");
 		}
 
 		// Enforcing table can only be extended with new columns
@@ -213,165 +219,11 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	}
 
 	/**
-	 * Returns the type string as it should appear in the mysql create table statement for the given column
-	 * @return string The type string
-	 */
-	private function getDatabaseTypeString($colName, $type, $length)
-	{
-		switch (strtoupper($type)) {
-			case '':
-				throw new ActiveRecordException(sprintf("Column %s has invalid type \"NULL\"", $colName));
-			
-			case 'BOOL';
-			case 'BOOLEAN':
-			case 'DATETIME':
-			case 'DATE':
-			case 'TIME':
-			case 'TEXT':
-			case 'INT UNSIGNED':
-				return $type;
-
-			case 'VARCHAR':
-				if ($length === null) {
-					throw new ActiveRecordException(sprintf("field type %s requires specified column field \"LENGTH\"", $colName));
-				} else {
-					return sprintf('%s(%d)', $type, $length);	
-				}
-
-			case 'INT':
-			case 'TINYINT':
-			case 'BIGINT':
-			default: 	
-				// Implicitly assuming that non-specified cases are correct without a length parameter
-				if ($length === null) {
-					return $type;
-				} else {
-					return sprintf('%s(%d)', $type, $length);	
-				}
-		}
-	}
-
-	/**
-	 * Builds the part of a MySQL create table statement that corresponds to the supplied column
-	 * @param string $colName 	Name of the database column
-	 * @param string $type 		The type of the string
-	 * @param int $properties 	The set of Column properties that apply to this column (See ColumnProperty for options)
-	 * @return string
-	 */
-	private function buildCreateTableColumnEntry($colName, $type, $length, $properties, $default)
-	{
-		$stmnt = sprintf('`%s` %s ', $colName, $this->getDatabaseTypeString($colName, $type, $length));
-		if ($properties & ColumnProperty::NOT_NULL) {
-			$stmnt .= 'NOT NULL ';
-		} else {
-			$stmnt .= 'NULL ';
-		}
-
-		if ($default !== NULL) {
-			$stmnt .= 'DEFAULT ' . var_export($default, true) . ' ';
-		}
-
-		if ($properties & ColumnProperty::AUTO_INCREMENT) {
-			$stmnt .= 'AUTO_INCREMENT ';
-		}
-
-		if ($properties & ColumnProperty::UNIQUE) {
-			$stmnt .= 'UNIQUE ';
-		}
-
-		if ($properties & ColumnProperty::PRIMARY_KEY) {
-			$stmnt .= 'PRIMARY KEY ';
-		}
-
-		return $stmnt;
-	}
-
-	/**
-	 * Sorts the column statement components in the order such that the id appears first, 
-	 * 		followed by all other columns in alphabetical ascending order
-	 * @param   Array $colStatements Array of column statements
-	 * @return  Array
-	 */
-	private function sortColumnStatements($colStatements)
-	{
-		// Find ID statement and put it first
-		$sortedStatements = [];
-
-		$sortedStatements[] = $colStatements[self::COLUMN_NAME_ID];
-		unset($colStatements[self::COLUMN_NAME_ID]);
-
-		// Sort remaining columns in alphabetical order
-		$columns = array_keys($colStatements);
-		sort($columns);
-		foreach ($columns as $colName) {
-			$sortedStatements[] = $colStatements[$colName];
-		}
-
-		return $sortedStatements;
-	}
-
-	/**
-	 * Builds the MySQL Create Table statement for the internal table definition
-	 * @return string
-	 */
-	public function buildCreateTableSQL()
-	{
-		$columnStatements = [];
-		foreach ($this->tableDefinition as $colName => $definition) {
-			// Destructure column definition
-			$type    = $definition['type'] ?? null;
-			$default = $definition['default'] ?? null;
-			$length  = $definition['length'] ?? null;
-			$properties = $definition['properties'] ?? null;
-
-			if (isset($definition['relation']) && $type !== null) {
-				$tableName = $this->getTableName();
-				$msg = "Column \"$colName\" on table \"$tableName\": ";
-				$msg .= "Relationship columns have an automatically inferred type, so type should be omitted";
-				throw new ActiveRecordException($msg);
-			} else if (isset($definition['relation'])) {
-				$type = self::COLUMN_TYPE_ID;
-			}
-
-			$columnStatements[$colName] = $this->buildCreateTableColumnEntry($colName, $type, $length, $properties, $default);
-		}
-
-		// Sort table (first column is id, the remaining are alphabetically sorted)
-		$columnStatements = $this->sortColumnStatements($columnStatements);
-
-		$sql = sprintf("CREATE TABLE %s (\n%s\n);", 
-			$this->getTableName(), 
-			implode(",\n", $columnStatements));
-
-		return $sql;
-	}
-
-	/**
 	 * Creates the entity as a table in the database
 	 */
 	public function createTable()
 	{
-		$this->pdo->query($this->buildCreateTableSQL());
-	}
-
-	/**
-	 * builds a MySQL constraint statement for the given parameters
-	 * @param string $parentTable
-	 * @param string $parentColumn
-	 * @param string $childTable
-	 * @param string $childColumn
-	 * @return string The MySQL table constraint string
-	 */
-	protected function buildConstraint($parentTable, $parentColumn, $childTable, $childColumn)
-	{
-		$template = <<<SQL
-ALTER TABLE `%s`
-ADD CONSTRAINT
-FOREIGN KEY (`%s`)
-REFERENCES `%s`(`%s`)
-ON DELETE CASCADE;
-SQL;
-		return sprintf($template, $childTable, $childColumn, $parentTable, $parentColumn);
+		$this->pdo->query(SchemaBuilder::buildCreateTableSQL($this->getTableName(), $this->tableDefinition));
 	}
 
 	/**
@@ -385,7 +237,7 @@ SQL;
 			if (isset($definition['relation']) && $definition['relation'] instanceof AbstractActiveRecord) {
 				// Forge new relation
 				$target = $definition['relation'];
-				$constraintSql = $this->buildConstraint($target->getTableName(), 'id', $this->getTableName(), $colName);
+				$constraintSql = SchemaBuilder::buildConstraint($target->getTableName(), 'id', $this->getTableName(), $colName);
 
 				$this->pdo->query($constraintSql);
 			} else if (isset($definition['relation'])) {
@@ -416,24 +268,28 @@ SQL;
 		return $bindings;
 	}
 
+	protected function insertDefaults()
+	{
+		// Insert default values for not-null fields
+		foreach ($this->tableDefinition as $colName => $colDef) {
+			if ($colDef['value'] === null
+				&& ($colDef['properties'] ?? 0) & ColumnProperty::NOT_NULL
+				&& isset($colDef['default'])) {
+				$this->tableDefinition[$colName]['value'] = $colDef['default'];
+			}
+		}		
+	}
+
 	/**
 	 * {@inheritdoc}
 	 */
 	public function create()
 	{
-		foreach ($this->registeredCreateHooks as $colName => $fn) {
+		foreach ($this->createHooks as $colName => $fn) {
 			$fn();
 		}
 
-		// Insert default values for not-null fields
-		foreach ($this->tableDefinition as $colName => $colDef) {
-			if ($this->tableDefinition[$colName]['value'] === null
-				&& isset($this->tableDefinition[$colName]['properties'])
-				&& $this->tableDefinition[$colName]['properties'] && ColumnProperty::NOT_NULL > 0
-				&& isset($this->tableDefinition[$colName]['default'])) {
-				$this->tableDefinition[$colName]['value'] = $this->tableDefinition[$colName]['default'];
-			}
-		}
+		$this->insertDefaults();
 
 		try {
 			(new Query($this->getPdo(), $this->getTableName()))
@@ -456,7 +312,7 @@ SQL;
 		$whereConditions = [
 			Query::Equal('id', $id)
 		];
-		foreach ($this->registeredReadHooks as $colName => $fn) {
+		foreach ($this->readHooks as $colName => $fn) {
 			$cond = $fn();
 			if ($cond !== null) {
 				$whereConditions[] = $cond;
@@ -487,7 +343,7 @@ SQL;
 	 */
 	public function update()
 	{
-		foreach ($this->registeredUpdateHooks as $colName => $fn) {
+		foreach ($this->updateHooks as $colName => $fn) {
 			$fn();
 		}
 
@@ -508,7 +364,7 @@ SQL;
 	 */
 	public function delete()
 	{
-		foreach ($this->registeredDeleteHooks as $colName => $fn) {
+		foreach ($this->deleteHooks as $colName => $fn) {
 			$fn();
 		}
 
@@ -569,7 +425,7 @@ SQL;
 	public function search(array $ignoredTraits = [])
 	{
 		$clauses = [];
-		foreach ($this->registeredSearchHooks as $column => $fn) {
+		foreach ($this->searchHooks as $column => $fn) {
 			if (!in_array($column, $ignoredTraits)) {
 				$clauses[] = $fn();
 			}

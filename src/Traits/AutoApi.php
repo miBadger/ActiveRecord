@@ -14,19 +14,19 @@ trait AutoApi
 	 * ======================================================================= */
 
 	/** @var array A map of column name to functions that hook the insert function */
-	protected $registeredCreateHooks;
+	protected $createHooks;
 
 	/** @var array A map of column name to functions that hook the read function */
-	protected $registeredReadHooks;
+	protected $readHooks;
 
 	/** @var array A map of column name to functions that hook the update function */
-	protected $registeredUpdateHooks;
+	protected $updateHooks;
 
 	/** @var array A map of column name to functions that hook the update function */
-	protected $registeredDeleteHooks;	
+	protected $deleteHooks;	
 
 	/** @var array A map of column name to functions that hook the search function */
-	protected $registeredSearchHooks;
+	protected $searchHooks;
 
 	/** @var array A list of table column definitions */
 	protected $tableDefinition;
@@ -53,18 +53,15 @@ trait AutoApi
 			$query->orderBy($orderColumn, $orderDirection);
 		}
 		
-		$limit = (int) ($queryParams['search_limit'] ?? $maxResultLimit);
-		if ($limit > $maxResultLimit) {
-			$limit = $maxResultLimit;
+		if ($whereClause !== null) {
+			$query->where($whereClause);
 		}
+
+		$limit = min((int) ($queryParams['search_limit'] ?? $maxResultLimit), $maxResultLimit);
 		$query->limit($limit);
 
 		$offset = $queryParams['search_offset'] ?? 0;
 		$query->offset($offset);
-
-		if ($whereClause !== null) {
-			$query->where($whereClause);
-		}
 
 		$numPages = $query->getNumberOfPages();
 		$currentPage = $query->getCurrentPage();
@@ -216,8 +213,11 @@ trait AutoApi
 			if ($properties & ColumnProperty::NOT_NULL
 				&& $default === null
 				&& !($properties & ColumnProperty::AUTO_INCREMENT)
-				&& (!array_key_exists($colName, $input) || $input[$colName] === null)
-				&& $value === null) {
+				&& (!array_key_exists($colName, $input) 
+					|| $input[$colName] === null 
+					|| (is_string($input[$colName]) && $input[$colName] === '') )
+				&& ($value === null
+					|| (is_string($value) && $value === ''))) {
 				$errors[$colName] = sprintf("The required field \"%s\" is missing", $colName);
 			} 
 		}
@@ -263,7 +263,7 @@ trait AutoApi
 		$transaction->loadData($input);
 
 		// Run create hooks
-		foreach ($transaction->registeredCreateHooks as $colName => $fn) {
+		foreach ($transaction->createHooks as $colName => $fn) {
 			$fn();
 		}
 
@@ -275,14 +275,7 @@ trait AutoApi
 			$this->syncInstanceFrom($transaction);
 
 			// Insert default values for not-null fields
-			foreach ($this->tableDefinition as $colName => $colDef) {
-				if ($this->tableDefinition[$colName]['value'] === null
-					&& isset($this->tableDefinition[$colName]['properties'])
-					&& $this->tableDefinition[$colName]['properties'] && ColumnProperty::NOT_NULL > 0
-					&& isset($this->tableDefinition[$colName]['default'])) {
-					$this->tableDefinition[$colName]['value'] = $this->tableDefinition[$colName]['default'];
-				}
-			}
+			$this->insertDefaults();
 
 			try {
 				(new Query($this->getPdo(), $this->getTableName()))
@@ -329,7 +322,7 @@ trait AutoApi
 		$transaction->loadData($input);
 
 		// Run create hooks
-		foreach ($transaction->registeredUpdateHooks as $colName => $fn) {
+		foreach ($transaction->updateHooks as $colName => $fn) {
 			$fn();
 		}
 

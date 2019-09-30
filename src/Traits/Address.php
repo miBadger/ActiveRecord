@@ -8,6 +8,7 @@ const TRAIT_ADDRESS_FIELD_ADDRESS = "address_address";
 const TRAIT_ADDRESS_FIELD_ZIPCODE = "address_zipcode";
 const TRAIT_ADDRESS_FIELD_CITY = "address_city";
 const TRAIT_ADDRESS_FIELD_COUNTRY = "address_country";
+const TRAIT_ADDRESS_FIELD_STATE = "address_state";
 
 trait Address
 {
@@ -22,6 +23,9 @@ trait Address
 
 	/** @var string the country */
 	protected $country;
+
+	/** @var string the state */
+	protected $state;
 
 	/**
 	 * Registers the Address trait on the including class
@@ -61,10 +65,19 @@ trait Address
 			'properties' => null
 		]);
 
+		$this->extendTableDefinition(TRAIT_ADDRESS_FIELD_STATE, [
+			'value' => &$this->state,
+			'validate' => null,
+			'type' => 'VARCHAR',
+			'length' => 1024,
+			'properties' => null
+		]);
+
 		$this->address = null;
 		$this->zipcode = null;
 		$this->city = null;
 		$this->country = null;
+		$this->state = null;
 	}
 
 	/**
@@ -81,6 +94,7 @@ trait Address
 	public function setAddress($address)
 	{
 		$this->address = $address;
+		return $this;
 	}
 
 	/**
@@ -97,6 +111,7 @@ trait Address
 	public function setZipcode($zipcode)
 	{
 		$this->zipcode = $zipcode;
+		return $this;
 	}
 
 	/**
@@ -113,6 +128,7 @@ trait Address
 	public function setCity($city)
 	{
 		$this->city = $city;
+		return $this;
 	}
 
 	/**
@@ -129,6 +145,18 @@ trait Address
 	public function setCountry($country)
 	{
 		$this->country = $country;
+		return $this;
+	}
+
+	public function getState()
+	{
+		return $this->state;
+	}
+	
+	public function setState($state)
+	{
+		$this->state = $state;
+		return $this;
 	}
 
 	/**

@@ -132,6 +132,7 @@ trait Password
 	public function generatePasswordResetToken()
 	{
 		$this->passwordResetToken = md5(uniqid(mt_rand(), true));
+		return $this;
 	}
 
 	/**
@@ -140,6 +141,7 @@ trait Password
 	public function clearPasswordResetToken()
 	{
 		$this->passwordResetToken = null;
+		return $this;
 	}
 	
 	/**

@@ -120,6 +120,29 @@ class AutoAPITest extends TestCase
 		$this->assertNull($data);
 	}
 
+	public function testApiCreateNullInput()
+	{
+		$input = [
+			'birthday' => '1990-01-01',
+			'name' => null
+		];
+
+		$entity = new TestEntity($this->pdo);
+		[$errors, $data] = $entity->apiCreate($input, ['name', 'birthday'], ['name', 'birthday']);
+		$this->assertNotNull($errors);
+		$this->assertNull($data);
+
+		$input = [
+			'birthday' => '1990-01-01',
+			'name' => ""
+		];
+
+		$entity = new TestEntity($this->pdo);
+		[$errors, $data] = $entity->apiCreate($input, ['name', 'birthday'], ['name', 'birthday']);
+		$this->assertNotNull($errors);
+		$this->assertNull($data);	
+	}
+
 	public function testApiCreateExcessFields() 
 	{
 		$input = [
@@ -249,8 +272,8 @@ class AutoAPITest extends TestCase
 			'search_limit' => 1], 
 			['name', 'birthday']);
 		$this->assertCount(1, $results['data']);
-		$this->assertEquals(2, $results['pages']);
-		$this->assertEquals(1, $results['current']);
+		$this->assertEquals(2, $results['search_pages']);
+		$this->assertEquals(1, $results['search_current']);
 	}
 
 	public function testRelationSuccess()
