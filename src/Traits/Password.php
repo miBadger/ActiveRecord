@@ -8,8 +8,9 @@ use miBadger\ActiveRecord\ActiveRecordTraitException;
 const TRAIT_PASSWORD_FIELD_PASSWORD = "password";
 const TRAIT_PASSWORD_ENCRYPTION = \PASSWORD_BCRYPT;
 const TRAIT_PASSWORD_STRENTH = 10;
-const TRAIT_PASSWORD_FIELD_PASSWORD_RESET_TOKEN = "password_reset_token";
+const TRAIT_PASSWORD_FIELD_RESET_TOKEN = "password_reset_token";
 const TRAIT_PASSWORD_MIN_LENGTH = 8;
+const TRAIT_PASSWORD_FIELD_RESET_TOKEN_EXPIRY = "password_reset_token_expiry";
 
 trait Password
 {
@@ -18,6 +19,9 @@ trait Password
 
 	/** @var string|null The password reset token. */
 	protected $passwordResetToken;
+
+	/** @var string|null The password expiry date */
+	protected $passwordExpiryDate;
 
 	/**
 	 * this method is required to be called in the constructor for each class that uses this trait. 
@@ -33,12 +37,18 @@ trait Password
 			'properties' => null
 		]);
 
-		$this->extendTableDefinition(TRAIT_PASSWORD_FIELD_PASSWORD_RESET_TOKEN, [
+		$this->extendTableDefinition(TRAIT_PASSWORD_FIELD_RESET_TOKEN, [
 			'value' => &$this->passwordResetToken,
 			'validate' => null,
 			'default' => 0,
 			'type' => 'VARCHAR',
 			'length' => 1024
+		]);
+
+		$this->extendTableDefinition(TRAIT_PASSWORD_FIELD_RESET_TOKEN_EXPIRY, [
+			'value' => &$this->passwordExpiryDate,
+			'validate' => null,
+			'type' => 'DATETIME',
 		]);
 	}
 
@@ -132,6 +142,10 @@ trait Password
 	public function generatePasswordResetToken()
 	{
 		$this->passwordResetToken = md5(uniqid(mt_rand(), true));
+
+		$validityDuration = new \DateInterval('PT24H');
+
+		$this->passwordExpiryDate = (new \DateTime('now'))->add($validityDuration)->format('Y-m-d H:i:s');
 		return $this;
 	}
 
@@ -141,7 +155,15 @@ trait Password
 	public function clearPasswordResetToken()
 	{
 		$this->passwordResetToken = null;
+		$this->passwordExpiryDate = null;
 		return $this;
+	}
+
+	public function validatePasswordResetToken($token)
+	{
+		return $this->passwordResetToken !== null
+			&& $token === $this->passwordResetToken
+			&& (new \DateTime('now')) < (new \DateTime($this->passwordExpiryDate));
 	}
 	
 	/**

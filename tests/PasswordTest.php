@@ -111,6 +111,20 @@ class PasswordTraitTest extends TestCase
 		$passwordMock->clearPasswordResetToken();
 		$this->assertEquals(null, $passwordMock->getPasswordResetToken());
 	}
+
+	public function testValidatePasswordResetToken()
+	{
+		$passwordMock = new PasswordsRecordTestMock($this->pdo);
+		$passwordMock->generatePasswordResetToken();
+		$passwordMock->create();
+
+		$token = $passwordMock->getPasswordResetToken();
+		$this->assertTrue($passwordMock->validatePasswordResetToken($token));
+
+		$yesterday = (new \DateTime('now'))->sub(new \DateInterval('PT25H'));
+		$passwordMock->overwritePasswordExpiryDate($yesterday);
+		$this->assertFalse($passwordMock->validatePasswordResetToken($token));
+	}
 }
 
 
@@ -154,4 +168,8 @@ class PasswordsRecordTestMock extends AbstractActiveRecord
 		$this->username = $username;
 	}
 
+	public function overwritePasswordExpiryDate($date)
+	{
+		$this->passwordExpiryDate = $date->format('Y-m-d h:i:s');
+	}
 }
