@@ -377,7 +377,7 @@ class invalidInitOrderTestMock extends AbstractActiveRecord
 		parent::__construct($pdo);
 	}	
 
-	public function getTableName()
+	public function getTableName(): string
 	{
 		return 'invalid_record';
 	}
@@ -385,10 +385,9 @@ class invalidInitOrderTestMock extends AbstractActiveRecord
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function getTableDefinition()
+	protected function getTableDefinition(): Array
 	{
-		return [
-		];
+		return [];
 	}
 }
 
@@ -409,7 +408,7 @@ class AbstractActiveRecordTestMock extends AbstractActiveRecord
 	/**
 	 * {@inheritdoc}
 	 */
-	public function getTableName()
+	public function getTableName(): string
 	{
 		return 'test';
 	}
@@ -417,7 +416,7 @@ class AbstractActiveRecordTestMock extends AbstractActiveRecord
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function getTableDefinition()
+	protected function getTableDefinition(): Array
 	{
 		return [
 			'username' => 

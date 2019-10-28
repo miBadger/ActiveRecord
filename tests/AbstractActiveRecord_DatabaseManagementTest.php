@@ -113,7 +113,7 @@ class UserRecordTestMock extends AbstractActiveRecord
 	/**
 	 * {@inheritdoc}
 	 */
-	public function getTableName()
+	public function getTableName(): string
 	{
 		return 'test_mock_user';
 	}
@@ -121,7 +121,7 @@ class UserRecordTestMock extends AbstractActiveRecord
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function getTableDefinition()
+	protected function getTableDefinition(): Array
 	{
 		return [
 			'username' => 
@@ -154,7 +154,7 @@ class BlogPostRecordTestMock extends AbstractActiveRecord
 	/**
 	 * {@inheritdoc}
 	 */
-	public function getTableName()
+	public function getTableName(): string
 	{
 		return 'test_mock_blogpost';
 	}
@@ -162,7 +162,7 @@ class BlogPostRecordTestMock extends AbstractActiveRecord
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function getTableDefinition()
+	protected function getTableDefinition(): Array
 	{
 		return [
 			'author' => 
@@ -202,7 +202,7 @@ class NullTypeFieldRecordMock extends AbstractActiveRecord
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function getTableDefinition()
+	protected function getTableDefinition(): Array
 	{
 		return [
 			'field' => 
@@ -216,7 +216,7 @@ class NullTypeFieldRecordMock extends AbstractActiveRecord
 		];
 	}
 
-	public function getTableName()
+	public function getTableName(): string
 	{
 		return 'nulltype_field_record_mock_test';
 	}
@@ -231,7 +231,7 @@ class ConstraintExceptionTestMock extends AbstractActiveRecord
 	/**
 	 * {@inheritdoc}
 	 */
-	public function getTableName()
+	public function getTableName(): string
 	{
 		return 'test_constraint_exception';
 	}
@@ -239,7 +239,7 @@ class ConstraintExceptionTestMock extends AbstractActiveRecord
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function getTableDefinition()
+	protected function getTableDefinition(): Array
 	{
 		return [
 			'author' => 

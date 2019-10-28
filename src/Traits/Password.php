@@ -88,7 +88,7 @@ trait Password
 
 	public function validatePassword($password) {
 		if (strlen($password) < TRAIT_PASSWORD_MIN_LENGTH) {
-			$message = sprintf('\'Password\' must be atleast %s characters long. %s characters provied.', TRAIT_PASSWORD_MIN_LENGTH, strlen($password));
+			$message = sprintf('\'Password\' must be atleast %s characters long. %s characters provided.', TRAIT_PASSWORD_MIN_LENGTH, strlen($password));
 			return [false, $message];
 		}
 		return [true, ''];
@@ -159,7 +159,7 @@ trait Password
 		return $this;
 	}
 
-	public function validatePasswordResetToken($token)
+	public function validatePasswordResetToken(string $token)
 	{
 		return $this->passwordResetToken !== null
 			&& $token === $this->passwordResetToken

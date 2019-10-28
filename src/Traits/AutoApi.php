@@ -37,8 +37,10 @@ trait AutoApi
 	 *                             "search_order_by", "search_order_direction", "search_limit", "search_offset"
 	 *                             or column names corresponding to an instance of miBadger\Query\QueryExpression
 	 * @param Array $fieldWhitelist names of the columns that will appear in the output results
+	 * 
+	 * @return Array an associative array containing the query parameters, and a data field containing an array of search results (associative arrays indexed by the keys in $fieldWhitelist)
 	 */
-	public function apiSearch(Array $queryParams, Array $fieldWhitelist, ?QueryExpression $whereClause = null, int $maxResultLimit = 100)
+	public function apiSearch(Array $queryParams, Array $fieldWhitelist, ?QueryExpression $whereClause = null, int $maxResultLimit = 100): Array
 	{
 		$query = $this->search();
 
@@ -96,7 +98,14 @@ trait AutoApi
 		return $output;
 	}
 
-	public function apiRead($id, Array $fieldWhitelist)
+	/**
+	 * @param string|int $id the id of the current entity
+	 * @param Array $fieldWhitelist an array of fields that are allowed to appear in the output
+	 * 
+	 * @param Array An associative array containing the data for this record, 
+	 * 				where the keys are entries in $fieldWhitelist
+	 */
+	public function apiRead($id, Array $fieldWhitelist): Array
 	{
 		// @TODO: Should apiRead throw exception or return null on fail?
 		$this->read($id);

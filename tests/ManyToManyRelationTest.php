@@ -119,7 +119,7 @@ class PersonMock extends AbstractActiveRecord
 {
 	protected $name;
 
-	public function getTableDefinition()
+	public function getTableDefinition(): Array
 	{
 		return [
 			'name' => 
@@ -133,7 +133,7 @@ class PersonMock extends AbstractActiveRecord
 		];
 	}
 
-	public function getTableName() 
+	public function getTableName(): string
 	{
 		return 'person_test_mock';
 	}
@@ -165,12 +165,12 @@ class FriendMock extends AbstractActiveRecord
 		$this->initManyToManyRelation(new PersonMock($pdo), $this->leftFriend, new PersonMock($pdo), $this->rightFriend);
 	}
 
-	public function getTableName() 
+	public function getTableName(): string
 	{
 		return 'friend_test_mock';
 	}
 
-	protected function getTableDefinition()
+	protected function getTableDefinition(): Array
 	{
 		return [];
 	}

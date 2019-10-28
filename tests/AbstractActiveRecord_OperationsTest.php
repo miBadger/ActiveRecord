@@ -379,7 +379,7 @@ class AbstractActiveRecordTestMock extends AbstractActiveRecord
 	/**
 	 * {@inheritdoc}
 	 */
-	public function getTableName()
+	public function getTableName(): string
 	{
 		return 'name';
 	}
@@ -387,7 +387,7 @@ class AbstractActiveRecordTestMock extends AbstractActiveRecord
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function getTableDefinition()
+	protected function getTableDefinition(): Array
 	{
 		return [
 			'field' => 
@@ -439,7 +439,7 @@ class AbstractActiveRecordTableExceptionTestMock extends AbstractActiveRecordTes
 	/**
 	 * {@inheritdoc}
 	 */
-	public function getTableName()
+	public function getTableName(): string
 	{
 		return 'name2';
 	}
@@ -461,7 +461,7 @@ class AbstractActiveRecordColumnsExceptionTestMock extends AbstractActiveRecordT
 	/**
 	 * {@inheritdoc}
 	 */
-	protected function getTableDefinition()
+	protected function getTableDefinition(): Array
 	{
 		return [
 			'field' => 

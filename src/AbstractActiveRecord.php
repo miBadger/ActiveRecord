@@ -495,12 +495,12 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 *
 	 * @return string the active record table name.
 	 */
-	abstract public function getTableName();
+	abstract public function getTableName(): string;
 
 	/**
 	 * Returns the active record columns.
 	 *
 	 * @return array the active record columns.
 	 */
-	abstract protected function getTableDefinition();
+	abstract protected function getTableDefinition(): Array;
 }

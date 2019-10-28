@@ -1,6 +1,6 @@
 # The AutoApi Trait
 
-The autoApi trait aims to make creating HTTP API's for modifying data models created with miBadger.ActiveRecord as simple as possible. It provides a set of functions that help with validating input, and appropriate error messenging, with the aim to reduce the number of lines of code that need to be written while implementing an API.
+The autoApi trait aims to make creating CRUD API's for modifying data models created with miBadger.ActiveRecord as simple as possible. It provides a set of functions that help with validating input, and appropriate error messenging, with the aim to reduce the number of lines of code that need to be written while implementing basic CRUD functionality.
 
 ```php
 use miBadger\Query\QueryExpression
@@ -14,7 +14,7 @@ public function apiCreate($input, $createWhitelist, $readWhitelist): [Array $err
 public function apiUpdate($input, $updateWhitelist, $readWhitelist): [Array $errors, Array $result];
 ```
 
-In these cases, the ```$createWhitelist``` and ```$updateWhitelist``` arrays specify database columns which are allowed to be modified. The ```$readwhitelist``` specifies the columns that get returned by the method, and the ```$input``` array specifies an associative array of user input values.
+for the above functions, the ```$createWhitelist``` and ```$updateWhitelist``` arrays specify database columns which are allowed to be modified. The ```$readwhitelist``` specifies the columns that get returned by the method, and the ```$input``` array specifies an associative array of user input values.
 
 For ```apiSearch``` There are two unique input fields:
 - The ```$queryParams``` is an associative array for which the following keys can be specified to modify the search results

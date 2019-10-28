@@ -1,9 +1,32 @@
 # AbstractActiveRecord
+ActiveRecord is a system to aid with managing database entries in PHP code. ActiveRecord implements a so called [object-relational-mapping](https://en.wikipedia.org/wiki/Object-relational_mapping) (ORM) which allows you to treat rows of database tables as PHP objects. These objects are instantiated from classes that inherit from the AbstractActiveRecord class.
 
-The abstract active record class implements the active record interface (miBadger\\ActiveRecord\\ActiveRecordInterface).
+The central functionality of ActiveRecord revolves around a table definition. This table definition contains all the information that defines a table in your database, and besides providing an ORM, allows you to: Install & Manage the database, validate input against database constraints, and even generate REST APIs easily (using ```AutoAPI```).
+
+To create a new model, create a new class that inherits from ```miBadger\ActiveRecord\AbstractActiveRecord``` and implement the following two methods:
+- ```getTableName(): string``` is expected to return a static string, which will be the name of the backing table in the database.
+- ```getTableDefinition(): Array``` defines the columns in the database table.
+
+## Table Definition format
+The implementation of ```getTableDefinition``` needs to return a static associative array, where the keys represent the column names in your database table, and the value is an array of configuration properties. The following properties are available:
+
+| Field      | Required | Description                                                                                                                                           |
+|------------|-----------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ```value```      | Yes       | Takes a reference to the member variable of the class,  where data read from the table will be stored                                                 |
+| ```type```       | Yes       | The string representing the mysql database type                                                                                                       |
+| ```length```     | No*       | The maximum size of the data in the variable, as would be specified in mysql.  Example: a ```VARCHAR(255)``` field would get a ```length``` of 255.   |
+| ```validate```   | No        | Takes an anonimous validation function,  or a reference to a class method in the form of ```[$this, 'functionName']```.  See AutoApi.md for more info |
+| ```default```    | No        | The primitive literal that will be used when a value for this column isn't specified.                                                                 |
+| ```properties``` | No        | A bitfield of column properties (analogous to the options available in mysql).  All options can be found in miBadger\ActiveRecord\ColumnProperty      |
+| ```relation```   | No        | Takes an instance of AbstractActiveRecord (or ```$this```) to indicate this column contains a relation between models. See below for more info. |
+
+
+An auto incrementing ```id``` field is automatically added to every table definition, and thus should be omitted.
+
+For commonly used fields, code repetition can be prevented by using traits. See the sections below for more info on this.
 
 ## Example(s)
-
+Declaration
 ```php
 <?php
 
@@ -28,7 +51,7 @@ class Example extends AbstractActiveRecord
 	/**
 	 * {@inheritdoc}
 	 */
-	public function getTableDefinition() 
+	public function getTableDefinition(): Array 
 	{
 		return [
 			'name' =>
@@ -67,6 +90,7 @@ class Example extends AbstractActiveRecord
 }
 ```
 
+Usage
 ```php
 <?php
 
@@ -76,14 +100,19 @@ class Example extends AbstractActiveRecord
 $activeRecord = new Example($pdo);
 
 /**
- * Returns the PDO.
+ * Reads the instance with id = 2 from the database
  */
-$activeRecord->getPdo();
+$activeRecord->read(2);
 
 /**
  * Returns the ID.
  */
 $activeRecord->getId();
+
+/**
+ * Retrieves the name for the retrieved record
+ */
+$activeRecord->getName();
 ```
 
 ## Entity extension using traits
@@ -93,7 +122,8 @@ To use traits in an entity:
 1. Include (use) the trait into the class, like you would do with every other trait
 2. Call the init method for the trait (look at source for the trait) in the constructer of the class. 
 
-Example of a default ```created``` & ```modified``` field trait
+Below follows an example of a trait that adds 2 default ```created``` & ```modified``` fields to the table definition.
+
 ```php
 <?php
 
@@ -108,6 +138,16 @@ class Example extends AbstractActiveRecord
 	{
 		parent::__construct($pdo);
 		$this->initDatefields();
+	}
+
+	public function getTableName(): string
+	{
+		return 'example';
+	}
+
+	public function getTableDefinition(): Array
+	{
+		return [];
 	}
 }
 ```
@@ -130,7 +170,7 @@ $activeRecord->createTable();
 ```
 
 ## Modelling relations
-miBadger allows for modeling database constraints between table values. In combination with database management, this allows for automatic enforcement of constraints. This is done by specifying the 'relation' attribute on a column as shown in the following example.
+ActiveRecord allows for modeling database constraints between table values. In combination with database management, this allows for automatic enforcement of database constraints. This is done by specifying the 'relation' attribute on a column as shown in the ```Example``` class below.
 
 ### Parent-child relations
 ```php
@@ -142,7 +182,7 @@ class User extends AbstractActiveRecord
 {
 	private $username;
 
-	public function getTableDefinition() 
+	public function getTableDefinition(): Array
 	{
 		return [
 			'username' =>
@@ -156,7 +196,7 @@ class User extends AbstractActiveRecord
 		];
 	}
 
-	public function getTableName() 
+	public function getTableName(): string
 	{
 		return 'user';
 	}
@@ -184,6 +224,7 @@ class Example extends AbstractActiveRecord
 ```
 
 ### Many-to-many relations
+While it's possible to model a many-to-many relationship table using 2 relation columns, there is a trait that provides a shorthand called ```ManyToManyRelation```
 ```php
 <?php
 
@@ -194,7 +235,7 @@ class User extends AbstractActiveRecord
 {
 	private $username;
 
-	public function getTableDefinition() 
+	public function getTableDefinition(): Array
 	{
 		return [
 			'username' =>
@@ -208,7 +249,7 @@ class User extends AbstractActiveRecord
 		];
 	}
 
-	public function getTableName() 
+	public function getTableName(): string
 	{
 		return 'user';
 	}
@@ -228,11 +269,12 @@ class FollowerRelation extends AbstractActiveRecord
 		$this->initManyToManyRelation(new User($pdo), $this->follower, new User($pdo), $this->target);
 	}
 
-	public function getTableDefinition() {
+	public function getTableDefinition(): Array
+	{
 		return [];
 	}
 
-	public function getTableName() 
+	public function getTableName(): string
 	{
 		return 'follower_relation';
 	}
@@ -243,20 +285,21 @@ class FollowerRelation extends AbstractActiveRecord
 To make database setup easy, and help with consistency between data and database specification, the table spec for an entity allows you to install a table and optional constraints directly onto the database.
 
 To make sure that your database is correctly installed, you should always install in the following order:
-1. Install the tables for all the entities first using ```(new Example($pdo))->createTable(); ```
-2. Only after installing all tables:
-	Install the table constraints using ```(new Example($pdo))->createTableConstraints(); ```
+1. Install the tables for all the entities first.
+2. Only after installing all tables: Install the table constraints.
 
 ```php
+// Installs the tables (CREATE TABLE x)
 (new User($pdo))->createTable();
 (new FollowerRelation($pdo))->createTable();
 
+// Installs the constraints (ALTER TABLE x ADD CONSTRAINT)
 (new User($pdo))->createTableConstraints();
 (new FollowerRelation($pdo))->createTableConstraints()
 ```
 
 ## Dev-mode: Database consistency validation
-NOT IMPLEMENTED
+NOT IMPLEMENTED YET
 At the expense of performance, miBadger can verify whether the data model as described in php is consistent with the mysql database, and help enforce this by throwing exceptions whenever an inconsistency is detected.
 
 # Testing

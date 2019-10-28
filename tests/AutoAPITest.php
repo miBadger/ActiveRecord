@@ -304,12 +304,12 @@ class TestRelated extends AbstractActiveRecord
 		parent::__construct($pdo);
 	}
 
-	public function getTableDefinition()
+	public function getTableDefinition(): Array
 	{
 		return [];
 	}
 
-	public function getTableName()
+	public function getTableName(): string
 	{
 		return 'test_related_mock';
 	}
@@ -326,7 +326,7 @@ class TestRelator extends AbstractActiveRecord
 		parent::__construct($pdo);
 	}
 
-	public function getTableDefinition()
+	public function getTableDefinition(): Array
 	{
 		return [
 			'id_relation' => [
@@ -337,7 +337,7 @@ class TestRelator extends AbstractActiveRecord
 		];
 	}
 
-	public function getTableName()
+	public function getTableName(): string
 	{
 		return 'test_relator_mock';
 	}
@@ -380,7 +380,7 @@ class TestEntity extends AbstractActiveRecord
 		$this->initSoftDelete();
 	}
 
-	public function getTableDefinition()
+	public function getTableDefinition(): Array
 	{
 		return [
 			'name' => 
@@ -421,7 +421,7 @@ class TestEntity extends AbstractActiveRecord
 		];
 	}
 
-	public function getTableName() 
+	public function getTableName(): string
 	{
 		return 'test_entity_mock';
 	}

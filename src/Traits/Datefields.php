@@ -36,21 +36,28 @@ trait Datefields
 			'properties' => ColumnProperty::NOT_NULL | ColumnProperty::IMMUTABLE
 		]);
 		
+		$this->registerCreateHook(TRAIT_DATEFIELDS_CREATED, 'DatefieldsLastModifiedCreateHook');
+		$this->registerCreateHook(TRAIT_DATEFIELDS_LAST_MODIFIED, 'DatefieldsCreatedCreateHook');
 		$this->registerUpdateHook(TRAIT_DATEFIELDS_LAST_MODIFIED, 'DatefieldsUpdateHook');
-		$this->registerCreateHook(TRAIT_DATEFIELDS_LAST_MODIFIED, 'DatefieldsCreateHook');
 
 		$this->created = null;
 		$this->lastModified = null;
 	}
 
 	/**
-	 * The hook that gets called to set the timestamp whenever a new record is created
+	 * The hook that gets called to set the last modified timestamp whenever a new record is created
 	 */
-	protected function DatefieldsCreateHook()
+	protected function DatefieldsLastModifiedCreateHook()
 	{
-		// @TODO: Should this be split up to seperate hooks for "last_modified" and "created" for consistency?
-		$this->created = (new \DateTime('now'))->format('Y-m-d H:i:s');
 		$this->lastModified = (new \DateTime('now'))->format('Y-m-d H:i:s');
+	}
+
+	/**
+	 * The hook that gets called to set the created timestamp whenever a new record is created
+	 */
+	protected function DatefieldsCreatedCreateHook()
+	{
+		$this->created = (new \DateTime('now'))->format('Y-m-d H:i:s');
 	}
 
 	/**

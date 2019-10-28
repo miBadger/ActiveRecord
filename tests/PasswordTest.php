@@ -70,7 +70,7 @@ class PasswordTraitTest extends TestCase
 
 	/**
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordTraitException
-	 * @expectedExceptionMessage 'Password' must be atleast 8 characters long. 0 characters provied.
+	 * @expectedExceptionMessage 'Password' must be atleast 8 characters long. 0 characters provided.
 	 */
 	public function testValidatePasswordLengthException()
 	{
@@ -115,6 +115,7 @@ class PasswordTraitTest extends TestCase
 	public function testValidatePasswordResetToken()
 	{
 		$passwordMock = new PasswordsRecordTestMock($this->pdo);
+		$this->assertFalse($passwordMock->validatePasswordResetToken("foo"));
 		$passwordMock->generatePasswordResetToken();
 		$passwordMock->create();
 
@@ -139,7 +140,7 @@ class PasswordsRecordTestMock extends AbstractActiveRecord
 		$this->initPassword();
 	}
 
-	public function getTableDefinition()
+	public function getTableDefinition(): Array
 	{
 		return [
 			'username' => 
@@ -153,7 +154,7 @@ class PasswordsRecordTestMock extends AbstractActiveRecord
 		];
 	}
 
-	public function getTableName() 
+	public function getTableName(): string
 	{
 		return 'password_test_mock';
 	}

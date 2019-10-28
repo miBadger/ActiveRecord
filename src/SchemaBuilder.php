@@ -164,7 +164,7 @@ SQL;
 		// Sort table (first column is id, the remaining are alphabetically sorted)
 		$columnStatements = self::sortColumnStatements($columnStatements);
 
-		$sql = sprintf("CREATE TABLE %s (\n%s\n);", 
+		$sql = sprintf("CREATE TABLE %s (\n%s\n) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;", 
 			$tableName, 
 			implode(",\n", $columnStatements));
 

@@ -82,7 +82,7 @@ class DatefieldsRecordTestMock extends AbstractActiveRecord
 		$this->initDatefields();
 	}
 
-	public function getTableDefinition()
+	public function getTableDefinition(): Array
 	{
 		return [
 			'value' => 
@@ -96,7 +96,7 @@ class DatefieldsRecordTestMock extends AbstractActiveRecord
 		];
 	}
 
-	public function getTableName() 
+	public function getTableName(): string
 	{
 		return 'datefields_test_mock';
 	}
