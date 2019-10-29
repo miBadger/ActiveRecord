@@ -172,6 +172,8 @@ $activeRecord->createTable();
 ## Modelling relations
 ActiveRecord allows for modeling database constraints between table values. In combination with database management, this allows for automatic enforcement of database constraints. This is done by specifying the 'relation' attribute on a column as shown in the ```Example``` class below.
 
+Relation can be either cascade (if the related entity is deleted, the row is deleted), or set to null (if the related entitity is deleted, the id for the relation is set to null). this is decided by the properties entry. if ```ColumnProperty::NOT_NULL``` is set on the relation column, it will create a cascade constraint. Otherwise, it will create a set-null constraint.
+
 ### Parent-child relations
 ```php
 <?php
