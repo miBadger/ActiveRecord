@@ -86,18 +86,6 @@ trait AutoApi
 		];
 	}
 
-	public function toArray($fieldWhitelist)
-	{
-		$output = [];
-		foreach ($this->tableDefinition as $colName => $definition) {
-			if (in_array($colName, $fieldWhitelist)) {
-				$output[$colName] = $definition['value'];
-			}
-		}
-
-		return $output;
-	}
-
 	/**
 	 * @param string|int $id the id of the current entity
 	 * @param Array $fieldWhitelist an array of fields that are allowed to appear in the output
@@ -387,6 +375,14 @@ trait AutoApi
 	 * @return null|int The ID.
 	 */
 	abstract protected function getId();
+
+
+	/**
+	 * Returns the serialized form of the specified columns
+	 * 
+	 * @return Array
+	 */
+	abstract public function toArray(Array $fieldWhitelist);
 
 	/**
 	 * Returns the active record table.

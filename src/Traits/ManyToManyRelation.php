@@ -73,8 +73,8 @@ Trait ManyToManyRelation
 		$leftParentTable = $this->_leftEntityTable;
 		$rightParentTable = $this->_rightEntityTable;
 
-		$leftConstraint = SchemaBuilder::buildConstraint($leftParentTable, 'id', $childTable, $this->_leftColumnName);
-		$rightConstraint = SchemaBuilder::buildConstraint($rightParentTable, 'id', $childTable, $this->_rightColumnName);
+		$leftConstraint = SchemaBuilder::buildConstraintOnDeleteCascade($leftParentTable, 'id', $childTable, $this->_leftColumnName);
+		$rightConstraint = SchemaBuilder::buildConstraintOnDeleteCascade($rightParentTable, 'id', $childTable, $this->_rightColumnName);
 
 		$this->pdo->query($leftConstraint);
 		$this->pdo->query($rightConstraint);

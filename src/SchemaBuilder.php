@@ -26,7 +26,7 @@ class SchemaBuilder
 	 * @param string $childColumn
 	 * @return string The MySQL table constraint string
 	 */
-	public static function buildConstraint($parentTable, $parentColumn, $childTable, $childColumn)
+	public static function buildConstraintOnDeleteCascade($parentTable, $parentColumn, $childTable, $childColumn)
 	{
 		$template = <<<SQL
 ALTER TABLE `%s`
@@ -36,6 +36,18 @@ REFERENCES `%s`(`%s`)
 ON DELETE CASCADE;
 SQL;
 		return sprintf($template, $childTable, $childColumn, $parentTable, $parentColumn);
+	}
+ 
+	public static function buildConstraintOnDeleteSetNull($parentTable, $parentColumn, $childTable, $childColumn)
+	{
+		$template = <<<SQL
+ALTER TABLE `%s`
+ADD CONSTRAINT 
+FOREIGN KEY (`%s`) 
+REFERENCES `%s` (`%s`)
+ON DELETE SET NULL
+SQL;
+  		return sprintf($template, $childTable, $childColumn, $parentTable, $parentColumn);
 	}
 
 	/**

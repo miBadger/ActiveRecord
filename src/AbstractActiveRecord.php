@@ -21,11 +21,11 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	const COLUMN_NAME_ID = 'id';
 	const COLUMN_TYPE_ID = 'INT UNSIGNED';
 
-	const CREATE = "CREATE";
-	const READ = "READ";
-	const UPDATE = "UPDATE";
-	const DELETE = "DELETE";
-	const SEARCH = "SEARCH";
+	const CREATE = 'CREATE';
+	const READ = 'READ';
+	const UPDATE = 'UPDATE';
+	const DELETE = 'DELETE';
+	const SEARCH = 'SEARCH';
 
 	/** @var \PDO The PDO object. */
 	protected $pdo;
@@ -237,7 +237,13 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 			if (isset($definition['relation']) && $definition['relation'] instanceof AbstractActiveRecord) {
 				// Forge new relation
 				$target = $definition['relation'];
-				$constraintSql = SchemaBuilder::buildConstraint($target->getTableName(), 'id', $this->getTableName(), $colName);
+				$properties = $definition['properties'] ?? 0;
+
+				if ($properties & ColumnProperty::NOT_NULL) {
+					$constraintSql = SchemaBuilder::buildConstraintOnDeleteCascade($target->getTableName(), 'id', $this->getTableName(), $colName);
+				} else {
+					$constraintSql = SchemaBuilder::buildConstraintOnDeleteSetNull($target->getTableName(), 'id', $this->getTableName(), $colName);
+				}
 
 				$this->pdo->query($constraintSql);
 			} else if (isset($definition['relation'])) {
@@ -417,6 +423,23 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		}
 
 		return $this;
+	}
+
+	/**
+	 * Returns the serialized form of the specified columns
+	 * 
+	 * @return Array
+	 */
+	public function toArray(Array $fieldWhitelist)
+	{
+		$output = [];
+		foreach ($this->tableDefinition as $colName => $definition) {
+			if (in_array($colName, $fieldWhitelist)) {
+				$output[$colName] = $definition['value'];
+			}
+		}
+
+		return $output;
 	}
 
 	/**

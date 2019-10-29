@@ -11,6 +11,7 @@ namespace miBadger\ActiveRecord\DatabaseManagementTest;
 
 use PHPUnit\Framework\TestCase;
 use miBadger\ActiveRecord\AbstractActiveRecord;
+use miBadger\ActiveRecord\ColumnProperty;
 
 /**
  * The abstract active record test class.
@@ -29,6 +30,7 @@ class AbstractActiveRecord_DatabaseManagementTest extends TestCase
 
 	public function tearDown()
 	{
+		$this->pdo->query('DROP TABLE IF EXISTS `test_mock_nullable_blogpost`');
 		$this->pdo->query('DROP TABLE IF EXISTS `test_mock_blogpost`');
 		$this->pdo->query('DROP TABLE IF EXISTS `test_mock_user`');
 		$this->pdo->query('DROP TABLE IF EXISTS `test_constraint_exception`');
@@ -68,7 +70,7 @@ class AbstractActiveRecord_DatabaseManagementTest extends TestCase
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
 	 * @expectedExceptionMessage Can not read the non-existent active record entry 1 from the `test_mock_blogpost` table.
 	 */
-	public function testCreateConstraint()
+	public function testCreateConstraintCascade()
 	{
 		$user = new UserRecordTestMock($this->pdo);
 		$user->createTable();	
@@ -92,6 +94,32 @@ class AbstractActiveRecord_DatabaseManagementTest extends TestCase
 		(new BlogPostRecordTestMock($this->pdo))->read($savedPostId);
 	}
 
+	public function testCreateConstraintSetNull()
+	{
+		$user = new UserRecordTestMock($this->pdo);
+		$user->createTable();	
+
+		$blogpost = new NullableAuthorBlogPost($this->pdo);
+		$blogpost->createTable();
+
+		$blogpost->createTableConstraints();
+		
+		$user->setUsername("Badger");
+		$user->create();
+
+		$blogpost->setAuthor($user);
+		$blogpost->create();
+
+		$savedPostId = $blogpost->getId();
+		$user->delete();
+
+		$readPost = (new NullableAuthorBlogPost($this->pdo))->read($savedPostId);
+
+		$this->assertNull($readPost->toArray(['author'])['author']);
+		$this->assertNotNull($savedPostId);
+		$this->assertEquals($savedPostId, $readPost->getId());
+	}
+
 	/**
 	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
 	 * @expectedExceptionMessage Relation constraint on column "author" of table "test_constraint_exception" does not contain a valid ActiveRecord instance
@@ -102,7 +130,6 @@ class AbstractActiveRecord_DatabaseManagementTest extends TestCase
 		$mock->createTable();
 		$mock->createTableConstraints();
 	}
-
 }
 
 class UserRecordTestMock extends AbstractActiveRecord
@@ -168,7 +195,8 @@ class BlogPostRecordTestMock extends AbstractActiveRecord
 			'author' => 
 			[
 				'value' => &$this->author,
-				'relation' => new UserRecordTestMock($this->pdo)
+				'relation' => new UserRecordTestMock($this->pdo),
+				'properties' => ColumnProperty::NOT_NULL
 			]
 		];
 	}
@@ -184,6 +212,36 @@ class BlogPostRecordTestMock extends AbstractActiveRecord
 	}
 }
 
+class NullableAuthorBlogPost extends AbstractActiveRecord 
+{
+	protected $author;
+
+	public function getTableName(): string
+	{
+		return 'test_mock_nullable_blogpost';
+	}
+
+	protected function getTableDefinition(): Array
+	{
+		return [
+			'author' => 
+			[
+				'value' => &$this->author,
+				'relation' => new UserRecordTestMock($this->pdo)
+			]
+		];
+	}
+	
+	public function setAuthor(UserRecordTestMock $user)
+	{
+		$this->author = $user->getId();
+	}
+
+	public function getAuthor() 
+	{
+		return ($this->author !== null) ? (new UserRecordTestMock($this->pdo))->read($this->author) : null;
+	}
+}
 /**
  * The abstract active record columns exception test mock class.
  */
