@@ -122,3 +122,54 @@ $router->addRoute("PUT", "/entity/{id}/", function ($id) {
 	
 });
 ```
+
+## Custom setters
+It is possible to provide a setter function, that apiUpdate and apiCreate will call before storing the entity in the database. This allows you to perform modifications on the data before inserting into the database.
+In the example below, the name is stored in lowercase in the database
+```php
+class Employee extends AbstractActiveRecord
+{
+	use AutoApi;
+
+	private $birthday;
+
+	private $name;
+
+	public function __construct($pdo)
+	{
+		parent::__construct($pdo);
+		$this->initSoftDelete();
+	}
+
+	public function getTableDefinition()
+	{
+		return [
+			'name' => 
+			[
+				'value' => &$this->name,
+				'validate' => [$this, 'validateName'],
+				'setter' => [$this, 'setName']
+				'type' => 'VARCHAR',
+				'length' => 256,
+				'properties' => ColumnProperty::NOT_NULL | ColumnProperty::UNIQUE
+			],
+		];
+	}
+
+	public function getTableName() 
+	{
+		return 'employee';
+	}
+
+	private function validateName($value)
+	{
+		return [is_string($value), "Given name must be a string"];
+	}
+
+	public function setName($name)
+	{
+		$this->name = strtolower($name);
+	}
+}
+```
+

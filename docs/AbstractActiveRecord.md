@@ -19,7 +19,7 @@ The implementation of ```getTableDefinition``` needs to return a static associat
 | ```default```    | No        | The primitive literal that will be used when a value for this column isn't specified.                                                                 |
 | ```properties``` | No        | A bitfield of column properties (analogous to the options available in mysql).  All options can be found in miBadger\ActiveRecord\ColumnProperty      |
 | ```relation```   | No        | Takes an instance of AbstractActiveRecord (or ```$this```) to indicate this column contains a relation between models. See below for more info. |
-
+| ```setter```     | No        | provides a setter function for autoAPI to implicitly call on apiUpdate and apiCreate.
 
 An auto incrementing ```id``` field is automatically added to every table definition, and thus should be omitted.
 

@@ -107,7 +107,7 @@ $user->sync();
 ActiveRecord is tested with
 - php 7.2+
 - mysql (mariadb) 8.0.6.16
-For more information, check out the scrutinizer reports.
+For more detailed information, check out the scrutinizer reports.
 
 # Setup
 The easiest way to install miBadger.ActiveRecord is using composer
@@ -118,6 +118,7 @@ or by including the package in your composer.json
 	"mibadger/activerecord": "^2.0"
 }
 ```
+# Limitations
 
 
 # Changelog

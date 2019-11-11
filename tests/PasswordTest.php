@@ -11,6 +11,7 @@ namespace miBadger\ActiveRecord;
 
 use PHPUnit\Framework\TestCase;
 use miBadger\ActiveRecord\Traits\Password;
+use miBadger\ActiveRecord\Traits\AutoApi;
 
 /**
  * The abstract active record test class.
@@ -126,12 +127,21 @@ class PasswordTraitTest extends TestCase
 		$passwordMock->overwritePasswordExpiryDate($yesterday);
 		$this->assertFalse($passwordMock->validatePasswordResetToken($token));
 	}
+
+	public function testAutoApiSetter()
+	{
+		$passwordMock = new PasswordsRecordTestMock($this->pdo);
+		[$err, $data] = $passwordMock->apiCreate(['password' => 'SomeC0mplexPassword'], ['password'], ['password']);
+		$this->assertNull($err);
+		$this->assertNotEquals($data['password'], 'SomeC0mplexPassword');
+	}
 }
 
 
 class PasswordsRecordTestMock extends AbstractActiveRecord
 {
 	use Password;
+	use AutoApi;
 
 	protected $username;
 

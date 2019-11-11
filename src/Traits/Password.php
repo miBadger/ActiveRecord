@@ -32,6 +32,7 @@ trait Password
 		$this->extendTableDefinition(TRAIT_PASSWORD_FIELD_PASSWORD, [
 			'value' => &$this->password,
 			'validate' => [$this, 'validatePassword'],
+			'setter' => [$this, 'setPassword'],
 			'type' => 'VARCHAR',
 			'length' => 1024,
 			'properties' => null

@@ -333,7 +333,8 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 				->fetch();
 			
 			if ($row === false) {
-				throw new ActiveRecordException(sprintf('Can not read the non-existent active record entry %d from the `%s` table.', $id, $this->getTableName()));	
+				$msg = sprintf('Can not read the non-existent active record entry %d from the `%s` table.', $id, $this->getTableName());
+				throw new ActiveRecordException($msg);
 			}
 
 			$this->fill($row)->setId($id);

@@ -229,7 +229,16 @@ trait AutoApi
 	private function loadData($input)
 	{
 		foreach ($this->tableDefinition as $colName => $definition) {
-			if (array_key_exists($colName, $input)) {
+			// Skip if this table column does not appear in the input
+			if (!array_key_exists($colName, $input)) {
+				continue;
+			}
+
+			// Use setter if known, otherwise set value directly
+			$fn = $definition['setter'] ?? null;
+			if (is_callable($fn)) {
+				$fn($input[$colName]);
+			} else {
 				$definition['value'] = $input[$colName];
 			}
 		}

@@ -43,6 +43,9 @@ class AutoAPITest extends TestCase
 		$e3->createTable();
 
 		$e2->createTableConstraints();
+
+		$e4 = new AutoSetterEntity($this->pdo);
+		$e4->createTable();
 	}
 
 	public function tearDown()
@@ -50,6 +53,7 @@ class AutoAPITest extends TestCase
 		$this->pdo->query('DROP TABLE `test_entity_mock`');
 		$this->pdo->query('DROP TABLE `test_relator_mock`');
 		$this->pdo->query('DROP TABLE `test_related_mock`');
+		$this->pdo->query('DROP TABLE `test_autosetterentity_mock`');
 	}
 
 	private function createMockData()
@@ -295,73 +299,30 @@ class AutoAPITest extends TestCase
 		$this->assertNull($err);
 	}
 
+	public function testUseSetter()
+	{
+		$entity = new AutoSetterEntity($this->pdo);
+		[$err, $data] = $entity->apiCreate(['test_with' => 'value'], ['test_with'], ['test_with']);
+
+		$this->assertNull($err);
+		$this->assertEquals('test-value', $data['test_with']);
+
+		[$err, $data] = $entity->apiUpdate(['test_with' => 'new-value'], ['test_with'], ['test_with']);
+
+		$this->assertNull($err);
+		$this->assertEquals('test-new-value', $data['test_with']);
+	}
+
+	public function testSkipSetter()
+	{
+		$entity = new AutoSetterEntity($this->pdo);
+		[$err, $data] = $entity->apiCreate(['test_without' => 'value'], ['test_without'], ['test_without']);
+
+		$this->assertNull($err);
+		$this->assertEquals('value', $data['test_without']);
+	}
+
 }
-
-class TestRelated extends AbstractActiveRecord
-{
-	public function __construct(\PDO $pdo)
-	{
-		parent::__construct($pdo);
-	}
-
-	public function getTableDefinition(): Array
-	{
-		return [];
-	}
-
-	public function getTableName(): string
-	{
-		return 'test_related_mock';
-	}
-}
-
-class TestRelator extends AbstractActiveRecord
-{
-	use AutoApi;
-
-	private $id_relation;
-
-	public function __construct(\PDO $pdo)
-	{
-		parent::__construct($pdo);
-	}
-
-	public function getTableDefinition(): Array
-	{
-		return [
-			'id_relation' => [
-				'value' => &$this->id_relation,
-				'relation' => new TestRelated($this->pdo),
-				'properties' => ColumnProperty::NOT_NULL
-			]
-		];
-	}
-
-	public function getTableName(): string
-	{
-		return 'test_relator_mock';
-	}
-
-	public function getRelation()
-	{
-		if ($this->id_relation === null)
-		{
-			throw new ActiveRecordException('id_relation is not set');
-		}
-	
-		return (new TestRelated($this->pdo))->read($this->id_relation);
-	}
-	
-	public function setRelation(TestRelated $relation)
-	{
-		if ($relation->getId() === null)
-		{
-			throw new ActiveRecordException('id_relation has null id (doesn\'t exist)');
-		}
-		$this->id_relation = $relation->getId();
-	}
-}
-
 
 class TestEntity extends AbstractActiveRecord
 {
@@ -445,4 +406,116 @@ class TestEntity extends AbstractActiveRecord
 	{
 		$this->birthday = $birthday->format('Y-m-d');
 	}
+}
+
+class TestRelated extends AbstractActiveRecord
+{
+	public function __construct(\PDO $pdo)
+	{
+		parent::__construct($pdo);
+	}
+
+	public function getTableDefinition(): Array
+	{
+		return [];
+	}
+
+	public function getTableName(): string
+	{
+		return 'test_related_mock';
+	}
+}
+
+class TestRelator extends AbstractActiveRecord
+{
+	use AutoApi;
+
+	private $id_relation;
+
+	public function __construct(\PDO $pdo)
+	{
+		parent::__construct($pdo);
+	}
+
+	public function getTableDefinition(): Array
+	{
+		return [
+			'id_relation' => [
+				'value' => &$this->id_relation,
+				'relation' => new TestRelated($this->pdo),
+				'properties' => ColumnProperty::NOT_NULL
+			]
+		];
+	}
+
+	public function getTableName(): string
+	{
+		return 'test_relator_mock';
+	}
+
+	public function getRelation()
+	{
+		if ($this->id_relation === null)
+		{
+			throw new ActiveRecordException('id_relation is not set');
+		}
+	
+		return (new TestRelated($this->pdo))->read($this->id_relation);
+	}
+	
+	public function setRelation(TestRelated $relation)
+	{
+		if ($relation->getId() === null)
+		{
+			throw new ActiveRecordException('id_relation has null id (doesn\'t exist)');
+		}
+		$this->id_relation = $relation->getId();
+	}
+}
+
+class AutoSetterEntity extends AbstractActiveRecord {
+	use AutoApi;
+
+	public $test_with;
+
+	public $test_without;
+
+	public function __construct(\PDO $pdo) 
+	{
+		parent::__construct($pdo);
+	}
+
+	public function getTableName(): string
+	{
+		return 'test_autosetterentity_mock';
+	}
+
+	public function getTableDefinition(): Array
+	{
+		return [
+			'test_with' => 
+			[
+				'value' => &$this->test_with,
+				'validate' => null,
+				'setter' => [$this, 'setWithColumn'],
+				'type' => 'VARCHAR',
+				'length' => 255,
+				'properties' => null
+			],
+			'test_without' => 
+			[
+				'value' => &$this->test_without,
+				'validate' => null,
+				'setter' => null,
+				'type' => 'VARCHAR',
+				'length' => 255,
+				'properties' => null
+			],
+		];
+	}
+
+	public function setWithColumn($withVal) {
+		$this->test_with = "test-" . $withVal;
+	}
+
 }
