@@ -105,8 +105,11 @@ trait AutoApi
 			$this->read($id);	
 		} catch (ActiveRecordException $e) {
 			if ($e->getCode() === ActiveRecordException::NOT_FOUND) {
-				// @TODO: Can we do more end-user friendly error messages?
-				return [$e->getMessage(), null];
+				$err = [
+					'type' => 'invalid',
+					'message' => $e->getMessage()
+				];
+				return [$err, null];
 			}
 			throw $e;
 		}
@@ -143,7 +146,10 @@ trait AutoApi
 		$errors = [];
 		foreach ($input as $colName => $value) {
 			if (!array_key_exists($colName, $this->tableDefinition)) {
-				$errors[$colName] = "Unknown input field";
+				$errors[$colName] = [
+					'type' => 'unknown_field',
+					'message' => 'Unknown input field'
+				];
 				continue;
 			}
 		}
@@ -157,7 +163,10 @@ trait AutoApi
 			$property = $definition['properties'] ?? null;
 			if (array_key_exists($colName, $input)
 				&& $property & ColumnProperty::IMMUTABLE) {
-				$errors[$colName] = "Field cannot be changed";
+				$errors[$colName] = [
+					'type' => 'immutable',
+					'message' => 'Value cannot be changed'
+				];
 			}
 		}
 		return $errors;
@@ -180,7 +189,10 @@ trait AutoApi
 				// If validation function fails
 				[$status, $message] = $definition['validate']($inputValue);
 				if (!$status) {
-					$errors[$colName] = $message;
+					$errors[$colName] = [
+						'type' => 'invalid',
+						'message' => $message
+					];
 				}	
 			}
 
@@ -192,7 +204,10 @@ trait AutoApi
 				try {
 					$instance->read($input[$colName] ?? $definition['value'] ?? null);
 				} catch (ActiveRecordException $e) {
-					$errors[$colName] = "Entity for this value doesn't exist";
+					$errors[$colName] = [
+						'type' => 'invalid',
+						'message' => 'Entry for this value does not exist'
+					];
 				}
 			}
 		}
@@ -228,7 +243,10 @@ trait AutoApi
 					|| (is_string($input[$colName]) && $input[$colName] === '') )
 				&& ($value === null
 					|| (is_string($value) && $value === ''))) {
-				$errors[$colName] = sprintf("The required field \"%s\" is missing", $colName);
+				$errors[$colName] = [
+					'type' => 'missing',
+					'message' => sprintf("The required field \"%s\" is missing", $colName)
+				];
 			} 
 		}
 

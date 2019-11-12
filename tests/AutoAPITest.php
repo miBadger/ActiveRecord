@@ -90,6 +90,7 @@ class AutoAPITest extends TestCase
 		[$err, $res] = $entity->apiRead(1, ['name']);
 		$this->assertNull($res);
 		$this->assertNotNull($err);
+		$this->assertEquals($err['type'], 'invalid');
 	}
 
 	public function testApiCreate()
@@ -130,6 +131,7 @@ class AutoAPITest extends TestCase
 		$entity = new TestEntity($this->pdo);
 		[$errors, $data] = $entity->apiCreate($input, ['name', 'birthday'], ['name', 'birthday']);
 		$this->assertNotNull($errors);
+		$this->assertEquals($errors['name']['type'], 'missing');
 		$this->assertNull($data);
 	}
 
@@ -143,6 +145,7 @@ class AutoAPITest extends TestCase
 		$entity = new TestEntity($this->pdo);
 		[$errors, $data] = $entity->apiCreate($input, ['name', 'birthday'], ['name', 'birthday']);
 		$this->assertNotNull($errors);
+		$this->assertEquals($errors['name']['type'], 'missing');
 		$this->assertNull($data);
 
 		$input = [
@@ -167,6 +170,7 @@ class AutoAPITest extends TestCase
 		$entity = new TestEntity($this->pdo);
 		[$errors, $data] = $entity->apiCreate($input, ['name', 'birthday', 'blablabla'], ['name', 'birthday', 'blablabla']);
 		$this->assertNotNull($errors);
+		$this->assertEquals($errors['blablabla']['type'], 'unknown_field');
 	}
 
 	public function testApiCreateInvalidInput()
@@ -179,6 +183,7 @@ class AutoAPITest extends TestCase
 		$entity = new TestEntity($this->pdo);
 		[$errors, $data] = $entity->apiCreate($input, ['name', 'birthday'], ['name', 'birthday']);
 		$this->assertNotNull($errors);
+		$this->assertEquals($errors['birthday']['type'], 'invalid');
 	}
 
 	public function testApiUpdate()
@@ -213,6 +218,7 @@ class AutoAPITest extends TestCase
 		[$errors, $data] = $entity->apiUpdate($inputData, ['name', 'birthday'], ['name', 'birthday']);
 		$this->assertNull($data);
 		$this->assertNotNull($errors);
+		$this->assertEquals($errors['birthday']['type'], 'immutable');
 	}
 
 	public function testApiUpdateValidationFunction()

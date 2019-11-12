@@ -173,3 +173,22 @@ class Employee extends AbstractActiveRecord
 }
 ```
 
+## AutoApi Errors
+input and constraint validation is automatically handled in autoapi methods, and return error messages annotated with a type that describes what caused the error. An example is shown below
+```json
+{
+	"type": "invalid",
+	"message": "This is not a valid date format"
+}
+
+```
+where the type can be one of the following:
+
+| Type                | Reason                                                                                                      |
+|---------------------|-------------------------------------------------------------------------------------------------------------|
+| ```immutable```     | The value is provided to an immutable column                                                                |
+| ```unknown_field``` | The column in the whitelist is unknown in the database                                                      |
+| ```invalid```       | There is no record in the database for the provided input, or the validation function for this value failed |
+| ```missing```       | A required column for the record is missing                                                                 |
+
+
