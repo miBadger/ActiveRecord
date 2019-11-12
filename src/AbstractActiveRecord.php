@@ -202,7 +202,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 * @param string $columnName The name of the column that is registered.
 	 * @param Array $definition The definition of that column.
 	 */
-	public function extendTableDefinition($columnName, $definition)
+	protected function extendTableDefinition($columnName, $definition)
 	{
 		if ($this->tableDefinition === null) {
 			throw new ActiveRecordException("tableDefinition is null, has parent been initialized in constructor?");
@@ -304,7 +304,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 
 			$this->setId(intval($this->getPdo()->lastInsertId()));
 		} catch (\PDOException $e) {
-			throw new ActiveRecordException($e->getMessage(), 0, $e);
+			throw new ActiveRecordException($e->getMessage(), ActiveRecordException::DB_ERROR, $e);
 		}
 
 		return $this;
@@ -334,12 +334,12 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 			
 			if ($row === false) {
 				$msg = sprintf('Can not read the non-existent active record entry %d from the `%s` table.', $id, $this->getTableName());
-				throw new ActiveRecordException($msg);
+				throw new ActiveRecordException($msg, ActiveRecordException::NOT_FOUND);
 			}
 
 			$this->fill($row)->setId($id);
 		} catch (\PDOException $e) {
-			throw new ActiveRecordException($e->getMessage(), 0, $e);
+			throw new ActiveRecordException($e->getMessage(), ActiveRecordException::DB_ERROR, $e);
 		}
 
 		return $this;
@@ -360,7 +360,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 				->where(Query::Equal('id', $this->getId()))
 				->execute();
 		} catch (\PDOException $e) {
-			throw new ActiveRecordException($e->getMessage(), 0, $e);
+			throw new ActiveRecordException($e->getMessage(), ActiveRecordException::DB_ERROR, $e);
 		}
 
 		return $this;
@@ -383,7 +383,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 
 			$this->setId(null);
 		} catch (\PDOException $e) {
-			throw new ActiveRecordException($e->getMessage(), 0, $e);
+			throw new ActiveRecordException($e->getMessage(), ActiveRecordException::DB_ERROR, $e);
 		}
 
 		return $this;

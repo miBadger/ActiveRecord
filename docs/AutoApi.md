@@ -5,7 +5,7 @@ The autoApi trait aims to make creating CRUD API's for modifying data models cre
 ```php
 use miBadger\Query\QueryExpression
 
-public function apiRead($id, $readWhitelist): Array;
+public function apiRead($id, $readWhitelist): [Array $error, Array $result];
 
 public function apiSearch($queryParams, $readWhitelist, QueryExpression $whereClause = null): Array;
 

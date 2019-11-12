@@ -78,9 +78,18 @@ class AutoAPITest extends TestCase
 
 		// Test read
 		$entity = new TestEntity($this->pdo);
-		$res = $entity->apiRead($id, ['name', 'birthday', 'soft_delete']);
+		[$err, $res] = $entity->apiRead($id, ['name', 'birthday', 'soft_delete']);
+		$this->assertNull($err);
 		$this->assertEquals(array_keys($res), ['name', 'birthday', 'soft_delete']);
 		$this->assertEquals($res['name'], 'badger');
+	}
+
+	public function testApiReadFail()
+	{
+		$entity = new TestEntity($this->pdo);
+		[$err, $res] = $entity->apiRead(1, ['name']);
+		$this->assertNull($res);
+		$this->assertNotNull($err);
 	}
 
 	public function testApiCreate()

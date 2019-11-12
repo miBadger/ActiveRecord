@@ -16,5 +16,6 @@ namespace miBadger\ActiveRecord;
  */
 class ActiveRecordException extends \RuntimeException
 {
-
+	const NOT_FOUND = 1;
+	const DB_ERROR = 2;
 }

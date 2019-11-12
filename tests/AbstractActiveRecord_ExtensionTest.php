@@ -308,37 +308,6 @@ class AbstractActiveRecord_ExtensionTest extends TestCase
 		$mock->registerSearchHook("username", function() {
 		});
 	}
-
-	public function testExtendTableDefinition()
-	{
-		$mock = new AbstractActiveRecordTestMock($this->pdo);
-
-		$value = null;
-		$mock->extendTableDefinition('extra_field2', [
-			'value' => &$value,
-			'validate' => null,
-			'type' => 'VARCHAR',
-			'length' => 256
-		]);
-
-		// @TODO: Create method to extract table definition
-	}
-
-	/**
-	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Table is being extended with a column that already exists, "extra_field" conflicts with your table definition
-	 */
-	public function testDoubleExtendTableDefinitionException()
-	{
-		$mock = new AbstractActiveRecordTestMock($this->pdo);
-		$value = null;
-		$mock->extendTableDefinition('extra_field', [
-			'value' => &$value,
-			'validate' => null,
-			'type' => 'VARCHAR',
-			'length' => 256
-		]);
-	}
 }
 
 trait ExtraField

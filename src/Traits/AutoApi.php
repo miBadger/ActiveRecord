@@ -87,17 +87,30 @@ trait AutoApi
 	}
 
 	/**
+	 * Performs a read call on the entity (modifying the current object) 
+	 * 	and returns a result array ($error, $data), with an optional error, and the results array (as filtered by the whitelist)
+	 * 	containing the loaded data.
+	 * 
 	 * @param string|int $id the id of the current entity
 	 * @param Array $fieldWhitelist an array of fields that are allowed to appear in the output
 	 * 
-	 * @param Array An associative array containing the data for this record, 
-	 * 				where the keys are entries in $fieldWhitelist
+	 * @param Array [$error, $result]
+	 * 				Where $error contains the error message (@TODO: & Error type?)
+	 * 				Where result is an associative array containing the data for this record, and the keys are a subset of $fieldWhitelist
+	 * 				
 	 */
 	public function apiRead($id, Array $fieldWhitelist): Array
 	{
-		// @TODO: Should apiRead throw exception or return null on fail?
-		$this->read($id);
-		return $this->toArray($fieldWhitelist);
+		try {
+			$this->read($id);	
+		} catch (ActiveRecordException $e) {
+			if ($e->getCode() === ActiveRecordException::NOT_FOUND) {
+				// @TODO: Can we do more end-user friendly error messages?
+				return [$e->getMessage(), null];
+			}
+			throw $e;
+		}
+		return [null, $this->toArray($fieldWhitelist)];
 	}
 
 	/* =============================================================
