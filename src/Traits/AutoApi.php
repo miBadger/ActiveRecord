@@ -99,7 +99,7 @@ trait AutoApi
 	 * 				Where result is an associative array containing the data for this record, and the keys are a subset of $fieldWhitelist
 	 * 				
 	 */
-	public function apiRead($id, Array $fieldWhitelist): Array
+	public function apiRead($id, Array $fieldWhitelist = []): Array
 	{
 		try {
 			$this->read($id);	

@@ -218,6 +218,77 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		$this->tableDefinition[$columnName] = $definition;
 	}
 
+	public function hasColumn(string $column) {
+		return array_key_exists($column, $this->tableDefinition);
+	}
+
+	public function hasRelation(string $column, AbstractActiveRecord $record) {
+		if (!$this->hasColumn($column)) {
+			throw new ActiveRecordException("Provided column \"$column\" does not exist in table definition", 0);
+		}
+
+		$relation = $this->tableDefinition[$column]['relation'] ?? null;
+		return $relation !== null && get_class($record) === get_class($relation);
+	}
+
+	public function hasProperty(string $column, $property) {
+		if (!$this->hasColumn($column)) {
+			throw new ActiveRecordException("Provided column \"$column\" does not exist in table definition", 0);
+		}
+
+		try {
+			$enumValue = ColumnProperty::valueOf($property);
+		} catch (\UnexpectedValueException $e) {
+			throw new ActiveRecordException("Provided property \"$property\" is not a valid property", 0, $e);
+		}
+
+		$properties = $this->tableDefinition[$column]['properties'] ?? null;
+
+		return $properties !== null && (($properties & $enumValue->getValue()) > 0);
+	}
+
+	public function getColumnType(string $column) {
+		if (!$this->hasColumn($column)) {
+			throw new ActiveRecordException("Provided column \"$column\" does not exist in table definition", 0);
+		}
+
+		return $this->tableDefinition[$column]['type'] ?? null;
+	}
+
+	public function getColumnLength(string $column) {
+		if (!$this->hasColumn($column)) {
+			throw new ActiveRecordException("Provided column \"$column\" does not exist in table definition", 0);
+		}
+
+		return $this->tableDefinition[$column]['length'] ?? null;
+	}
+
+	public function getDefault(string $column) {
+		if (!$this->hasColumn($column)) {
+			throw new ActiveRecordException("Provided column \"$column\" does not exist in table definition", 0);
+		}
+
+		return $this->tableDefinition[$column]['default'] ?? null;
+	}
+
+	public function validateColumn(string $column, $input) {
+		if (!$this->hasColumn($column)) {
+			throw new ActiveRecordException("Provided column \"$column\" does not exist in table definition", 0);
+		}
+
+		$fn = $this->tableDefinition[$column]['validate'] ?? null;
+
+		if ($fn === null) {
+			return [true, ''];
+		}
+
+		if (!is_callable($fn)) {
+			throw new ActiveRecordException("Provided validation function is not callable", 0);
+		}
+
+		return $fn($input);
+	}
+
 	/**
 	 * Creates the entity as a table in the database
 	 */

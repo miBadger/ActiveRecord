@@ -2,8 +2,9 @@
 
 namespace miBadger\ActiveRecord;
 
+use miBadger\Enum\Enum;
 
-class ColumnProperty
+class ColumnProperty extends Enum
 {
 	const NONE = 0;
 	const UNIQUE = 1;
