@@ -227,8 +227,18 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 			throw new ActiveRecordException("Provided column \"$column\" does not exist in table definition", 0);
 		}
 
-		$relation = $this->tableDefinition[$column]['relation'] ?? null;
-		return $relation !== null && get_class($record) === $relation;
+		if (!isset($this->tableDefinition[$column]['relation'])) {
+			return false;
+		}
+
+		$relation = $this->tableDefinition[$column]['relation'];
+		if ($relation instanceof AbstractActiveRecord) {
+			// Injected object
+			return get_class($record) === get_class($relation);
+		} else {
+			// :: class definition
+			return get_class($record) === $relation;
+		}
 	}
 
 	public function hasProperty(string $column, $property) {

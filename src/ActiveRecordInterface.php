@@ -22,6 +22,13 @@ interface ActiveRecordInterface
 	public function __construct(\PDO $pdo);
 	
 	/**
+	 * Returns the ID of the record.
+	 *
+	 * @return null|int The ID.
+	 */	
+	public function getId();
+
+	/**
 	 * Returns this active record after creating an entry with the records attributes.
 	 *
 	 * @return $this
