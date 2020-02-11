@@ -200,8 +200,13 @@ trait AutoApi
 			$properties = $definition['properties'] ?? null;
 			if (isset($definition['relation'])
 				&& ($properties & ColumnProperty::NOT_NULL)) {
-				$instance = clone $definition['relation'];
+				
 				try {
+					if ($definition['relation'] instanceof AbstractActiveRecord) {
+						$instance = $definition['relation'];
+					} else {
+						$instance = new $definition['relation']($this->pdo);	
+					}
 					$instance->read($input[$colName] ?? $definition['value'] ?? null);
 				} catch (ActiveRecordException $e) {
 					$errors[$colName] = [

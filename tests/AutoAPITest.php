@@ -457,7 +457,7 @@ class TestRelator extends AbstractActiveRecord
 		return [
 			'id_relation' => [
 				'value' => &$this->id_relation,
-				'relation' => new TestRelated($this->pdo),
+				'relation' => TestRelated::class,
 				'properties' => ColumnProperty::NOT_NULL
 			]
 		];

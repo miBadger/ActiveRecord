@@ -222,13 +222,13 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		return array_key_exists($column, $this->tableDefinition);
 	}
 
-	public function hasRelation(string $column, AbstractActiveRecord $record) {
+	public function hasRelation(string $column, ActiveRecordInterface $record) {
 		if (!$this->hasColumn($column)) {
 			throw new ActiveRecordException("Provided column \"$column\" does not exist in table definition", 0);
 		}
 
 		$relation = $this->tableDefinition[$column]['relation'] ?? null;
-		return $relation !== null && get_class($record) === get_class($relation);
+		return $relation !== null && get_class($record) === $relation;
 	}
 
 	public function hasProperty(string $column, $property) {
@@ -289,6 +289,14 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		return $fn($input);
 	}
 
+	public function injectInstanceOnRelation(string $column, $mock) {
+		if (!$this->hasColumn($column)) {
+			throw new ActiveRecordException("Provided column \"$column\" does not exist in table definition", 0);
+		}
+
+		$this->tableDefinition[$column]['relation'] = $mock;
+	}
+
 	/**
 	 * Creates the entity as a table in the database
 	 */
@@ -305,24 +313,42 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	{
 		// Iterate over columns, check whether "relation" field exists, if so create constraint
 		foreach ($this->tableDefinition as $colName => $definition) {
-			if (isset($definition['relation']) && $definition['relation'] instanceof AbstractActiveRecord) {
-				// Forge new relation
-				$target = $definition['relation'];
-				$properties = $definition['properties'] ?? 0;
-
-				if ($properties & ColumnProperty::NOT_NULL) {
-					$constraintSql = SchemaBuilder::buildConstraintOnDeleteCascade($target->getTableName(), 'id', $this->getTableName(), $colName);
-				} else {
-					$constraintSql = SchemaBuilder::buildConstraintOnDeleteSetNull($target->getTableName(), 'id', $this->getTableName(), $colName);
-				}
-
-				$this->pdo->query($constraintSql);
-			} else if (isset($definition['relation'])) {
-				$msg = sprintf("Relation constraint on column \"%s\" of table \"%s\" does not contain a valid ActiveRecord instance", 
-					$colName,
-					$this->getTableName());
-				throw new ActiveRecordException($msg);
+			if (!isset($definition['relation'])) {
+				continue;
 			}
+
+			$relation = $definition['relation'];
+			$properties = $definition['properties'] ?? 0;
+			
+			if (is_string($relation) 
+				&& class_exists($relation) 
+				&& new $relation($this->pdo) instanceof AbstractActiveRecord) {
+				// ::class relation in tableDefinition
+				$target = new $definition['relation']($this->pdo);
+			}
+			else if ($relation instanceof AbstractActiveRecord) {
+				throw new ActiveRecordException(sprintf(
+					"Relation constraint on column \"%s\" of table \"%s\" can not be built from relation instance, use %s::class in table definition instead",
+					$colName,
+					$this->getTableName(),
+					get_class($relation)
+				));
+			}
+			else {
+				// Invalid class
+				throw new ActiveRecordException(sprintf(
+					"Relation constraint on column \"%s\" of table \"%s\" does not contain a valid ActiveRecord instance", 
+					$colName,
+					$this->getTableName()));
+			}
+
+			// Add new relation constraint on database
+			if ($properties & ColumnProperty::NOT_NULL) {
+				$constraintSql = SchemaBuilder::buildConstraintOnDeleteCascade($target->getTableName(), 'id', $this->getTableName(), $colName);
+			} else {
+				$constraintSql = SchemaBuilder::buildConstraintOnDeleteSetNull($target->getTableName(), 'id', $this->getTableName(), $colName);
+			}
+			$this->pdo->query($constraintSql);
 		}
 	}
 

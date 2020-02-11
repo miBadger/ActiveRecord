@@ -195,7 +195,7 @@ class BlogPostRecordTestMock extends AbstractActiveRecord
 			'author' => 
 			[
 				'value' => &$this->author,
-				'relation' => new UserRecordTestMock($this->pdo),
+				'relation' => UserRecordTestMock::class,
 				'properties' => ColumnProperty::NOT_NULL
 			]
 		];
@@ -227,7 +227,7 @@ class NullableAuthorBlogPost extends AbstractActiveRecord
 			'author' => 
 			[
 				'value' => &$this->author,
-				'relation' => new UserRecordTestMock($this->pdo)
+				'relation' => UserRecordTestMock::class
 			]
 		];
 	}
