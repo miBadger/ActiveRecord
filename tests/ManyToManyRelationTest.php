@@ -11,6 +11,7 @@ namespace miBadger\ActiveRecord;
 
 use PHPUnit\Framework\TestCase;
 use miBadger\ActiveRecord\Traits\ManyToManyRelation;
+use miBadger\ActiveRecord\ActiveRecordException;
 
 /**
  * The abstract active record test class.
@@ -21,7 +22,7 @@ class ManyToManyRelationTest extends TestCase
 {
 	private $pdo;
 
-	public function setUp()
+	public function setUp(): void
 	{
 		$this->pdo = new \PDO(sprintf('mysql:host=%s;dbname=%s;charset=utf8mb4', DB_HOST, DB_NAME), DB_USER, DB_PASS);
 
@@ -33,7 +34,7 @@ class ManyToManyRelationTest extends TestCase
 		$friend->createTableConstraints();
 	}
 
-	public function tearDown()
+	public function tearDown(): void
 	{
 		$this->pdo->query('DROP TABLE IF EXISTS `friend_test_mock`');
 		$this->pdo->query('DROP TABLE IF EXISTS `person_test_mock`');
@@ -84,12 +85,11 @@ class ManyToManyRelationTest extends TestCase
 		$this->assertEquals($checkFriend->getRightFriend()->getId(), $bob->getId());
 	}
 
-	/**
-	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Can not read the non-existent active record entry 1 from the `friend_test_mock` table.
-	 */
 	public function testTableConstraints()
 	{
+		$this->expectException(ActiveRecordException::class);
+		$this->expectExceptionMessage("Can not read the non-existent active record entry 1 from the `friend_test_mock` table.");
+
 		$alice = new PersonMock($this->pdo);
 		$alice->setName("alice");
 		$alice->create();

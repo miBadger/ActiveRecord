@@ -15,7 +15,7 @@ class AddressTraitTest extends TestCase
 {
 	private $pdo;
 
-	public function setUp()
+	public function setUp(): void
 	{
 		$this->pdo = new \PDO(sprintf('mysql:host=%s;dbname=%s;charset=utf8mb4', DB_HOST, DB_NAME), DB_USER, DB_PASS);
 
@@ -23,7 +23,7 @@ class AddressTraitTest extends TestCase
 		$addressInstance->createTable();
 	}
 
-	public function tearDown()
+	public function tearDown(): void
 	{
 		$this->pdo->query('DROP TABLE IF EXISTS `address_test_mock`');
 	}

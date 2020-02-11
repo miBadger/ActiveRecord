@@ -12,6 +12,7 @@ namespace miBadger\ActiveRecord;
 use PHPUnit\Framework\TestCase;
 use miBadger\ActiveRecord\Traits\Password;
 use miBadger\ActiveRecord\Traits\AutoApi;
+use miBadger\ActiveRecord\ActiveRecordTraitException;
 
 /**
  * The abstract active record test class.
@@ -22,7 +23,7 @@ class PasswordTraitTest extends TestCase
 {
 	private $pdo;
 
-	public function setUp()
+	public function setUp(): void
 	{
 		$this->pdo = new \PDO(sprintf('mysql:host=%s;dbname=%s;charset=utf8mb4', DB_HOST, DB_NAME), DB_USER, DB_PASS);
 
@@ -30,7 +31,7 @@ class PasswordTraitTest extends TestCase
 		$passwordInstance->createTable();
 	}
 
-	public function tearDown()
+	public function tearDown(): void
 	{
 		$this->pdo->query('DROP TABLE IF EXISTS `password_test_mock`');
 	}
@@ -57,24 +58,22 @@ class PasswordTraitTest extends TestCase
 		$this->assertTrue($passwordMock->isPassword("mibadger"));
 	}
 
-	/**
-	 * @expectedException miBadger\ActiveRecord\ActiveRecordTraitException
-	 * @expectedExceptionMessage Password field has not been set
-	 */
 	public function testValidateNullPasswordException()
 	{
+		$this->expectException(ActiveRecordTraitException::class);
+		$this->expectExceptionMessage("Password field has not been set");
+
 		$passwordMock = new PasswordsRecordTestMock($this->pdo);
 		$passwordMock->create();
 
 		$passwordMock->isPassword("mibadger");
 	}
 
-	/**
-	 * @expectedException miBadger\ActiveRecord\ActiveRecordTraitException
-	 * @expectedExceptionMessage 'Password' must be atleast 8 characters long. 0 characters provided.
-	 */
 	public function testValidatePasswordLengthException()
 	{
+		$this->expectException(ActiveRecordTraitException::class);
+		$this->expectExceptionMessage("'Password' must be atleast 8 characters long. 0 characters provided.");
+
 		$passwordMock = new PasswordsRecordTestMock($this->pdo);
 		$passwordMock->setPassword("");
 		$passwordMock->create();

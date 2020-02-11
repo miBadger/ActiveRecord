@@ -12,6 +12,7 @@ namespace miBadger\ActiveRecord\OperationsTest;
 use miBadger\Query\Query;
 use PHPUnit\Framework\TestCase;
 use miBadger\ActiveRecord\AbstractActiveRecord;
+use miBadger\ActiveRecord\ActiveRecordException;
 
 /*
  * TODO: Test validation function
@@ -27,7 +28,7 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 	/** @var \PDO The PDO. */
 	private $pdo;
 
-	public function setUp()
+	public function setUp(): void
 	{
 		// Note: If using sqlite, Exception messages will differ!
 		// $this->pdo = new \PDO('sqlite::memory:');
@@ -40,7 +41,7 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 		$this->pdo->query('INSERT INTO `name` (`id`, `field`) VALUES (3, NULL)');
 	}
 
-	public function tearDown()
+	public function tearDown(): void
 	{
 		$this->pdo->query('DROP TABLE `name`');
 	}
@@ -57,22 +58,24 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 
 	/**
 	 * @depends testCreate
-	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage SQLSTATE[42S02]: Base table or view not found: 1146 Table 'mibadger_activerecord_phpunit_tests.name2' doesn't exist
 	 */
 	public function testCreateTableException()
 	{
+		$this->expectException(ActiveRecordException::class);
+		$this->expectExceptionMessage("SQLSTATE[42S02]: Base table or view not found: 1146 Table 'mibadger_activerecord_phpunit_tests.name2' doesn't exist");
+
 		$abstractActiveRecord = new AbstractActiveRecordTableExceptionTestMock($this->pdo);
 		$abstractActiveRecord->create();
 	}
 
 	/**
 	 * @depends testCreate
-	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage SQLSTATE[42S22]: Column not found: 1054 Unknown column 'field2' in 'field list'
 	 */
 	public function testCreateColumnsException()
 	{
+		$this->expectException(ActiveRecordException::class);
+		$this->expectExceptionMessage("SQLSTATE[42S22]: Column not found: 1054 Unknown column 'field2' in 'field list'");
+
 		$abstractActiveRecord = new AbstractActiveRecordColumnsExceptionTestMock($this->pdo);
 		$abstractActiveRecord->create();
 	}
@@ -88,22 +91,24 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 
 	/**
 	 * @depends testRead
-	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Can not read the non-existent active record entry 4 from the `name` table
 	 */
 	public function testReadNonExistentId()
 	{
+		$this->expectException(ActiveRecordException::class);
+		$this->expectExceptionMessage("Can not read the non-existent active record entry 4 from the `name` table");
+
 		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
 		$abstractActiveRecord->read(4);
 	}
 
 	/**
 	 * @depends testRead
-	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage SQLSTATE[42S02]: Base table or view not found: 1146 Table 'mibadger_activerecord_phpunit_tests.name2' doesn't exist
 	 */
 	public function testReadTableException()
 	{
+		$this->expectException(ActiveRecordException::class);
+		$this->expectExceptionMessage("SQLSTATE[42S02]: Base table or view not found: 1146 Table 'mibadger_activerecord_phpunit_tests.name2' doesn't exist");
+
 		$abstractActiveRecord = new AbstractActiveRecordTableExceptionTestMock($this->pdo);
 		$abstractActiveRecord->read(1);
 	}
@@ -121,22 +126,24 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 
 	/**
 	 * @depends testUpdate
-	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage SQLSTATE[42S02]: Base table or view not found: 1146 Table 'mibadger_activerecord_phpunit_tests.name2' doesn't exist
 	 */
 	public function testUpdateTableException()
 	{
+		$this->expectException(ActiveRecordException::class);
+		$this->expectExceptionMessage("SQLSTATE[42S02]: Base table or view not found: 1146 Table 'mibadger_activerecord_phpunit_tests.name2' doesn't exist");
+
 		$abstractActiveRecord = new AbstractActiveRecordTableExceptionTestMock($this->pdo);
 		$abstractActiveRecord->update();
 	}
 
 	/**
 	 * @depends testUpdate
-	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage SQLSTATE[42S22]: Column not found: 1054 Unknown column 'field2' in 'field list'
 	 */
 	public function testUpdateColumnsException()
 	{
+		$this->expectException(ActiveRecordException::class);
+		$this->expectExceptionMessage("SQLSTATE[42S22]: Column not found: 1054 Unknown column 'field2' in 'field list'");
+
 		$abstractActiveRecord = new AbstractActiveRecordColumnsExceptionTestMock($this->pdo);
 		$abstractActiveRecord->update();
 	}
@@ -153,11 +160,12 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 
 	/**
 	 * @depends testDelete
-	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage SQLSTATE[42S02]: Base table or view not found: 1146 Table 'mibadger_activerecord_phpunit_tests.name2' doesn't exist
 	 */
 	public function testDeleteTableException()
 	{
+		$this->expectException(ActiveRecordException::class);
+		$this->expectExceptionMessage("SQLSTATE[42S02]: Base table or view not found: 1146 Table 'mibadger_activerecord_phpunit_tests.name2' doesn't exist");
+
 		$abstractActiveRecord = new AbstractActiveRecordTableExceptionTestMock($this->pdo);
 		$abstractActiveRecord->delete();
 	}
@@ -221,11 +229,12 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 
 	/**
 	 * @depends testSearchOne
-	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage SQLSTATE[42S02]: Base table or view not found: 1146 Table 'mibadger_activerecord_phpunit_tests.name2' doesn't exist
 	 */
 	public function testSearchOneException()
 	{
+		$this->expectException(ActiveRecordException::class);
+		$this->expectExceptionMessage("SQLSTATE[42S02]: Base table or view not found: 1146 Table 'mibadger_activerecord_phpunit_tests.name2' doesn't exist");
+
 		$abstractActiveRecord = new AbstractActiveRecordTableExceptionTestMock($this->pdo);
 		$abstractActiveRecord->search()->fetch();
 	}
@@ -240,11 +249,12 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 
 	/**
 	 * @depends testSearch
-	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage SQLSTATE[42S02]: Base table or view not found: 1146 Table 'mibadger_activerecord_phpunit_tests.name2' doesn't exist
 	 */
 	public function testSearchException()
 	{
+		$this->expectException(ActiveRecordException::class);
+		$this->expectExceptionMessage("SQLSTATE[42S02]: Base table or view not found: 1146 Table 'mibadger_activerecord_phpunit_tests.name2' doesn't exist");
+
 		$abstractActiveRecord = new AbstractActiveRecordTableExceptionTestMock($this->pdo);
 		$abstractActiveRecord->search()->fetchAll();
 	}
@@ -262,11 +272,12 @@ class AbstractActiveRecord_OperationsTest extends TestCase
 
 	/**
 	 * @depends testSearch
-	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage SQLSTATE[42S22]: Column not found: 1054 Unknown column 'field2' in 'where clause'
 	 */
 	public function testSearchWhereKeyException()
 	{
+		$this->expectException(ActiveRecordException::class);
+		$this->expectExceptionMessage("SQLSTATE[42S22]: Column not found: 1054 Unknown column 'field2' in 'where clause'");
+
 		$abstractActiveRecord = new AbstractActiveRecordTestMock($this->pdo);
 		$abstractActiveRecord->search()->where(Query::Like('field2', 'test'))->fetchAll();
 	}

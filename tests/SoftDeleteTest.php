@@ -21,13 +21,13 @@ class SoftDeleteTest extends TestCase
 {
 	private $pdo;
 
-	public function setUp()
+	public function setUp(): void
 	{
 		$this->pdo = new \PDO(sprintf('mysql:host=%s;dbname=%s;charset=utf8mb4', DB_HOST, DB_NAME), DB_USER, DB_PASS);
 		$this->pdo->query('CREATE TABLE IF NOT EXISTS `soft_delete_test_mock` (`id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, `value` VARCHAR(255), `soft_delete` INT(1) )');
 	}
 
-	public function tearDown()
+	public function tearDown(): void
 	{
 		$this->pdo->query('DROP TABLE IF EXISTS `soft_delete_test_mock`');
 	}
@@ -72,12 +72,11 @@ class SoftDeleteTest extends TestCase
 		$this->assertEquals(1, count($results));
 	}
 
-	/**
-	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Can not read the non-existent active record entry 1 from the `soft_delete_test_mock` table.
-	 */
 	public function testReadSoftDeletedException()
 	{
+		$this->expectException(ActiveRecordException::class);
+		$this->expectExceptionMessage("Can not read the non-existent active record entry 1 from the `soft_delete_test_mock` table.");
+
 		$entity = new SoftDeleteRecordTestMock($this->pdo);
 		$entity->setValue("Deleted");
 		$entity->softDelete();

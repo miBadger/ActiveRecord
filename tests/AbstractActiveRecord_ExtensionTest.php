@@ -12,6 +12,7 @@ namespace miBadger\ActiveRecord\ExtensionTest;
 use PHPUnit\Framework\TestCase;
 use miBadger\Query\Query;
 use miBadger\ActiveRecord\AbstractActiveRecord;
+use miBadger\ActiveRecord\ActiveRecordException;
 use miBadger\ActiveRecord\ColumnProperty;
 
 /**
@@ -24,14 +25,14 @@ class AbstractActiveRecord_ExtensionTest extends TestCase
 	/** @var \PDO The PDO. */
 	private $pdo;
 
-	public function setUp()
+	public function setUp(): void
 	{
 		$this->pdo = new \PDO(sprintf('mysql:host=%s;dbname=%s;charset=utf8mb4', DB_HOST, DB_NAME), DB_USER, DB_PASS);
 		$this->pdo->query('CREATE TABLE IF NOT EXISTS `test` (`id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, `username` VARCHAR(255), `extra_field` VARCHAR(255))');
 		$this->pdo->query('INSERT INTO `test` (`id`, `username`, `extra_field`) VALUES (1, "badger", "something")');
 	}
 
-	public function tearDown()
+	public function tearDown(): void
 	{
 		$this->pdo->query('DROP TABLE IF EXISTS `test`');
 	}
@@ -68,43 +69,38 @@ class AbstractActiveRecord_ExtensionTest extends TestCase
 		$this->assertTrue($var);
 	}
 
-	/**
-	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage tableDefinition is null, has parent been initialized in constructor?
-	 */
 	public function testInvalidInitException()
 	{
+		$this->expectException(ActiveRecordException::class);
+		$this->expectExceptionMessage("tableDefinition is null, has parent been initialized in constructor?");
+
 		new invalidInitOrderTestMock($this->pdo);
 	}
 
-	/**
-	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Provided hook on column "username" is not callable
-	 */
 	public function testInvalidCreateHookException()
 	{
+		$this->expectException(ActiveRecordException::class);
+		$this->expectExceptionMessage("Provided hook on column \"username\" is not callable");
+
 		$mock = new AbstractActiveRecordTestMock($this->pdo);
 		$mock->registerCreateHook("username", "someNonExistingFunction");
 	}
 
-
-	/**
-	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Hook is trying to register on non-existing column "fake_column"
-	 */
 	public function testCreateHookInvalidColumnException()
 	{
+		$this->expectException(ActiveRecordException::class);
+		$this->expectExceptionMessage("Hook is trying to register on non-existing column \"fake_column\"");
+
 		$mock = new AbstractActiveRecordTestMock($this->pdo);
 		$mock->registerCreateHook("fake_column", function() {
 		});
 	}
 
-	/**
-	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Hook is trying to register on an already registered column "username", do you have conflicting traits?
-	 */
 	public function testDoubleCreateHookException()
 	{
+		$this->expectException(ActiveRecordException::class);
+		$this->expectExceptionMessage("Hook is trying to register on an already registered column \"username\", do you have conflicting traits?");
+
 		$mock = new AbstractActiveRecordTestMock($this->pdo);
 		$mock->registerCreateHook("username", function() {
 		});
@@ -128,33 +124,30 @@ class AbstractActiveRecord_ExtensionTest extends TestCase
 		$this->assertTrue($var);
 	}
 
-	/**
-	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Provided hook on column "username" is not callable
-	 */
 	public function testInvalidReadHookException()
 	{
+		$this->expectException(ActiveRecordException::class);
+		$this->expectExceptionMessage("Provided hook on column \"username\" is not callable");
+
 		$mock = new AbstractActiveRecordTestMock($this->pdo);
 		$mock->registerReadHook("username", "someNonExistingFunction");
 	}
 
-	/**
-	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Hook is trying to register on non-existing column "fake_column"
-	 */
 	public function testReadHookInvalidColumnException()
 	{
+		$this->expectException(ActiveRecordException::class);
+		$this->expectExceptionMessage("Hook is trying to register on non-existing column \"fake_column\"");
+
 		$mock = new AbstractActiveRecordTestMock($this->pdo);
 		$mock->registerReadHook("fake_column", function() {
 		});
 	}
 
-	/**
-	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Hook is trying to register on an already registered column "username", do you have conflicting traits?
-	 */
 	public function testDoubleReadHookException()
 	{
+		$this->expectException(ActiveRecordException::class);
+		$this->expectExceptionMessage("Hook is trying to register on an already registered column \"username\", do you have conflicting traits?");
+
 		$mock = new AbstractActiveRecordTestMock($this->pdo);
 		$mock->registerReadHook("username", function() {
 		});
@@ -178,33 +171,31 @@ class AbstractActiveRecord_ExtensionTest extends TestCase
 		$this->assertTrue($var);
 	}
 
-	/**
-	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Provided hook on column "username" is not callable
-	 */
 	public function testInvalidUpdateHookException()
 	{
+		$this->expectException(ActiveRecordException::class);
+		$this->expectExceptionMessage("Provided hook on column \"username\" is not callable");
+
 		$mock = new AbstractActiveRecordTestMock($this->pdo);
 		$mock->registerUpdateHook("username", "someNonExistingFunction");
 	}
 
-	/**
-	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Hook is trying to register on non-existing column "fake_column"
-	 */
 	public function testUpdateHookInvalidColumnException()
 	{
+		$this->expectException(ActiveRecordException::class);
+		$this->expectExceptionMessage("Hook is trying to register on non-existing column \"fake_column\"");
+
 		$mock = new AbstractActiveRecordTestMock($this->pdo);
 		$mock->registerUpdateHook("fake_column", function() {
 		});
 	}
 
-	/**
-	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Hook is trying to register on an already registered column "username", do you have conflicting traits?
-	 */
+
 	public function testDoubleUpdateHookException()
 	{
+		$this->expectException(ActiveRecordException::class);
+		$this->expectExceptionMessage("Hook is trying to register on an already registered column \"username\", do you have conflicting traits?");
+
 		$mock = new AbstractActiveRecordTestMock($this->pdo);
 		$mock->registerUpdateHook("username", function() {
 		});
@@ -227,33 +218,30 @@ class AbstractActiveRecord_ExtensionTest extends TestCase
 		$this->assertTrue($var);
 	}
 
-	/**
-	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Provided hook on column "username" is not callable
-	 */
 	public function testInvalidDeleteHookException()
 	{
+		$this->expectException(ActiveRecordException::class);
+		$this->expectExceptionMessage("Provided hook on column \"username\" is not callable");
+
 		$mock = new AbstractActiveRecordTestMock($this->pdo);
 		$mock->registerDeleteHook("username", "someNonExistingFunction");
 	}
 
-	/**
-	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Hook is trying to register on non-existing column "fake_column"
-	 */
 	public function testDeleteHookInvalidColumnException()
 	{
+		$this->expectException(ActiveRecordException::class);
+		$this->expectExceptionMessage("Hook is trying to register on non-existing column \"fake_column\"");
+
 		$mock = new AbstractActiveRecordTestMock($this->pdo);
 		$mock->registerDeleteHook("fake_column", function() {
 		});
 	}
 
-	/**
-	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Hook is trying to register on an already registered column "username", do you have conflicting traits?
-	 */
 	public function testDoubleDeleteHookException()
 	{
+		$this->expectException(ActiveRecordException::class);
+		$this->expectExceptionMessage("Hook is trying to register on an already registered column \"username\", do you have conflicting traits?");
+
 		$mock = new AbstractActiveRecordTestMock($this->pdo);
 		$mock->registerDeleteHook("username", function() {
 		});
@@ -275,33 +263,30 @@ class AbstractActiveRecord_ExtensionTest extends TestCase
 		$this->assertTrue($var);
 	}
 
-	/**
-	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Provided hook on column "username" is not callable
-	 */
 	public function testInvalidSearchHookException()
 	{
+		$this->expectException(ActiveRecordException::class);
+		$this->expectExceptionMessage("Provided hook on column \"username\" is not callable");
+
 		$mock = new AbstractActiveRecordTestMock($this->pdo);
 		$mock->registerSearchHook("username", "someNonExistingFunction");
 	}
 
-	/**
-	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Hook is trying to register on non-existing column "fake_column"
-	 */
 	public function testSearchHookInvalidColumnException()
 	{
+		$this->expectException(ActiveRecordException::class);
+		$this->expectExceptionMessage("Hook is trying to register on non-existing column \"fake_column\"");
+
 		$mock = new AbstractActiveRecordTestMock($this->pdo);
 		$mock->registerSearchHook("fake_column", function() {
 		});
 	}
 
-	/**
-	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Hook is trying to register on an already registered column "username", do you have conflicting traits?
-	 */
 	public function testDoubleSearchHookException()
 	{
+		$this->expectException(ActiveRecordException::class);
+		$this->expectExceptionMessage("Hook is trying to register on an already registered column \"username\", do you have conflicting traits?");
+
 		$mock = new AbstractActiveRecordTestMock($this->pdo);
 		$mock->registerSearchHook("username", function() {
 		});

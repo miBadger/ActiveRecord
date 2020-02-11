@@ -26,7 +26,7 @@ class AutoAPITest extends TestCase
 	/** @var \PDO The PDO. */
 	private $pdo;
 
-	public function setUp()
+	public function setUp(): void
 	{
 		// Note: If using sqlite, Exception messages will differ!
 		// $this->pdo = new \PDO('sqlite::memory:');
@@ -48,7 +48,7 @@ class AutoAPITest extends TestCase
 		$e4->createTable();
 	}
 
-	public function tearDown()
+	public function tearDown(): void
 	{
 		$this->pdo->query('DROP TABLE `test_entity_mock`');
 		$this->pdo->query('DROP TABLE `test_relator_mock`');

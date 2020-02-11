@@ -11,6 +11,7 @@ namespace miBadger\ActiveRecord\DatabaseManagementTest;
 
 use PHPUnit\Framework\TestCase;
 use miBadger\ActiveRecord\AbstractActiveRecord;
+use miBadger\ActiveRecord\ActiveRecordException;
 use miBadger\ActiveRecord\ColumnProperty;
 
 /**
@@ -23,12 +24,12 @@ class AbstractActiveRecord_DatabaseManagementTest extends TestCase
 	/** @var \PDO The PDO. */
 	private $pdo;
 
-	public function setUp()
+	public function setUp(): void
 	{
 		$this->pdo = new \PDO(sprintf('mysql:host=%s;dbname=%s;charset=utf8mb4', DB_HOST, DB_NAME), DB_USER, DB_PASS);
 	}
 
-	public function tearDown()
+	public function tearDown(): void
 	{
 		$this->pdo->query('DROP TABLE IF EXISTS `test_mock_nullable_blogpost`');
 		$this->pdo->query('DROP TABLE IF EXISTS `test_mock_blogpost`');
@@ -56,22 +57,20 @@ class AbstractActiveRecord_DatabaseManagementTest extends TestCase
 		$this->assertEquals([$key => 'test_mock_blogpost'], $pdoStatement->fetch());
 	}
 
-	/**
-	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Column field has invalid type "NULL"
-	 */
 	public function testCreateNullField()
 	{
+		$this->expectException(ActiveRecordException::class);
+		$this->expectExceptionMessage("Column field has invalid type \"NULL\"");
+
 		$entity = new NullTypeFieldRecordMock($this->pdo);
 		$entity->createTable();
 	}
 	
-	/**
-	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Can not read the non-existent active record entry 1 from the `test_mock_blogpost` table.
-	 */
 	public function testCreateConstraintCascade()
 	{
+		$this->expectException(ActiveRecordException::class);
+		$this->expectExceptionMessage("Can not read the non-existent active record entry 1 from the `test_mock_blogpost` table.");
+
 		$user = new UserRecordTestMock($this->pdo);
 		$user->createTable();	
 
@@ -120,12 +119,11 @@ class AbstractActiveRecord_DatabaseManagementTest extends TestCase
 		$this->assertEquals($savedPostId, $readPost->getId());
 	}
 
-	/**
-	 * @expectedException miBadger\ActiveRecord\ActiveRecordException
-	 * @expectedExceptionMessage Relation constraint on column "author" of table "test_constraint_exception" does not contain a valid ActiveRecord instance
-	 */
 	public function testInvalidConstraint()
 	{
+		$this->expectException(ActiveRecordException::class);
+		$this->expectExceptionMessage("Relation constraint on column \"author\" of table \"test_constraint_exception\" does not contain a valid ActiveRecord instance");
+
 		$mock = new ConstraintExceptionTestMock($this->pdo);
 		$mock->createTable();
 		$mock->createTableConstraints();
