@@ -299,6 +299,12 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		return $fn($input);
 	}
 
+	/**
+	 * Useful for writing unit tests of models against ActiveRecord: 
+	 * overrides a relation column with a relation onto a mock object.
+	 * @param string $column the name of the column onto which to place the mock relation
+	 * @param object $mock the instance of a mock object to palce onto the model.
+	 */
 	public function injectInstanceOnRelation(string $column, $mock) {
 		if (!$this->hasColumn($column)) {
 			throw new ActiveRecordException("Provided column \"$column\" does not exist in table definition", 0);

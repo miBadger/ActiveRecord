@@ -213,7 +213,7 @@ class Example extends AbstractActiveRecord
 			'id_user' =>
 			[
 				'value' => &$this->user_id,
-				'relation' => new User($this->pdo)
+				'relation' => User::class
 			]
 		];
 	}
