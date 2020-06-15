@@ -8,6 +8,7 @@ The active record interface.
 <?php
 
 use miBadger\ActiveRecord\ActiveRecordInterface;
+use mibadger\Query\Query;
 
 /**
  * Returns this active record after creating an entry with the records attributes.
@@ -46,16 +47,14 @@ $activeRecord->exists();
 $activeRecord->fill();
 
 /**
- * Returns this record after filling it with the attributes of the first entry with the given where and order by clauses.
+ * Returns the first record with the (optional) where, order by, limit and offset clauses. 
  */
-$activeRecord->searchOne([
-	['id', '=', 1]
-]);
+$activeRecord->search()->where(Query::Equal('id', 1))->fetchOne();
+
+$activeRecord->search()->where(Query::Equal('id', 1))->orderBy('name')->limit(50)->offset(3)->fetchOne();
 
 /**
  * Returns the records with the given where, order by, limit and offset clauses.
  */
-$activeRecord->search([
-	['id', '=', 1]
-]);
+$activeRecord->search()->where(Query::Equal('id', 1))->fetchAll();
 ```

@@ -1,0 +1,192 @@
+<?php
+
+namespace miBadger\ActiveRecord\Traits;
+
+use miBadger\ActiveRecord\ColumnProperty;
+
+const TRAIT_ADDRESS_FIELD_ADDRESS = "address_address";
+const TRAIT_ADDRESS_FIELD_ZIPCODE = "address_zipcode";
+const TRAIT_ADDRESS_FIELD_CITY = "address_city";
+const TRAIT_ADDRESS_FIELD_COUNTRY = "address_country";
+const TRAIT_ADDRESS_FIELD_STATE = "address_state";
+
+trait Address
+{
+	/** @var string the address line */
+	protected $address;
+
+	/** @var string the zipcode */
+	protected $zipcode;
+
+	/** @var string the city */
+	protected $city;
+
+	/** @var string the country */
+	protected $country;
+
+	/** @var string the state */
+	protected $state;
+
+	/**
+	 * Registers the Address trait on the including class
+	 * @return void
+	 */
+	protected function initAddress() 
+	{
+		$this->extendTableDefinition(TRAIT_ADDRESS_FIELD_ADDRESS, [
+			'value' => &$this->address,
+			'validate' => null,
+			'type' => 'VARCHAR',
+			'length' => 1024,
+			'properties' => null
+		]);
+
+		$this->extendTableDefinition(TRAIT_ADDRESS_FIELD_ZIPCODE, [
+			'value' => &$this->zipcode,
+			'validate' => null,
+			'type' => 'VARCHAR',
+			'length' => 1024,
+			'properties' => null
+		]);
+
+		$this->extendTableDefinition(TRAIT_ADDRESS_FIELD_CITY, [
+			'value' => &$this->city,
+			'validate' => null,
+			'type' => 'VARCHAR',
+			'length' => 1024,
+			'properties' => null
+		]);
+
+		$this->extendTableDefinition(TRAIT_ADDRESS_FIELD_COUNTRY, [
+			'value' => &$this->country,
+			'validate' => null,
+			'type' => 'VARCHAR',
+			'length' => 1024,
+			'properties' => null
+		]);
+
+		$this->extendTableDefinition(TRAIT_ADDRESS_FIELD_STATE, [
+			'value' => &$this->state,
+			'validate' => null,
+			'type' => 'VARCHAR',
+			'length' => 1024,
+			'properties' => null
+		]);
+
+		$this->address = null;
+		$this->zipcode = null;
+		$this->city = null;
+		$this->country = null;
+		$this->state = null;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getAddress()
+	{
+		return $this->address;
+	}
+	
+	/**
+	 * @param string $address
+	 */
+	public function setAddress($address)
+	{
+		$this->address = $address;
+		return $this;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getZipcode()
+	{
+		return $this->zipcode;
+	}
+	
+	/**
+	 * @param string $zipcode
+	 */
+	public function setZipcode($zipcode)
+	{
+		$this->zipcode = $zipcode;
+		return $this;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getCity()
+	{
+		return $this->city;
+	}
+	
+	/**
+	 * @param string $city
+	 */
+	public function setCity($city)
+	{
+		$this->city = $city;
+		return $this;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getCountry()
+	{
+		return $this->country;
+	}
+	
+	/**
+	 * @param string $country
+	 */
+	public function setCountry($country)
+	{
+		$this->country = $country;
+		return $this;
+	}
+
+	public function getState()
+	{
+		return $this->state;
+	}
+	
+	public function setState($state)
+	{
+		$this->state = $state;
+		return $this;
+	}
+
+	/**
+	 * @return void
+	 */
+	abstract protected function extendTableDefinition(string $columnName, $definition);
+	
+	/**
+	 * @return void
+	 */
+	abstract protected function registerSearchHook(string $columnName, $fn);
+
+	/**
+	 * @return void
+	 */
+	abstract protected function registerDeleteHook(string $columnName, $fn);
+
+	/**
+	 * @return void
+	 */
+	abstract protected function registerUpdateHook(string $columnName, $fn);
+
+	/**
+	 * @return void
+	 */
+	abstract protected function registerReadHook(string $columnName, $fn);
+
+	/**
+	 * @return void
+	 */
+	abstract protected function registerCreateHook(string $columnName, $fn);
+	
+}

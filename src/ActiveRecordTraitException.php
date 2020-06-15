@@ -8,14 +8,12 @@
  */
 
 namespace miBadger\ActiveRecord;
-
 /**
  * The active record exception class.
  *
  * @since 1.0.0
  */
-class ActiveRecordException extends \RuntimeException
+class ActiveRecordTraitException extends ActiveRecordException
 {
-	const NOT_FOUND = 1;
-	const DB_ERROR = 2;
+
 }

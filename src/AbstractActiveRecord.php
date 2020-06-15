@@ -18,11 +18,38 @@ use miBadger\Query\Query;
  */
 abstract class AbstractActiveRecord implements ActiveRecordInterface
 {
+	const COLUMN_NAME_ID = 'id';
+	const COLUMN_TYPE_ID = 'INT UNSIGNED';
+
+	const CREATE = 'CREATE';
+	const READ = 'READ';
+	const UPDATE = 'UPDATE';
+	const DELETE = 'DELETE';
+	const SEARCH = 'SEARCH';
+
 	/** @var \PDO The PDO object. */
-	private $pdo;
+	protected $pdo;
 
 	/** @var null|int The ID. */
 	private $id;
+
+	/** @var array A map of column name to functions that hook the insert function */
+	protected $createHooks;
+
+	/** @var array A map of column name to functions that hook the read function */
+	protected $readHooks;
+
+	/** @var array A map of column name to functions that hook the update function */
+	protected $updateHooks;
+
+	/** @var array A map of column name to functions that hook the update function */
+	protected $deleteHooks;	
+
+	/** @var array A map of column name to functions that hook the search function */
+	protected $searchHooks;
+
+	/** @var array A list of table column definitions */
+	protected $tableDefinition;
 
 	/**
 	 * Construct an abstract active record with the given PDO.
@@ -35,6 +62,387 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		$pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
 
 		$this->setPdo($pdo);
+
+		$this->createHooks = [];
+		$this->readHooks = [];
+		$this->updateHooks = [];
+		$this->deleteHooks = [];
+		$this->searchHooks = [];
+		$this->tableDefinition = $this->getTableDefinition();
+
+		// Extend table definition with default ID field, throw exception if field already exists
+		if (array_key_exists('id', $this->tableDefinition)) {
+			$message = "Table definition in record contains a field with name \"id\"";
+			$message .= ", which is a reserved name by ActiveRecord";
+			throw new ActiveRecordException($message, 0);
+		}
+
+		$this->tableDefinition[self::COLUMN_NAME_ID] =
+		[
+			'value' => &$this->id,
+			'validate' => null,
+			'type' => self::COLUMN_TYPE_ID,
+			'properties' =>
+				ColumnProperty::NOT_NULL
+				| ColumnProperty::IMMUTABLE
+				| ColumnProperty::AUTO_INCREMENT
+				| ColumnProperty::PRIMARY_KEY
+		];
+	}
+
+	/**
+	 * Verifies whether a column already has an entry in the specified hook map. If so, throws.
+	 * @param string $columnName The column name for which to verify the hook constraints
+	 * @param Array $hookMap The associative map of hooks to be verifie
+	 */
+	private function checkHookConstraints(string $columnName, Array $hookMap)
+	{
+		// Check whether column exists
+		if (!array_key_exists($columnName, $this->tableDefinition)) 
+		{
+			throw new ActiveRecordException("Hook is trying to register on non-existing column \"$columnName\"", 0);
+		}
+
+		// Enforcing 1 hook per table column
+		if (array_key_exists($columnName, $hookMap)) {
+			$message = "Hook is trying to register on an already registered column \"$columnName\", ";
+			$message .= "do you have conflicting traits?";
+			throw new ActiveRecordException($message, 0);
+		}
+	}
+
+
+	/**
+	 * Registers a hook to be called on one of the following actions
+	 * 		[CREATE, READ, UPDATE, DELETE, SEARCH]
+	 * @param string $actionName The name of the action to register for
+	 * @param string $columnName The columnName for which to register this action
+	 * @param callable|string $fn The function name to call, or a callable function
+	 */
+	public function registerHookOnAction(string $actionName, string $columnName, $fn)
+	{
+		if (is_string($fn) && is_callable([$this, $fn])) {
+			$fn = [$this, $fn];
+		}
+
+		if (!is_callable($fn)) { 
+			throw new ActiveRecordException("Provided hook on column \"$columnName\" is not callable", 0);
+		}
+
+		switch ($actionName) {
+			case self::CREATE:
+				$this->checkHookConstraints($columnName, $this->createHooks);
+				$this->createHooks[$columnName] = $fn;
+				break;
+			case self::READ:
+				$this->checkHookConstraints($columnName, $this->readHooks);
+				$this->readHooks[$columnName] = $fn;
+				break;
+			case self::UPDATE:
+				$this->checkHookConstraints($columnName, $this->updateHooks);
+				$this->updateHooks[$columnName] = $fn;
+				break;
+			case self::DELETE:
+				$this->checkHookConstraints($columnName, $this->deleteHooks);
+				$this->deleteHooks[$columnName] = $fn;
+				break;
+			case self::SEARCH:
+				$this->checkHookConstraints($columnName, $this->searchHooks);
+				$this->searchHooks[$columnName] = $fn;
+				break;
+			default:
+				throw new ActiveRecordException("Invalid action: Can not register hook on non-existing action");
+		}
+	}
+
+	/**
+	 * Register a new hook for a specific column that gets called before execution of the create() method
+	 * Only one hook per column can be registered at a time
+	 * @param string $columnName The name of the column that is registered.
+	 * @param string|callable $fn Either a callable, or the name of a method on the inheriting object.
+	 */
+	public function registerCreateHook(string $columnName, $fn)
+	{
+		$this->registerHookOnAction(self::CREATE, $columnName, $fn);
+	}
+
+	/**
+	 * Register a new hook for a specific column that gets called before execution of the read() method
+	 * Only one hook per column can be registered at a time
+	 * @param string $columnName The name of the column that is registered.
+	 * @param string|callable $fn Either a callable, or the name of a method on the inheriting object.
+	 */
+	public function registerReadHook(string $columnName, $fn)
+	{
+		$this->registerHookOnAction(self::READ, $columnName, $fn);
+	}
+
+	/**
+	 * Register a new hook for a specific column that gets called before execution of the update() method
+	 * Only one hook per column can be registered at a time
+	 * @param string $columnName The name of the column that is registered.
+	 * @param string|callable $fn Either a callable, or the name of a method on the inheriting object.
+	 */
+	public function registerUpdateHook(string $columnName, $fn)
+	{
+		$this->registerHookOnAction(self::UPDATE, $columnName, $fn);
+	}
+
+	/**
+	 * Register a new hook for a specific column that gets called before execution of the delete() method
+	 * Only one hook per column can be registered at a time
+	 * @param string $columnName The name of the column that is registered.
+	 * @param string|callable $fn Either a callable, or the name of a method on the inheriting object.
+	 */
+	public function registerDeleteHook(string $columnName, $fn)
+	{
+		$this->registerHookOnAction(self::DELETE, $columnName, $fn);
+	}
+
+	/**
+	 * Register a new hook for a specific column that gets called before execution of the search() method
+	 * Only one hook per column can be registered at a time
+	 * @param string $columnName The name of the column that is registered.
+	 * @param string|callable $fn Either a callable, or the name of a method on the inheriting object. The callable is required to take one argument: an instance of miBadger\Query\Query; 
+	 */
+	public function registerSearchHook(string $columnName, $fn)
+	{
+		$this->registerHookOnAction(self::SEARCH, $columnName, $fn);
+	}
+
+	/**
+	 * Adds a new column definition to the table.
+	 * @param string $columnName The name of the column that is registered.
+	 * @param Array $definition The definition of that column.
+	 */
+	protected function extendTableDefinition(string $columnName, $definition)
+	{
+		if ($this->tableDefinition === null) {
+			throw new ActiveRecordException("tableDefinition is null, has parent been initialized in constructor?");
+		}
+
+		// Enforcing table can only be extended with new columns
+		if (array_key_exists($columnName, $this->tableDefinition)) {
+			$message = "Table is being extended with a column that already exists, ";
+			$message .= "\"$columnName\" conflicts with your table definition";
+			throw new ActiveRecordException($message, 0);
+		}
+
+		$this->tableDefinition[$columnName] = $definition;
+	}
+
+	/**
+	 * Checks whether the provided column name is registered in the table definition
+	 * @param string $column The column name
+	 */
+	public function hasColumn(string $column): bool {
+		return array_key_exists($column, $this->tableDefinition);
+	}
+
+	/**
+	 * Checks whether the column has a relation onto the provided record table
+	 * @param string $column The column name
+	 * @param ActiveRecordInterface $record The record to check the relation on
+	 */
+	public function hasRelation(string $column, ActiveRecordInterface $record): bool {
+		if (!$this->hasColumn($column)) {
+			throw new ActiveRecordException("Provided column \"$column\" does not exist in table definition", 0);
+		}
+
+		if (!isset($this->tableDefinition[$column]['relation'])) {
+			return false;
+		}
+
+		$relation = $this->tableDefinition[$column]['relation'];
+		if ($relation instanceof AbstractActiveRecord) {
+			// Injected object
+			return get_class($record) === get_class($relation);
+		} else {
+			// :: class definition
+			return get_class($record) === $relation;
+		}
+	}
+
+
+	/**
+	 * Checks whether the property Exists for an instance of t
+	 * @param string $column The column name
+	 * @param int $property The ColumnProperty enum value
+	 */
+	public function hasProperty(string $column, $property): bool {
+		if (!$this->hasColumn($column)) {
+			throw new ActiveRecordException("Provided column \"$column\" does not exist in table definition", 0);
+		}
+
+		try {
+			$enumValue = ColumnProperty::valueOf($property);
+		} catch (\UnexpectedValueException $e) {
+			throw new ActiveRecordException("Provided property \"$property\" is not a valid property", 0, $e);
+		}
+
+		$properties = $this->tableDefinition[$column]['properties'] ?? null;
+
+		return $properties !== null && (($properties & $enumValue->getValue()) > 0);
+	}
+	/**
+	 * @param $column string The column name
+	 */
+	public function getColumnType(string $column): string {
+		if (!$this->hasColumn($column)) {
+			throw new ActiveRecordException("Provided column \"$column\" does not exist in table definition", 0);
+		}
+
+		return $this->tableDefinition[$column]['type'] ?? null;
+	}
+
+	/**
+	 * Returns the default value on a column
+	 * @param $column string The column name
+	 */
+	public function getColumnLength(string $column): ?int {
+		if (!$this->hasColumn($column)) {
+			throw new ActiveRecordException("Provided column \"$column\" does not exist in table definition", 0);
+		}
+
+		return $this->tableDefinition[$column]['length'] ?? null;
+	}
+
+	/**
+	 * Returns the default value on a column
+	 * @param $column string The column name
+	 */
+	public function getDefault(string $column) {
+		if (!$this->hasColumn($column)) {
+			throw new ActiveRecordException("Provided column \"$column\" does not exist in table definition", 0);
+		}
+
+		return $this->tableDefinition[$column]['default'] ?? null;
+	}
+
+	/**
+	 * Validates that the column matches the input constraints & passes the validator function
+	 * @param $column string The column name
+	 */
+	public function validateColumn(string $column, $input) {
+		if (!$this->hasColumn($column)) {
+			throw new ActiveRecordException("Provided column \"$column\" does not exist in table definition", 0);
+		}
+
+		$fn = $this->tableDefinition[$column]['validate'] ?? null;
+
+		if ($fn === null) {
+			return [true, ''];
+		}
+
+		if (!is_callable($fn)) {
+			throw new ActiveRecordException("Provided validation function is not callable", 0);
+		}
+
+		return $fn($input);
+	}
+
+	/**
+	 * Useful for writing unit tests of models against ActiveRecord: 
+	 * overrides a relation column with a relation onto a mock object.
+	 * @param string $column the name of the column onto which to place the mock relation
+	 * @param object $mock the instance of a mock object to palce onto the model.
+	 */
+	public function injectInstanceOnRelation(string $column, $mock) {
+		if (!$this->hasColumn($column)) {
+			throw new ActiveRecordException("Provided column \"$column\" does not exist in table definition", 0);
+		}
+
+		$this->tableDefinition[$column]['relation'] = $mock;
+	}
+
+	/**
+	 * Creates the entity as a table in the database
+	 */
+	public function createTable()
+	{
+		$this->pdo->query(SchemaBuilder::buildCreateTableSQL($this->getTableName(), $this->tableDefinition));
+	}
+
+	/**
+	 * Iterates over the specified constraints in the table definition, 
+	 * 		and applies these to the database.
+	 */
+	public function createTableConstraints()
+	{
+		// Iterate over columns, check whether "relation" field exists, if so create constraint
+		foreach ($this->tableDefinition as $colName => $definition) {
+			if (!isset($definition['relation'])) {
+				continue;
+			}
+
+			$relation = $definition['relation'];
+			$properties = $definition['properties'] ?? 0;
+			
+			if (is_string($relation) 
+				&& class_exists($relation) 
+				&& new $relation($this->pdo) instanceof AbstractActiveRecord) {
+				// ::class relation in tableDefinition
+				$target = new $definition['relation']($this->pdo);
+			}
+			else if ($relation instanceof AbstractActiveRecord) {
+				throw new ActiveRecordException(sprintf(
+					"Relation constraint on column \"%s\" of table \"%s\" can not be built from relation instance, use %s::class in table definition instead",
+					$colName,
+					$this->getTableName(),
+					get_class($relation)
+				));
+			}
+			else {
+				// Invalid class
+				throw new ActiveRecordException(sprintf(
+					"Relation constraint on column \"%s\" of table \"%s\" does not contain a valid ActiveRecord instance", 
+					$colName,
+					$this->getTableName()));
+			}
+
+			// Add new relation constraint on database
+			if ($properties & ColumnProperty::NOT_NULL) {
+				$constraintSql = SchemaBuilder::buildConstraintOnDeleteCascade($target->getTableName(), 'id', $this->getTableName(), $colName);
+			} else {
+				$constraintSql = SchemaBuilder::buildConstraintOnDeleteSetNull($target->getTableName(), 'id', $this->getTableName(), $colName);
+			}
+			$this->pdo->query($constraintSql);
+		}
+	}
+
+	/**
+	 * Returns the name -> variable mapping for the table definition.
+	 * @return Array The mapping
+	 */
+	protected function getActiveRecordColumns()
+	{
+		$bindings = [];
+		foreach ($this->tableDefinition as $colName => $definition) {
+
+			// Ignore the id column (key) when inserting or updating
+			if ($colName == self::COLUMN_NAME_ID) {
+				continue;
+			}
+
+			$bindings[$colName] = &$definition['value'];
+		}
+		return $bindings;
+	}
+
+	/**
+	 * Inserts the default values for columns that have a non-null specification
+	 * 	and a registered default value
+	 */
+	protected function insertDefaults()
+	{
+		// Insert default values for not-null fields
+		foreach ($this->tableDefinition as $colName => $colDef) {
+			if ($colDef['value'] === null
+				&& ($colDef['properties'] ?? 0) & ColumnProperty::NOT_NULL
+				&& isset($colDef['default'])) {
+				$this->tableDefinition[$colName]['value'] = $colDef['default'];
+			}
+		}		
 	}
 
 	/**
@@ -42,14 +450,20 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 */
 	public function create()
 	{
+		foreach ($this->createHooks as $colName => $fn) {
+			$fn();
+		}
+
+		$this->insertDefaults();
+
 		try {
-			(new Query($this->getPdo(), $this->getActiveRecordTable()))
+			(new Query($this->getPdo(), $this->getTableName()))
 				->insert($this->getActiveRecordColumns())
 				->execute();
 
 			$this->setId(intval($this->getPdo()->lastInsertId()));
 		} catch (\PDOException $e) {
-			throw new ActiveRecordException($e->getMessage(), 0, $e);
+			throw new ActiveRecordException($e->getMessage(), ActiveRecordException::DB_ERROR, $e);
 		}
 
 		return $this;
@@ -60,20 +474,31 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 */
 	public function read($id)
 	{
+		$whereConditions = [
+			Query::Equal('id', $id)
+		];
+		foreach ($this->readHooks as $colName => $fn) {
+			$cond = $fn();
+			if ($cond !== null) {
+				$whereConditions[] = $cond;
+			}
+		}
+
 		try {
-			$row = (new Query($this->getPdo(), $this->getActiveRecordTable()))
+			$row = (new Query($this->getPdo(), $this->getTableName()))
 				->select()
-				->where('id', '=', $id)
+				->where(Query::AndArray($whereConditions))
 				->execute()
 				->fetch();
-
+			
 			if ($row === false) {
-				throw new ActiveRecordException(sprintf('Can not read the non-existent active record entry %d from the `%s` table.', $id, $this->getActiveRecordTable()));
+				$msg = sprintf('Can not read the non-existent active record entry %d from the `%s` table.', $id, $this->getTableName());
+				throw new ActiveRecordException($msg, ActiveRecordException::NOT_FOUND);
 			}
 
 			$this->fill($row)->setId($id);
 		} catch (\PDOException $e) {
-			throw new ActiveRecordException($e->getMessage(), 0, $e);
+			throw new ActiveRecordException($e->getMessage(), ActiveRecordException::DB_ERROR, $e);
 		}
 
 		return $this;
@@ -84,13 +509,17 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 */
 	public function update()
 	{
+		foreach ($this->updateHooks as $colName => $fn) {
+			$fn();
+		}
+
 		try {
-			(new Query($this->getPdo(), $this->getActiveRecordTable()))
+			(new Query($this->getPdo(), $this->getTableName()))
 				->update($this->getActiveRecordColumns())
-				->where('id', '=', $this->getId())
+				->where(Query::Equal('id', $this->getId()))
 				->execute();
 		} catch (\PDOException $e) {
-			throw new ActiveRecordException($e->getMessage(), 0, $e);
+			throw new ActiveRecordException($e->getMessage(), ActiveRecordException::DB_ERROR, $e);
 		}
 
 		return $this;
@@ -101,15 +530,19 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 */
 	public function delete()
 	{
+		foreach ($this->deleteHooks as $colName => $fn) {
+			$fn();
+		}
+
 		try {
-			(new Query($this->getPdo(), $this->getActiveRecordTable()))
+			(new Query($this->getPdo(), $this->getTableName()))
 				->delete()
-				->where('id', '=', $this->getId())
+				->where(Query::Equal('id', $this->getId()))
 				->execute();
 
 			$this->setId(null);
 		} catch (\PDOException $e) {
-			throw new ActiveRecordException($e->getMessage(), 0, $e);
+			throw new ActiveRecordException($e->getMessage(), ActiveRecordException::DB_ERROR, $e);
 		}
 
 		return $this;
@@ -153,113 +586,35 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	}
 
 	/**
+	 * Returns the serialized form of the specified columns
+	 * 
+	 * @return Array
+	 */
+	public function toArray(Array $fieldWhitelist)
+	{
+		$output = [];
+		foreach ($this->tableDefinition as $colName => $definition) {
+			if (in_array($colName, $fieldWhitelist)) {
+				$output[$colName] = $definition['value'];
+			}
+		}
+
+		return $output;
+	}
+
+	/**
 	 * {@inheritdoc}
 	 */
-	public function searchOne(array $where = [], array $orderBy = [])
+	public function search(array $ignoredTraits = [])
 	{
-		try {
-			$row = $this->getSearchQueryResult($where, $orderBy, 1)->fetch();
-
-			if ($row === false) {
-				throw new ActiveRecordException(sprintf('Can not search one non-existent entry from the `%s` table.', $this->getActiveRecordTable()));
+		$clauses = [];
+		foreach ($this->searchHooks as $column => $fn) {
+			if (!in_array($column, $ignoredTraits)) {
+				$clauses[] = $fn();
 			}
-
-			return $this->fill($row)->setId($row['id']);
-		} catch (\PDOException $e) {
-			throw new ActiveRecordException($e->getMessage(), 0, $e);
-		}
-	}
-
-	/**
-	 * {@inheritdoc}
-	 */
-	public function search(array $where = [], array $orderBy = [], $limit = -1, $offset = 0)
-	{
-		try {
-			$queryResult = $this->getSearchQueryResult($where, $orderBy, $limit, $offset);
-			$result = [];
-
-			foreach ($queryResult as $row) {
-				$new = clone $this;
-
-				$result[] = $new->fill($row)->setId($row['id']);
-			}
-
-			return $result;
-		} catch (\PDOException $e) {
-			throw new ActiveRecordException($e->getMessage(), 0, $e);
-		}
-	}
-
-	/**
-	 * Returns the search query result with the given where, order by, limit and offset clauses.
-	 *
-	 * @param array $where = []
-	 * @param array $orderBy = []
-	 * @param int $limit = -1
-	 * @param int $offset = 0
-	 * @return \miBadger\Query\QueryResult the search query result with the given where, order by, limit and offset clauses.
-	 */
-	private function getSearchQueryResult(array $where = [], array $orderBy = [], $limit = -1, $offset = 0)
-	{
-		$query = (new Query($this->getPdo(), $this->getActiveRecordTable()))
-			->select();
-
-		$this->getSearchQueryWhere($query, $where);
-		$this->getSearchQueryOrderBy($query, $orderBy);
-		$this->getSearchQueryLimit($query, $limit, $offset);
-
-		return $query->execute();
-	}
-
-	/**
-	 * Returns the given query after adding the given where conditions.
-	 *
-	 * @param \miBadger\Query\Query $query
-	 * @param array $where
-	 * @return \miBadger\Query\Query the given query after adding the given where conditions.
-	 */
-	private function getSearchQueryWhere($query, $where)
-	{
-		foreach ($where as $key => $value) {
-			$query->where($value[0], $value[1], $value[2]);
 		}
 
-		return $query;
-	}
-
-	/**
-	 * Returns the given query after adding the given order by conditions.
-	 *
-	 * @param \miBadger\Query\Query $query
-	 * @param array $orderBy
-	 * @return \miBadger\Query\Query the given query after adding the given order by conditions.
-	 */
-	private function getSearchQueryOrderBy($query, $orderBy)
-	{
-		foreach ($orderBy as $key => $value) {
-			$query->orderBy($key, $value);
-		}
-
-		return $query;
-	}
-
-	/**
-	 * Returns the given query after adding the given limit and offset conditions.
-	 *
-	 * @param \miBadger\Query\Query $query
-	 * @param int $limit
-	 * @param int $offset
-	 * @return \miBadger\Query\Query the given query after adding the given limit and offset conditions.
-	 */
-	private function getSearchQueryLimit($query, $limit, $offset)
-	{
-		if ($limit > -1) {
-			$query->limit($limit);
-			$query->offset($offset);
-		}
-
-		return $query;
+		return new ActiveRecordQuery($this, $clauses);
 	}
 
 	/**
@@ -290,7 +645,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 *
 	 * @return null|int The ID.
 	 */
-	public function getId()
+	public function getId(): ?int
 	{
 		return $this->id;
 	}
@@ -298,27 +653,37 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	/**
 	 * Set the ID.
 	 *
-	 * @param int $id
+	 * @param int|null $id
 	 * @return $this
 	 */
-	protected function setId($id)
+	protected function setId(?int $id)
 	{
 		$this->id = $id;
 
 		return $this;
 	}
 
+	public function getFinalTableDefinition()
+	{
+		return $this->tableDefinition;
+	}
+
+	public function newInstance()
+	{
+		return new static($this->pdo);
+	}
+
 	/**
 	 * Returns the active record table.
 	 *
-	 * @return string the active record table.
+	 * @return string the active record table name.
 	 */
-	abstract protected function getActiveRecordTable();
+	abstract public function getTableName(): string;
 
 	/**
 	 * Returns the active record columns.
 	 *
 	 * @return array the active record columns.
 	 */
-	abstract protected function getActiveRecordColumns();
+	abstract protected function getTableDefinition(): Array;
 }

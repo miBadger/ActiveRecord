@@ -19,7 +19,7 @@ try {
 ```php
 <?php
 
-use miBadger/ActiveRecord/ActiveRecordException;
+use miBadger\ActiveRecord\ActiveRecordException;
 
 try {
 	$activeRecord->read($id);

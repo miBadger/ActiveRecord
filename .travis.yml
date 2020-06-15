@@ -1,17 +1,21 @@
 language: php
 
 php:
-    - 7.1
     - 7.2
     - 7.3
+    - 7.4
     - hhvm
+
+services:
+    - mysql
 
 matrix:
     allow_failures:
         - php: hhvm
-
+        
 before_install:
     - if [[ $TRAVIS_PHP_VERSION = hhv* ]]; then echo hhvm.php7.all=1 >> /etc/hhvm/php.ini; fi
+    - mysql -e 'CREATE DATABASE mibadger_activerecord_phpunit_tests;'
 
 install:
     - composer self-update

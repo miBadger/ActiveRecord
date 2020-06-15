@@ -6,6 +6,8 @@
 [![SensioLabsInsight](https://insight.sensiolabs.com/projects/a413f3f7-2937-470b-968b-a1ab3abe2670/mini.png)](https://insight.sensiolabs.com/projects/a413f3f7-2937-470b-968b-a1ab3abe2670)
 
 The Active Record Component.
+For more in depth information, check out the docs directory.
+New to ActiveRecord? Begin at [```docs/AbstractActiveRecord.md```](docs/AbstractActiveRecord.md)
 
 ## Example
 
@@ -25,7 +27,7 @@ class User extends AbstractActiveRecord
 	/**
 	 * {@inheritdoc}
 	 */
-	public function getActiveRecordTable()
+	public function getTableName()
 	{
 		return 'example';
 	}
@@ -33,10 +35,17 @@ class User extends AbstractActiveRecord
 	/**
 	 * {@inheritdoc}
 	 */
-	public function getActiveRecordColumns()
+	public function getTableDefinition() 
 	{
 		return [
-			'name' => &$name
+			'name' =>
+			[
+				'value' => &$this->name,
+				'validate' => null,
+				'type' => 'VARCHAR',
+				'length' => 256,
+				'properties' => ColumnProperty::NOT_NULL | ColumnProperty::UNIQUE
+			]
 		];
 	}
 
@@ -93,3 +102,28 @@ $user->setName('Jane');
  */
 $user->sync();
 ```
+
+# Requirements
+ActiveRecord is tested with
+- php 7.2+
+- mysql (mariadb) 8.0.6.16
+For more detailed information, check out the scrutinizer reports.
+
+# Setup
+The easiest way to install miBadger.ActiveRecord is using composer
+```composer require mibadger/activerecord```
+or by including the package in your composer.json
+```json
+"require": {
+	"mibadger/activerecord": "^2.0"
+}
+```
+# Limitations
+
+
+# Changelog
+## 2.0-dev
+- New interfaces & style of declaring columns
+- getTableDefinition now returns an associative array of columnEntries
+- added functionality for code reuse by means of traits. Some common traits can be found in ```src/Traits/```
+- added autoApi trait for handling simple CRUD operations.
