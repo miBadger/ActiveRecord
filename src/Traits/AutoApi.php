@@ -409,10 +409,10 @@ trait AutoApi
 	/**
 	 * Set the ID.
 	 *
-	 * @param int $id
+	 * @param int|null $id
 	 * @return $this
 	 */
-	abstract protected function setId($id);
+	abstract protected function setId(?int $id);
 
 	/**
 	 * Returns the ID.

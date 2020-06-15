@@ -250,7 +250,7 @@ class NullTypeFieldRecordMock extends AbstractActiveRecord
 	/**
 	 * {@inheritdoc}
 	 */
-	public function getId()
+	public function getId(): ?int
 	{
 		return 1;
 	}

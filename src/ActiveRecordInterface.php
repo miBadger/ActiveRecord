@@ -26,7 +26,7 @@ interface ActiveRecordInterface
 	 *
 	 * @return null|int The ID.
 	 */	
-	public function getId();
+	public function getId(): ?int;
 
 	/**
 	 * Returns this active record after creating an entry with the records attributes.

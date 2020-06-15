@@ -442,7 +442,7 @@ class AbstractActiveRecordTableExceptionTestMock extends AbstractActiveRecordTes
 	/**
 	 * {@inheritdoc}
 	 */
-	public function getId()
+	public function getId(): ?int
 	{
 		return 1;
 	}
@@ -464,7 +464,7 @@ class AbstractActiveRecordColumnsExceptionTestMock extends AbstractActiveRecordT
 	/**
 	 * {@inheritdoc}
 	 */
-	public function getId()
+	public function getId(): ?int
 	{
 		return 1;
 	}

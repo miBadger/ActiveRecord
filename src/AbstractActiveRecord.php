@@ -90,7 +90,12 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		];
 	}
 
-	private function checkHookConstraints($columnName, $hookMap)
+	/**
+	 * Verifies whether a column already has an entry in the specified hook map. If so, throws.
+	 * @param string $columnName The column name for which to verify the hook constraints
+	 * @param Array $hookMap The associative map of hooks to be verifie
+	 */
+	private function checkHookConstraints(string $columnName, Array $hookMap)
 	{
 		// Check whether column exists
 		if (!array_key_exists($columnName, $this->tableDefinition)) 
@@ -106,7 +111,15 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		}
 	}
 
-	public function registerHookOnAction($actionName, $columnName, $fn)
+
+	/**
+	 * Registers a hook to be called on one of the following actions
+	 * 		[CREATE, READ, UPDATE, DELETE, SEARCH]
+	 * @param string $actionName The name of the action to register for
+	 * @param string $columnName The columnName for which to register this action
+	 * @param callable|string $fn The function name to call, or a callable function
+	 */
+	public function registerHookOnAction(string $actionName, string $columnName, $fn)
 	{
 		if (is_string($fn) && is_callable([$this, $fn])) {
 			$fn = [$this, $fn];
@@ -148,7 +161,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 * @param string $columnName The name of the column that is registered.
 	 * @param string|callable $fn Either a callable, or the name of a method on the inheriting object.
 	 */
-	public function registerCreateHook($columnName, $fn)
+	public function registerCreateHook(string $columnName, $fn)
 	{
 		$this->registerHookOnAction(self::CREATE, $columnName, $fn);
 	}
@@ -159,7 +172,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 * @param string $columnName The name of the column that is registered.
 	 * @param string|callable $fn Either a callable, or the name of a method on the inheriting object.
 	 */
-	public function registerReadHook($columnName, $fn)
+	public function registerReadHook(string $columnName, $fn)
 	{
 		$this->registerHookOnAction(self::READ, $columnName, $fn);
 	}
@@ -170,7 +183,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 * @param string $columnName The name of the column that is registered.
 	 * @param string|callable $fn Either a callable, or the name of a method on the inheriting object.
 	 */
-	public function registerUpdateHook($columnName, $fn)
+	public function registerUpdateHook(string $columnName, $fn)
 	{
 		$this->registerHookOnAction(self::UPDATE, $columnName, $fn);
 	}
@@ -181,7 +194,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 * @param string $columnName The name of the column that is registered.
 	 * @param string|callable $fn Either a callable, or the name of a method on the inheriting object.
 	 */
-	public function registerDeleteHook($columnName, $fn)
+	public function registerDeleteHook(string $columnName, $fn)
 	{
 		$this->registerHookOnAction(self::DELETE, $columnName, $fn);
 	}
@@ -192,7 +205,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 * @param string $columnName The name of the column that is registered.
 	 * @param string|callable $fn Either a callable, or the name of a method on the inheriting object. The callable is required to take one argument: an instance of miBadger\Query\Query; 
 	 */
-	public function registerSearchHook($columnName, $fn)
+	public function registerSearchHook(string $columnName, $fn)
 	{
 		$this->registerHookOnAction(self::SEARCH, $columnName, $fn);
 	}
@@ -202,7 +215,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 * @param string $columnName The name of the column that is registered.
 	 * @param Array $definition The definition of that column.
 	 */
-	protected function extendTableDefinition($columnName, $definition)
+	protected function extendTableDefinition(string $columnName, $definition)
 	{
 		if ($this->tableDefinition === null) {
 			throw new ActiveRecordException("tableDefinition is null, has parent been initialized in constructor?");
@@ -218,11 +231,20 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		$this->tableDefinition[$columnName] = $definition;
 	}
 
-	public function hasColumn(string $column) {
+	/**
+	 * Checks whether the provided column name is registered in the table definition
+	 * @param string $column The column name
+	 */
+	public function hasColumn(string $column): bool {
 		return array_key_exists($column, $this->tableDefinition);
 	}
 
-	public function hasRelation(string $column, ActiveRecordInterface $record) {
+	/**
+	 * Checks whether the column has a relation onto the provided record table
+	 * @param string $column The column name
+	 * @param ActiveRecordInterface $record The record to check the relation on
+	 */
+	public function hasRelation(string $column, ActiveRecordInterface $record): bool {
 		if (!$this->hasColumn($column)) {
 			throw new ActiveRecordException("Provided column \"$column\" does not exist in table definition", 0);
 		}
@@ -241,7 +263,13 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		}
 	}
 
-	public function hasProperty(string $column, $property) {
+
+	/**
+	 * Checks whether the property Exists for an instance of t
+	 * @param string $column The column name
+	 * @param int $property The ColumnProperty enum value
+	 */
+	public function hasProperty(string $column, $property): bool {
 		if (!$this->hasColumn($column)) {
 			throw new ActiveRecordException("Provided column \"$column\" does not exist in table definition", 0);
 		}
@@ -256,8 +284,10 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 
 		return $properties !== null && (($properties & $enumValue->getValue()) > 0);
 	}
-
-	public function getColumnType(string $column) {
+	/**
+	 * @param $column string The column name
+	 */
+	public function getColumnType(string $column): string {
 		if (!$this->hasColumn($column)) {
 			throw new ActiveRecordException("Provided column \"$column\" does not exist in table definition", 0);
 		}
@@ -265,7 +295,11 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		return $this->tableDefinition[$column]['type'] ?? null;
 	}
 
-	public function getColumnLength(string $column) {
+	/**
+	 * Returns the default value on a column
+	 * @param $column string The column name
+	 */
+	public function getColumnLength(string $column): ?int {
 		if (!$this->hasColumn($column)) {
 			throw new ActiveRecordException("Provided column \"$column\" does not exist in table definition", 0);
 		}
@@ -273,6 +307,10 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		return $this->tableDefinition[$column]['length'] ?? null;
 	}
 
+	/**
+	 * Returns the default value on a column
+	 * @param $column string The column name
+	 */
 	public function getDefault(string $column) {
 		if (!$this->hasColumn($column)) {
 			throw new ActiveRecordException("Provided column \"$column\" does not exist in table definition", 0);
@@ -281,6 +319,10 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		return $this->tableDefinition[$column]['default'] ?? null;
 	}
 
+	/**
+	 * Validates that the column matches the input constraints & passes the validator function
+	 * @param $column string The column name
+	 */
 	public function validateColumn(string $column, $input) {
 		if (!$this->hasColumn($column)) {
 			throw new ActiveRecordException("Provided column \"$column\" does not exist in table definition", 0);
@@ -387,6 +429,10 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 		return $bindings;
 	}
 
+	/**
+	 * Inserts the default values for columns that have a non-null specification
+	 * 	and a registered default value
+	 */
 	protected function insertDefaults()
 	{
 		// Insert default values for not-null fields
@@ -599,7 +645,7 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	 *
 	 * @return null|int The ID.
 	 */
-	public function getId()
+	public function getId(): ?int
 	{
 		return $this->id;
 	}
@@ -607,10 +653,10 @@ abstract class AbstractActiveRecord implements ActiveRecordInterface
 	/**
 	 * Set the ID.
 	 *
-	 * @param int $id
+	 * @param int|null $id
 	 * @return $this
 	 */
-	protected function setId($id)
+	protected function setId(?int $id)
 	{
 		$this->id = $id;
 

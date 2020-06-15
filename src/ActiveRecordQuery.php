@@ -246,7 +246,7 @@ class ActiveRecordQuery implements \IteratorAggregate
 	 * @return $this
 	 * @see https://en.wikipedia.org/wiki/SQL#Queries
 	 */
-	public function groupBy($column)
+	public function groupBy(string $column)
 	{
 		$this->query->groupBy($column);
 		return $this;
@@ -261,7 +261,7 @@ class ActiveRecordQuery implements \IteratorAggregate
 	 * @see https://en.wikipedia.org/wiki/SQL#Queries
 	 * @see https://en.wikipedia.org/wiki/Order_by
 	 */
-	public function orderBy($column, $order = null)
+	public function orderBy(string $column, $order = null)
 	{
 		$this->query->orderBy($column, $order);	
 		return $this;
