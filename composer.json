@@ -19,8 +19,8 @@
 	],
 	"require": {
 		"php": "^7.2",
-		"mibadger/enum": "^2.0.0",
-		"mibadger/query": "dev-develop"
+		"mibadger/enum": "^2.0",
+		"mibadger/query": "^2.0"
 	},
 	"require-dev": {
 		"phpunit/phpunit": "^8.4"
